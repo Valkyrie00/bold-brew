@@ -302,6 +302,10 @@ func (s *AppService) BuildApp() {
 }
 
 func (s *AppService) handleKeyEventInput(event *tcell.EventKey) *tcell.EventKey {
+	if s.searchInput.HasFocus() {
+		return event
+	}
+
 	switch event.Key() {
 	case tcell.KeyRune:
 		switch event.Rune() {

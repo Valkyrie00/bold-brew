@@ -1,0 +1,15 @@
+version: 2
+project_name: bbrew
+builds:
+  - id: bbrew
+    main: ./cmd/bbrew
+    goos:
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+    ldflags:
+      - -s -w
+archives:
+  - format: tar.gz
+    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"

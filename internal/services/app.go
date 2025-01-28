@@ -6,13 +6,12 @@ import (
 	"github.com/gdamore/tcell/v2"
 	_ "github.com/joho/godotenv/autoload"
 	"github.com/rivo/tview"
-	"os"
 	"strings"
 )
 
 var (
-	AppName    = os.Getenv("APP_NAME")
-	AppVersion = os.Getenv("APP_VERSION")
+	AppName    = "Bold Brew"
+	AppVersion = "0.0.1"
 )
 
 type AppServiceInterface interface {

@@ -8,9 +8,10 @@ builds:
     goarch:
       - amd64
       - arm64
+    env:
+      - CGO_ENABLED=0
     ldflags:
       - -s -w
-      - -X 'bbrew/internal/services.AppName={{ .ProjectName }}'
       - -X 'bbrew/internal/services.AppVersion={{ .Version }}'
 archives:
   - format: tar.gz

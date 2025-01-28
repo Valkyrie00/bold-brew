@@ -4,14 +4,15 @@ import (
 	"bbrew/internal/models"
 	"fmt"
 	"github.com/gdamore/tcell/v2"
+	_ "github.com/joho/godotenv/autoload"
 	"github.com/rivo/tview"
+	"os"
 	"strings"
 )
 
-// CONSTANTS
-const (
-	AppName    = "MyApp"
-	AppVersion = "1.0.0"
+var (
+	AppName    = os.Getenv("APP_NAME")
+	AppVersion = os.Getenv("APP_VERSION")
 )
 
 type AppServiceInterface interface {

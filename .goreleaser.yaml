@@ -34,6 +34,3 @@ brews:
       name: homebrew-bbrew
       branch: main
       token: "{{ .Env.GITHUB_TOKEN }}"
-    pull_request:
-      enabled: true
-      draft: false

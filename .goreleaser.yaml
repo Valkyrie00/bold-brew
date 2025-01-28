@@ -13,3 +13,27 @@ builds:
 archives:
   - format: tar.gz
     name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+brews:
+  - name: bold-brew
+    homepage: "https://github.com/Valkyrie00/bold-brew"
+    description: "A simple TUI tool to make your brews bold."
+    url_template: "https://github.com/Valkyrie00/bold-brew/releases/download/{{ .Tag }}/{{ .ArtifactName }}"
+    commit_author:
+      name: goreleaserbot
+      email: bot@goreleaser.com
+    commit_msg_template: "Brew formula update for {{ .ProjectName }} version {{ .Tag }}"
+    directory: Formula
+    dependencies:
+      - name: go
+    test: |
+      system "#{bin}/bbrew --version"
+    install: |
+      bin.install "bbrew"
+    repository:
+      owner: Valkyrie00
+      name: homebrew-bbrew
+      branch: main
+      token: "{{ .Env.GITHUB_TOKEN }}"
+    pull_request:
+      enabled: true
+      draft: false

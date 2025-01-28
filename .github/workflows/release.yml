@@ -31,3 +31,4 @@ jobs:
           args: release --clean
         env:
           GITHUB_TOKEN: ${{ secrets.GORELEASE }}
+          HOMEBREW_TAP_GITHUB_TOKEN: ${{ secrets.GORELEASE }}

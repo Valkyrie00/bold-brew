@@ -14,7 +14,7 @@ archives:
   - format: tar.gz
     name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
 brews:
-  - name: bold-brew
+  - name: bbrew
     homepage: "https://github.com/Valkyrie00/bold-brew"
     description: "A simple TUI tool to make your brews bold."
     url_template: "https://github.com/Valkyrie00/bold-brew/releases/download/{{ .Tag }}/{{ .ArtifactName }}"

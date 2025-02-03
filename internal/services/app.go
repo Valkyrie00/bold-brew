@@ -114,20 +114,27 @@ func (s *AppService) applySearchFilter(
 	s.packageCountView.SetText(fmt.Sprintf("Total: %d | Filtered: %d", len(*s.packages), len(*s.filteredPackages)))
 }
 
-func (s *AppService) updateDetailsView(
-	info *models.Formula,
-) {
+func (s *AppService) updateDetailsView(info *models.Formula) {
 	if info != nil {
 		installedVersion := "Not installed"
 		packagePrefix := "-"
+		installedOnRequest := false
 		if len(info.Installed) > 0 {
 			installedVersion = info.Installed[0].Version
 			packagePrefix, _ = s.BrewService.GetPrefixPath(info.Name)
+			installedOnRequest = info.Installed[0].InstalledOnRequest
+		}
+
+		dependencies := strings.Join(info.Dependencies, ", ")
+		if dependencies == "" {
+			dependencies = "None"
 		}
 
 		s.detailsView.SetText(
-			fmt.Sprintf("Name: %s\nDescription: %s\nInstalled: %s\nAvailable Version: %s\nInstall Path: %s",
-				info.Name, info.Description, installedVersion, info.Versions.Stable, packagePrefix),
+			fmt.Sprintf(
+				"[blue]Name:[-] %s\n[blue]Full Name:[-] %s\n[blue]Description:[-] %s\n[blue]Installed:[-] %s\n[blue]Available Version:[-] %s\n[blue]Install Path:[-] %s\n[blue]Tap:[-] %s\n[blue]Homepage:[-] %s\n[blue]License:[-] %s\n[blue]Dependencies:[-] %s\n[blue]Installed On Request:[-] %t\n[blue]Outdated:[-] %t\n[blue]Linked Keg:[-] %s",
+				info.Name, info.FullName, info.Description, installedVersion, info.Versions.Stable, packagePrefix, info.Tap, info.Homepage, info.License, dependencies, installedOnRequest, info.Outdated, info.LinkedKeg,
+			),
 		)
 		return
 	}
@@ -231,11 +238,11 @@ func (s *AppService) BuildApp() {
 
 	// Details view to show package information
 	s.detailsView = tview.NewTextView().SetDynamicColors(true).SetTextAlign(tview.AlignLeft)
-	s.detailsView.SetTitle("Details").SetTitleAlign(tview.AlignLeft).SetBorder(true)
+	s.detailsView.SetTitle("Details").SetTitleColor(tcell.ColorYellowGreen).SetTitleAlign(tview.AlignLeft).SetBorder(true)
 
 	// Output view to show command output
 	s.outputView = tview.NewTextView().SetDynamicColors(true).SetTextAlign(tview.AlignLeft)
-	s.outputView.SetBorder(true).SetTitle("Output").SetTitleAlign(tview.AlignLeft)
+	s.outputView.SetBorder(true).SetTitle("Output").SetTitleColor(tcell.ColorYellowGreen).SetTitleAlign(tview.AlignLeft)
 
 	// Search input to filter packages
 	s.searchInput = tview.NewInputField().

@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="resources/logo/bbrew-logo.png" alt="Bold Brew Logo" style="width: 200px; height: 200px; border-radius: 50%;">
+  <img src="resources/logo/bbrew-logo.png" alt="Bold Brew Logo" style="width: 200px; height: 200px; border-radius: 100%;">
 </div>
 
 # Bold Brew (bbrew) - A Homebrew TUI Manager

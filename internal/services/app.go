@@ -262,7 +262,7 @@ func (s *AppService) BuildApp() {
 		SetLabelColor(tcell.ColorYellow).
 		SetFieldWidth(30).
 		SetDoneFunc(func(key tcell.Key) {
-			if key == tcell.KeyEnter {
+			if key == tcell.KeyEnter || key == tcell.KeyEscape {
 				s.app.SetFocus(s.table)
 			}
 		})

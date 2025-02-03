@@ -231,7 +231,7 @@ func (s *AppService) BuildApp() {
 		SetTextAlign(tview.AlignCenter)
 
 	legend := tview.NewTextView().
-		SetText(tview.Escape("[Up/Down] Navigate | [/] Search | [f] Filter Installed Only | [i] Install | [u] Update | [r] Remove | [Esc] Back to Table | [q] Quit")).
+		SetText(tview.Escape("[/] Search | [f] Filter Installed | [i] Install | [u] Update | [r] Remove | [Esc] Back to Table | [ctrl+u] Update Homebrew | [q] Quit")).
 		SetDynamicColors(true).
 		SetTextAlign(tview.AlignCenter)
 
@@ -406,6 +406,24 @@ func (s *AppService) handleKeyEventInput(event *tcell.EventKey) *tcell.EventKey 
 			s.table.ScrollToBeginning()
 			return nil
 		}
+	case tcell.KeyCtrlU:
+		// Update homebrew
+		modal := s.createModal("Are you sure you want to update Homebrew?", func() {
+			s.outputView.Clear()
+			go func() {
+				err := s.CommandService.UpdateHomebrew(s.app, s.outputView)
+				if err != nil {
+					s.app.QueueUpdateDraw(func() {
+						errorModal := s.createModal(fmt.Sprintf("Failed to update Homebrew\nError: %v", err), nil)
+						s.app.SetRoot(errorModal, true).SetFocus(errorModal)
+					})
+				} else {
+					s.updateTableView()
+				}
+			}()
+		})
+		s.app.SetRoot(modal, true).SetFocus(modal)
+		return nil
 	case tcell.KeyEsc:
 		// Remove the modal if it is currently displayed
 		if s.currentModal != nil {

@@ -170,7 +170,7 @@ func (s *AppService) updateTableView() {
 }
 
 func (s *AppService) fillTable(data *[]models.Formula) {
-	headers := []string{"Name", "Description", "Installed", "Available Version"}
+	headers := []string{"Name", "Description", "Version"}
 	s.table.Clear()
 
 	for i, header := range headers {
@@ -182,25 +182,24 @@ func (s *AppService) fillTable(data *[]models.Formula) {
 	}
 
 	for i, info := range *data {
-		installedVersion := ""
-		if len(info.Installed) > 0 {
-			installedVersion = info.Installed[0].Version
+		version := info.Versions.Stable
+		if len(info.Installed) > 0 && info.Installed[0].Version != info.Versions.Stable {
+			version = fmt.Sprintf("%s -> %s", info.Installed[0].Version, info.Versions.Stable)
 		}
 
 		nameCell := tview.NewTableCell(info.Name).SetSelectable(true)
-		if installedVersion != "" {
+		if len(info.Installed) > 0 {
 			nameCell.SetTextColor(tcell.ColorGreen)
 		}
 
-		installedVersionCell := tview.NewTableCell(installedVersion).SetSelectable(true)
-		if installedVersion != "" && installedVersion < info.Versions.Stable {
-			installedVersionCell.SetTextColor(tcell.ColorOrange)
+		versionCell := tview.NewTableCell(version).SetSelectable(true)
+		if version != "" && len(info.Installed) > 0 && info.Installed[0].Version < info.Versions.Stable {
+			versionCell.SetTextColor(tcell.ColorOrange)
 		}
 
 		s.table.SetCell(i+1, 0, nameCell)
 		s.table.SetCell(i+1, 1, tview.NewTableCell(info.Description).SetSelectable(true))
-		s.table.SetCell(i+1, 2, installedVersionCell)
-		s.table.SetCell(i+1, 3, tview.NewTableCell(info.Versions.Stable).SetSelectable(true))
+		s.table.SetCell(i+1, 2, versionCell)
 	}
 
 	// Update the details view with the first item in the list

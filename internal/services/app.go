@@ -120,7 +120,11 @@ func (s *AppService) updateDetailsView(info *models.Formula) {
 		packagePrefix := "-"
 		installedOnRequest := false
 		if len(info.Installed) > 0 {
-			installedVersion = info.Installed[0].Version
+			if info.Installed[0].Version == info.Versions.Stable {
+				installedVersion = info.Installed[0].Version
+			} else {
+				installedVersion = fmt.Sprintf("[orange]%s[-]", info.Installed[0].Version)
+			}
 			packagePrefix, _ = s.BrewService.GetPrefixPath(info.Name)
 			installedOnRequest = info.Installed[0].InstalledOnRequest
 		}
@@ -130,11 +134,18 @@ func (s *AppService) updateDetailsView(info *models.Formula) {
 			dependencies = "None"
 		}
 
+		generalInfo := fmt.Sprintf(
+			"[blue]Name:[-] %s\n[blue]Description:[-] %s\n[blue]Homepage:[-] %s\n[blue]License:[-] %s\n[blue]Tap:[-] %s",
+			info.FullName, info.Description, info.Homepage, info.License, info.Tap,
+		)
+
+		installInfo := fmt.Sprintf(
+			"[blue]Installed:[-] %s\n[blue]Available Version:[-] %s\n[blue]Install Path:[-] %s\n[blue]Dependencies:[-] %s\n[blue]Installed On Request:[-] %t\n[blue]Outdated:[-] %t\n",
+			installedVersion, info.Versions.Stable, packagePrefix, dependencies, installedOnRequest, info.Outdated,
+		)
+
 		s.detailsView.SetText(
-			fmt.Sprintf(
-				"[blue]Name:[-] %s\n[blue]Full Name:[-] %s\n[blue]Description:[-] %s\n[blue]Installed:[-] %s\n[blue]Available Version:[-] %s\n[blue]Install Path:[-] %s\n[blue]Tap:[-] %s\n[blue]Homepage:[-] %s\n[blue]License:[-] %s\n[blue]Dependencies:[-] %s\n[blue]Installed On Request:[-] %t\n[blue]Outdated:[-] %t\n[blue]Linked Keg:[-] %s",
-				info.Name, info.FullName, info.Description, installedVersion, info.Versions.Stable, packagePrefix, info.Tap, info.Homepage, info.License, dependencies, installedOnRequest, info.Outdated, info.LinkedKeg,
-			),
+			fmt.Sprintf("%s\n\n%s", generalInfo, installInfo),
 		)
 		return
 	}

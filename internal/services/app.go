@@ -38,8 +38,9 @@ type AppService struct {
 	brewVersion       string
 
 	// Services
-	BrewService    BrewServiceInterface
-	CommandService CommandServiceInterface
+	BrewService       BrewServiceInterface
+	CommandService    CommandServiceInterface
+	SelfUpdateService SelfUpdateServiceInterface
 }
 
 var NewAppService = func() AppServiceInterface {
@@ -51,8 +52,9 @@ var NewAppService = func() AppServiceInterface {
 		brewVersion:       "-",
 
 		// Services
-		BrewService:    NewBrewService(),
-		CommandService: NewCommandService(),
+		BrewService:       NewBrewService(),
+		CommandService:    NewCommandService(),
+		SelfUpdateService: NewSelfUpdateService(),
 	}
 }
 
@@ -225,6 +227,11 @@ func (s *AppService) fillTable(data *[]models.Formula) {
 }
 
 func (s *AppService) BuildApp() {
+	latestVersion, err := s.SelfUpdateService.CheckForUpdates()
+	if err == nil && latestVersion != AppVersion {
+		AppVersion = fmt.Sprintf("%s ([orange]Update available: %s[-])", AppVersion, latestVersion)
+	}
+
 	header := tview.NewTextView().
 		SetText(fmt.Sprintf("%s %s - %s", AppName, AppVersion, s.brewVersion)).
 		SetDynamicColors(true).

@@ -21,15 +21,7 @@ type AppServiceInterface interface {
 }
 
 type AppService struct {
-	// Components IO
-	app              *tview.Application
-	table            *tview.Table
-	detailsView      *tview.TextView
-	outputView       *tview.TextView
-	searchInput      *tview.InputField
-	packageCountView *tview.TextView
-	currentModal     *tview.Modal
-	grid             *tview.Grid
+	app *tview.Application
 
 	// Data
 	packages          *[]models.Formula
@@ -41,6 +33,7 @@ type AppService struct {
 	BrewService       BrewServiceInterface
 	CommandService    CommandServiceInterface
 	SelfUpdateService SelfUpdateServiceInterface
+	LayoutService     LayoutServiceInterface
 }
 
 var NewAppService = func() AppServiceInterface {
@@ -55,6 +48,7 @@ var NewAppService = func() AppServiceInterface {
 		BrewService:       NewBrewService(),
 		CommandService:    NewCommandService(),
 		SelfUpdateService: NewSelfUpdateService(),
+		LayoutService:     NewLayoutService(),
 	}
 }
 
@@ -113,7 +107,7 @@ func (s *AppService) applySearchFilter(
 	*s.filteredPackages = filteredList
 	s.fillTable(s.filteredPackages)
 
-	s.packageCountView.SetText(fmt.Sprintf("Total: %d | Filtered: %d", len(*s.packages), len(*s.filteredPackages)))
+	s.LayoutService.GetFilterCounter().SetText(fmt.Sprintf("Total: %d | Filtered: %d", len(*s.packages), len(*s.filteredPackages)))
 }
 
 func (s *AppService) updateDetailsView(info *models.Formula) {
@@ -146,48 +140,29 @@ func (s *AppService) updateDetailsView(info *models.Formula) {
 			installedVersion, info.Versions.Stable, packagePrefix, dependencies, installedOnRequest, info.Outdated,
 		)
 
-		s.detailsView.SetText(
+		s.LayoutService.GetDetailsView().SetText(
 			fmt.Sprintf("%s\n\n%s", generalInfo, installInfo),
 		)
 		return
 	}
 
-	s.detailsView.SetText("")
-}
-
-func (s *AppService) createModal(text string, confirmFunc func()) *tview.Modal {
-	modal := tview.NewModal().
-		SetText(text).
-		AddButtons([]string{"Confirm", "Cancel"}).
-		SetBackgroundColor(tcell.ColorDarkSlateGray).
-		SetTextColor(tcell.ColorWhite).
-		SetButtonBackgroundColor(tcell.ColorGray).
-		SetButtonTextColor(tcell.ColorWhite).
-		SetDoneFunc(func(buttonIndex int, buttonLabel string) {
-			s.app.SetRoot(s.grid, true).SetFocus(s.table)
-			if buttonLabel == "Confirm" {
-				confirmFunc()
-			}
-		})
-
-	s.currentModal = modal
-	return modal
+	s.LayoutService.GetDetailsView().SetText("")
 }
 
 func (s *AppService) updateTableView() {
 	s.app.QueueUpdateDraw(func() {
 		_ = s.BrewService.LoadAllFormulae()
-		s.applySearchFilter(s.searchInput.GetText())
-		s.app.SetRoot(s.grid, true).SetFocus(s.table)
+		s.applySearchFilter(s.LayoutService.GetSearchField().GetText())
+		s.app.SetRoot(s.LayoutService.GetGrid(), true).SetFocus(s.LayoutService.GetTableResult())
 	})
 }
 
 func (s *AppService) fillTable(data *[]models.Formula) {
 	headers := []string{"Name", "Description", "Version"}
-	s.table.Clear()
+	s.LayoutService.GetTableResult().Clear()
 
 	for i, header := range headers {
-		s.table.SetCell(0, i, tview.NewTableCell(header).
+		s.LayoutService.GetTableResult().SetCell(0, i, tview.NewTableCell(header).
 			SetTextColor(tcell.ColorBlue).
 			SetAlign(tview.AlignLeft).
 			SetSelectable(false).
@@ -210,15 +185,15 @@ func (s *AppService) fillTable(data *[]models.Formula) {
 			versionCell.SetTextColor(tcell.ColorOrange)
 		}
 
-		s.table.SetCell(i+1, 0, nameCell)
-		s.table.SetCell(i+1, 1, tview.NewTableCell(info.Description).SetSelectable(true))
-		s.table.SetCell(i+1, 2, versionCell)
+		s.LayoutService.GetTableResult().SetCell(i+1, 0, nameCell)
+		s.LayoutService.GetTableResult().SetCell(i+1, 1, tview.NewTableCell(info.Description).SetSelectable(true))
+		s.LayoutService.GetTableResult().SetCell(i+1, 2, versionCell)
 	}
 
 	// Update the details view with the first item in the list
 	if len(*data) > 0 {
-		s.table.Select(1, 0)
-		s.table.ScrollToBeginning()
+		s.LayoutService.GetTableResult().Select(1, 0)
+		s.LayoutService.GetTableResult().ScrollToBeginning()
 		s.updateDetailsView(&(*data)[0])
 		return
 	}
@@ -232,101 +207,49 @@ func (s *AppService) BuildApp() {
 		AppVersion = fmt.Sprintf("%s ([orange]Update available: %s[-])", AppVersion, latestVersion)
 	}
 
-	header := tview.NewTextView().
-		SetText(fmt.Sprintf("%s %s - %s", AppName, AppVersion, s.brewVersion)).
-		SetDynamicColors(true).
-		SetTextAlign(tview.AlignCenter)
+	s.LayoutService.SetHeader(AppName, AppVersion, s.brewVersion)
+	s.LayoutService.SetLegend()
 
-	legend := tview.NewTextView().
-		SetText(tview.Escape("[/] Search | [f] Filter Installed | [i] Install | [u] Update | [r] Remove | [Esc] Back to Table | [ctrl+u] Update Homebrew | [q] Quit")).
-		SetDynamicColors(true).
-		SetTextAlign(tview.AlignCenter)
-
-	s.table = tview.NewTable().
-		SetBorders(false).
-		SetSelectable(true, false).
-		SetFixed(1, 0)
-
-	s.table.SetSelectionChangedFunc(func(row, column int) {
+	tableSelectionChangedFunc := func(row, column int) {
 		if row > 0 && row-1 < len(*s.filteredPackages) {
 			s.updateDetailsView(&(*s.filteredPackages)[row-1])
 		}
-	})
+	}
 
-	// Details view to show package information
-	s.detailsView = tview.NewTextView().SetDynamicColors(true).SetTextAlign(tview.AlignLeft)
-	s.detailsView.SetTitle("Details").SetTitleColor(tcell.ColorYellowGreen).SetTitleAlign(tview.AlignLeft).SetBorder(true)
-
-	// Output view to show command output
-	s.outputView = tview.NewTextView().SetDynamicColors(true).SetTextAlign(tview.AlignLeft)
-	s.outputView.SetBorder(true).SetTitle("Output").SetTitleColor(tcell.ColorYellowGreen).SetTitleAlign(tview.AlignLeft)
+	s.LayoutService.SetTableResult(tableSelectionChangedFunc)
+	s.LayoutService.SetDetailsView()
+	s.LayoutService.SetBuildOutputView()
 
 	// Search input to filter packages
-	s.searchInput = tview.NewInputField().
-		SetLabel("Search (All): ").
-		SetFieldBackgroundColor(tcell.ColorBlack).
-		SetFieldTextColor(tcell.ColorWhite).
-		SetLabelColor(tcell.ColorYellow).
-		SetFieldWidth(30).
-		SetDoneFunc(func(key tcell.Key) {
-			if key == tcell.KeyEnter || key == tcell.KeyEscape {
-				s.app.SetFocus(s.table)
-			}
-		})
+	inputDoneFunc := func(key tcell.Key) {
+		if key == tcell.KeyEnter || key == tcell.KeyEscape {
+			s.app.SetFocus(s.LayoutService.GetTableResult())
+		}
+	}
 
-	s.searchInput.SetChangedFunc(func(text string) {
-		s.applySearchFilter(s.searchInput.GetText())
-	})
+	changedFunc := func(text string) {
+		s.applySearchFilter(s.LayoutService.GetSearchField().GetText())
+	}
 
-	s.packageCountView = tview.NewTextView().
-		SetDynamicColors(true).
-		SetTextAlign(tview.AlignRight).
-		SetText(fmt.Sprintf("Total: %d | Filtered: %d", len(*s.packages), len(*s.filteredPackages)))
+	s.LayoutService.SetSearchField(inputDoneFunc, changedFunc)
 
-	// Create a grid layout to hold the header, table, search input, and the legend
-	searchRow := tview.NewFlex().SetDirection(tview.FlexColumn).
-		AddItem(s.searchInput, 0, 1, false).
-		AddItem(s.packageCountView, 0, 1, false)
+	s.LayoutService.SetFilterCounter(len(*s.packages), len(*s.filteredPackages))
 
-	filtersArea := tview.NewFrame(searchRow).
-		SetBorders(0, 0, 0, 0, 3, 3)
-
-	tableFrame := tview.NewFrame(s.table).
-		SetBorders(0, 0, 0, 0, 3, 3)
-
-	leftColumn := tview.NewFlex().SetDirection(tview.FlexRow).
-		AddItem(filtersArea, 2, 0, false). // Fixed height of 3 rows
-		AddItem(tableFrame, 0, 4, false)
-
-	rightColumn := tview.NewFlex().SetDirection(tview.FlexRow).
-		AddItem(s.detailsView, 0, 2, false).
-		AddItem(s.outputView, 0, 1, false)
-
-	mainContent := tview.NewFlex().SetDirection(tview.FlexColumn).
-		AddItem(leftColumn, 0, 1, false).
-		AddItem(rightColumn, 0, 1, false)
-
-	s.grid = tview.NewGrid().
-		SetRows(1, 0, 1).
-		SetColumns(0).
-		SetBorders(true).
-		AddItem(header, 0, 0, 1, 1, 0, 0, false).
-		AddItem(mainContent, 1, 0, 1, 1, 0, 0, true).
-		AddItem(legend, 2, 0, 1, 1, 0, 0, false)
+	s.LayoutService.SetGrid()
 
 	// Add key event handler
 	s.app.SetInputCapture(s.handleKeyEventInput)
 
 	// Set the grid as the root of the application
-	s.app.SetRoot(s.grid, true)
-	s.app.SetFocus(s.table)
+	s.app.SetRoot(s.LayoutService.GetGrid(), true)
+	s.app.SetFocus(s.LayoutService.GetTableResult())
 
 	// Fill the table with the initial data
 	s.fillTable(s.packages)
 }
 
 func (s *AppService) handleKeyEventInput(event *tcell.EventKey) *tcell.EventKey {
-	if s.searchInput.HasFocus() {
+	if s.LayoutService.GetSearchField().HasFocus() {
 		return event
 	}
 
@@ -337,108 +260,89 @@ func (s *AppService) handleKeyEventInput(event *tcell.EventKey) *tcell.EventKey 
 			s.app.Stop()
 			return nil
 		case 'u': // Update the selected package
-			row, _ := s.table.GetSelection()
+			row, _ := s.LayoutService.GetTableResult().GetSelection()
 			if row > 0 {
 				info := (*s.filteredPackages)[row-1]
-				modal := s.createModal(fmt.Sprintf("Are you sure you want to update the package: %s?", info.Name), func() {
-					s.outputView.Clear()
+				modal := s.LayoutService.GenerateModal(fmt.Sprintf("Are you sure you want to update the package: %s?", info.Name), func() {
+					s.app.SetRoot(s.LayoutService.GetGrid(), true).SetFocus(s.LayoutService.GetTableResult())
+					s.LayoutService.GetOutputView().Clear()
 					go func() {
-						err := s.CommandService.UpdatePackage(info, s.app, s.outputView)
-						if err != nil {
-							s.app.QueueUpdateDraw(func() {
-								errorModal := s.createModal(fmt.Sprintf("Failed to update package: %s\nError: %v", info.Name, err), nil)
-								s.app.SetRoot(errorModal, true).SetFocus(errorModal)
-							})
-						} else {
-							s.updateTableView()
-						}
+						_ = s.CommandService.UpdatePackage(info, s.app, s.LayoutService.GetOutputView())
+						s.updateTableView()
 					}()
+				}, func() {
+					s.app.SetRoot(s.LayoutService.GetGrid(), true).SetFocus(s.LayoutService.GetTableResult())
 				})
+
 				s.app.SetRoot(modal, true).SetFocus(modal)
 			}
 			return nil
 		case 'r': // Remove the selected package
-			row, _ := s.table.GetSelection()
+			row, _ := s.LayoutService.GetTableResult().GetSelection()
 			if row > 0 {
 				info := (*s.filteredPackages)[row-1]
-				modal := s.createModal(fmt.Sprintf("Are you sure you want to remove the package: %s?", info.Name), func() {
-					s.outputView.Clear()
+				modal := s.LayoutService.GenerateModal(fmt.Sprintf("Are you sure you want to remove the package: %s?", info.Name), func() {
+					s.app.SetRoot(s.LayoutService.GetGrid(), true).SetFocus(s.LayoutService.GetTableResult())
+					s.LayoutService.GetOutputView().Clear()
 					go func() {
-						err := s.CommandService.RemovePackage(info, s.app, s.outputView)
-						if err != nil {
-							s.app.QueueUpdateDraw(func() {
-								errorModal := s.createModal(fmt.Sprintf("Failed to remove package: %s\nError: %v", info.Name, err), nil)
-								s.app.SetRoot(errorModal, true).SetFocus(errorModal)
-							})
-						} else {
-							s.updateTableView()
-						}
+						_ = s.CommandService.RemovePackage(info, s.app, s.LayoutService.GetOutputView())
+						s.updateTableView()
 					}()
+				}, func() {
+					s.app.SetRoot(s.LayoutService.GetGrid(), true).SetFocus(s.LayoutService.GetTableResult())
 				})
 				s.app.SetRoot(modal, true).SetFocus(modal)
 			}
 			return nil
 		case 'i': // Install the selected package
-			row, _ := s.table.GetSelection()
+			row, _ := s.LayoutService.GetTableResult().GetSelection()
 			if row > 0 {
 				info := (*s.filteredPackages)[row-1]
-				modal := s.createModal(fmt.Sprintf("Are you sure you want to install the package: %s?", info.Name), func() {
-					s.outputView.Clear()
+				modal := s.LayoutService.GenerateModal(fmt.Sprintf("Are you sure you want to install the package: %s?", info.Name), func() {
+					s.app.SetRoot(s.LayoutService.GetGrid(), true).SetFocus(s.LayoutService.GetTableResult())
+					s.LayoutService.GetOutputView().Clear()
 					go func() {
-						err := s.CommandService.InstallPackage(info, s.app, s.outputView)
-						if err != nil {
-							s.app.QueueUpdateDraw(func() {
-								errorModal := s.createModal(fmt.Sprintf("Failed to install package: %s\nError: %v", info.Name, err), nil)
-								s.app.SetRoot(errorModal, true).SetFocus(errorModal)
-							})
-						} else {
-							s.updateTableView()
-						}
+						_ = s.CommandService.InstallPackage(info, s.app, s.LayoutService.GetOutputView())
+						s.updateTableView()
 					}()
+				}, func() {
+					s.app.SetRoot(s.LayoutService.GetGrid(), true).SetFocus(s.LayoutService.GetTableResult())
 				})
 				s.app.SetRoot(modal, true).SetFocus(modal)
 			}
 			return nil
 		case '/':
-			s.app.SetFocus(s.searchInput)
+			s.app.SetFocus(s.LayoutService.GetSearchField())
 			return nil
 		case 'f':
 			s.showOnlyInstalled = !s.showOnlyInstalled
 			if s.showOnlyInstalled {
-				s.searchInput.SetLabel("Search (Installed): ")
+				s.LayoutService.GetSearchField().SetLabel("Search (Installed): ")
 			} else {
-				s.searchInput.SetLabel("Search (All): ")
+				s.LayoutService.GetSearchField().SetLabel("Search (All): ")
 			}
-			s.applySearchFilter(s.searchInput.GetText())
-			s.table.ScrollToBeginning()
+			s.applySearchFilter(s.LayoutService.GetSearchField().GetText())
+			s.LayoutService.GetTableResult().ScrollToBeginning()
 			return nil
 		}
 	case tcell.KeyCtrlU:
 		// Update homebrew
-		modal := s.createModal("Are you sure you want to update Homebrew?", func() {
-			s.outputView.Clear()
+		modal := s.LayoutService.GenerateModal("Are you sure you want to update Homebrew?", func() {
+			s.app.SetRoot(s.LayoutService.GetGrid(), true).SetFocus(s.LayoutService.GetTableResult())
+			s.LayoutService.GetOutputView().Clear()
 			go func() {
-				err := s.CommandService.UpdateHomebrew(s.app, s.outputView)
-				if err != nil {
-					s.app.QueueUpdateDraw(func() {
-						errorModal := s.createModal(fmt.Sprintf("Failed to update Homebrew\nError: %v", err), nil)
-						s.app.SetRoot(errorModal, true).SetFocus(errorModal)
-					})
-				} else {
-					s.updateTableView()
-				}
+				_ = s.CommandService.UpdateHomebrew(s.app, s.LayoutService.GetOutputView())
+				s.updateTableView()
 			}()
+		}, func() {
+			s.app.SetRoot(s.LayoutService.GetGrid(), true).SetFocus(s.LayoutService.GetTableResult())
 		})
 		s.app.SetRoot(modal, true).SetFocus(modal)
 		return nil
 	case tcell.KeyEsc:
-		// Remove the modal if it is currently displayed
-		if s.currentModal != nil {
-			s.currentModal = nil
-		}
-
-		s.app.SetRoot(s.grid, true).SetFocus(s.table)
+		s.app.SetRoot(s.LayoutService.GetGrid(), true).SetFocus(s.LayoutService.GetTableResult())
 		return nil
 	}
+
 	return event
 }

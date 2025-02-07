@@ -197,7 +197,7 @@ func (s *AppService) fillTable(data *[]models.Formula) {
 	for i, info := range *data {
 		version := info.Versions.Stable
 		if len(info.Installed) > 0 && info.Installed[0].Version != info.Versions.Stable {
-			version = fmt.Sprintf("%s -> %s", info.Installed[0].Version, info.Versions.Stable)
+			version = fmt.Sprintf("(%s) < %s", info.Installed[0].Version, info.Versions.Stable)
 		}
 
 		nameCell := tview.NewTableCell(info.Name).SetSelectable(true)

@@ -16,7 +16,7 @@ var (
 
 type AppServiceInterface interface {
 	GetApp() *tview.Application
-	InitData() (err error)
+	Boot() (err error)
 	BuildApp()
 }
 
@@ -56,7 +56,7 @@ func (s *AppService) GetApp() *tview.Application {
 	return s.app
 }
 
-func (s *AppService) InitData() (err error) {
+func (s *AppService) Boot() (err error) {
 	if err = s.BrewService.LoadAllFormulae(); err != nil {
 		return fmt.Errorf("failed to load Homebrew formulae: %v", err)
 	}
@@ -71,9 +71,7 @@ func (s *AppService) InitData() (err error) {
 	return nil
 }
 
-func (s *AppService) applySearchFilter(
-	searchText string,
-) {
+func (s *AppService) search(searchText string) {
 	var filteredList []models.Formula
 	uniquePackages := make(map[string]bool)
 
@@ -105,12 +103,10 @@ func (s *AppService) applySearchFilter(
 	}
 
 	*s.filteredPackages = filteredList
-	s.fillTable(s.filteredPackages)
-
-	s.LayoutService.GetFilterCounter().SetText(fmt.Sprintf("Total: %d | Filtered: %d", len(*s.packages), len(*s.filteredPackages)))
+	s.setResults(s.filteredPackages)
 }
 
-func (s *AppService) updateDetailsView(info *models.Formula) {
+func (s *AppService) setDetails(info *models.Formula) {
 	if info != nil {
 		installedVersion := "Not installed"
 		packagePrefix := "-"
@@ -149,20 +145,20 @@ func (s *AppService) updateDetailsView(info *models.Formula) {
 	s.LayoutService.GetDetailsView().SetText("")
 }
 
-func (s *AppService) updateTableView() {
+func (s *AppService) forceRefreshResults() {
 	s.app.QueueUpdateDraw(func() {
 		_ = s.BrewService.LoadAllFormulae()
-		s.applySearchFilter(s.LayoutService.GetSearchField().GetText())
-		s.app.SetRoot(s.LayoutService.GetGrid(), true).SetFocus(s.LayoutService.GetTableResult())
+		s.search(s.LayoutService.GetSearchField().GetText())
+		s.app.SetRoot(s.LayoutService.GetGrid(), true).SetFocus(s.LayoutService.GetResultTable()) //TODO: da capire se rimuovere
 	})
 }
 
-func (s *AppService) fillTable(data *[]models.Formula) {
+func (s *AppService) setResults(data *[]models.Formula) {
 	headers := []string{"Name", "Description", "Version"}
-	s.LayoutService.GetTableResult().Clear()
+	s.LayoutService.GetResultTable().Clear()
 
 	for i, header := range headers {
-		s.LayoutService.GetTableResult().SetCell(0, i, tview.NewTableCell(header).
+		s.LayoutService.GetResultTable().SetCell(0, i, tview.NewTableCell(header).
 			SetTextColor(tcell.ColorBlue).
 			SetAlign(tview.AlignLeft).
 			SetSelectable(false).
@@ -185,65 +181,66 @@ func (s *AppService) fillTable(data *[]models.Formula) {
 			versionCell.SetTextColor(tcell.ColorOrange)
 		}
 
-		s.LayoutService.GetTableResult().SetCell(i+1, 0, nameCell)
-		s.LayoutService.GetTableResult().SetCell(i+1, 1, tview.NewTableCell(info.Description).SetSelectable(true))
-		s.LayoutService.GetTableResult().SetCell(i+1, 2, versionCell)
+		s.LayoutService.GetResultTable().SetCell(i+1, 0, nameCell)
+		s.LayoutService.GetResultTable().SetCell(i+1, 1, tview.NewTableCell(info.Description).SetSelectable(true))
+		s.LayoutService.GetResultTable().SetCell(i+1, 2, versionCell)
 	}
 
 	// Update the details view with the first item in the list
 	if len(*data) > 0 {
-		s.LayoutService.GetTableResult().Select(1, 0)
-		s.LayoutService.GetTableResult().ScrollToBeginning()
-		s.updateDetailsView(&(*data)[0])
+		s.LayoutService.GetResultTable().Select(1, 0)
+		s.LayoutService.GetResultTable().ScrollToBeginning()
+		s.setDetails(&(*data)[0])
+
+		// Update the filter counter
+		s.LayoutService.UpdateFilterCounterView(len(*s.packages), len(*s.filteredPackages))
 		return
 	}
 
-	s.updateDetailsView(nil)
+	s.setDetails(nil)
 }
 
 func (s *AppService) BuildApp() {
+	// Evaluate if there is a new version available
 	latestVersion, err := s.SelfUpdateService.CheckForUpdates()
 	if err == nil && latestVersion != AppVersion {
 		AppVersion = fmt.Sprintf("%s ([orange]Update available: %s[-])", AppVersion, latestVersion)
 	}
 
-	s.LayoutService.SetHeader(AppName, AppVersion, s.brewVersion)
-	s.LayoutService.SetLegend()
-
-	tableSelectionChangedFunc := func(row, column int) {
-		if row > 0 && row-1 < len(*s.filteredPackages) {
-			s.updateDetailsView(&(*s.filteredPackages)[row-1])
-		}
-	}
-
-	s.LayoutService.SetTableResult(tableSelectionChangedFunc)
+	// Build the layout
+	s.LayoutService.SetHeaderView(AppName, AppVersion, s.brewVersion)
+	s.LayoutService.SetLegendView()
 	s.LayoutService.SetDetailsView()
 	s.LayoutService.SetBuildOutputView()
+	s.LayoutService.SetFilterCounterView()
 
-	// Search input to filter packages
-	inputDoneFunc := func(key tcell.Key) {
-		if key == tcell.KeyEnter || key == tcell.KeyEscape {
-			s.app.SetFocus(s.LayoutService.GetTableResult())
+	// Result table section
+	tableSelectionChangedFunc := func(row, column int) {
+		if row > 0 && row-1 < len(*s.filteredPackages) {
+			s.setDetails(&(*s.filteredPackages)[row-1])
 		}
 	}
+	s.LayoutService.SetResultTable(tableSelectionChangedFunc)
 
-	changedFunc := func(text string) {
-		s.applySearchFilter(s.LayoutService.GetSearchField().GetText())
+	// Search field section
+	inputDoneFunc := func(key tcell.Key) {
+		if key == tcell.KeyEnter || key == tcell.KeyEscape {
+			s.app.SetFocus(s.LayoutService.GetResultTable())
+		}
 	}
-
+	changedFunc := func(text string) {
+		s.search(s.LayoutService.GetSearchField().GetText())
+	}
 	s.LayoutService.SetSearchField(inputDoneFunc, changedFunc)
 
-	s.LayoutService.SetFilterCounter(len(*s.packages), len(*s.filteredPackages))
-
+	// Set the grid layout (final step)
 	s.LayoutService.SetGrid()
 
-	// Add key event handler
+	// Add key event handler and set the root view
 	s.app.SetInputCapture(s.handleKeyEventInput)
-
-	// Set the grid as the root of the application
 	s.app.SetRoot(s.LayoutService.GetGrid(), true)
-	s.app.SetFocus(s.LayoutService.GetTableResult())
+	s.app.SetFocus(s.LayoutService.GetResultTable())
 
 	// Fill the table with the initial data
-	s.fillTable(s.packages)
+	s.setResults(s.packages)
 }

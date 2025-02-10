@@ -26,7 +26,7 @@ func (s *AppService) handleKeyEventInput(event *tcell.EventKey) *tcell.EventKey 
 		},
 		tcell.KeyCtrlU: s.handleUpdateHomebrewEvent,
 		tcell.KeyEsc: func() {
-			s.app.SetRoot(s.LayoutService.GetGrid(), true).SetFocus(s.LayoutService.GetTableResult())
+			s.app.SetRoot(s.LayoutService.GetGrid(), true).SetFocus(s.LayoutService.GetResultTable())
 		},
 	}
 
@@ -49,14 +49,14 @@ func (s *AppService) handleQuitEvent() {
 func (s *AppService) handleUpdateHomebrewEvent() {
 	// Update homebrew
 	modal := s.LayoutService.GenerateModal("Are you sure you want to update Homebrew?", func() {
-		s.app.SetRoot(s.LayoutService.GetGrid(), true).SetFocus(s.LayoutService.GetTableResult())
+		s.app.SetRoot(s.LayoutService.GetGrid(), true).SetFocus(s.LayoutService.GetResultTable())
 		s.LayoutService.GetOutputView().Clear()
 		go func() {
 			_ = s.CommandService.UpdateHomebrew(s.app, s.LayoutService.GetOutputView())
-			s.updateTableView()
+			s.forceRefreshResults()
 		}()
 	}, func() {
-		s.app.SetRoot(s.LayoutService.GetGrid(), true).SetFocus(s.LayoutService.GetTableResult())
+		s.app.SetRoot(s.LayoutService.GetGrid(), true).SetFocus(s.LayoutService.GetResultTable())
 	})
 	s.app.SetRoot(modal, true).SetFocus(modal)
 }
@@ -68,59 +68,59 @@ func (s *AppService) handleFilterPackagesEvent() {
 	} else {
 		s.LayoutService.GetSearchField().SetLabel("Search (All): ")
 	}
-	s.applySearchFilter(s.LayoutService.GetSearchField().GetText())
-	s.LayoutService.GetTableResult().ScrollToBeginning()
+	s.search(s.LayoutService.GetSearchField().GetText())
+	s.LayoutService.GetResultTable().ScrollToBeginning()
 }
 
 func (s *AppService) handleInstallPackageEvent() {
-	row, _ := s.LayoutService.GetTableResult().GetSelection()
+	row, _ := s.LayoutService.GetResultTable().GetSelection()
 	if row > 0 {
 		info := (*s.filteredPackages)[row-1]
 		modal := s.LayoutService.GenerateModal(fmt.Sprintf("Are you sure you want to install the package: %s?", info.Name), func() {
-			s.app.SetRoot(s.LayoutService.GetGrid(), true).SetFocus(s.LayoutService.GetTableResult())
+			s.app.SetRoot(s.LayoutService.GetGrid(), true).SetFocus(s.LayoutService.GetResultTable())
 			s.LayoutService.GetOutputView().Clear()
 			go func() {
 				_ = s.CommandService.InstallPackage(info, s.app, s.LayoutService.GetOutputView())
-				s.updateTableView()
+				s.forceRefreshResults()
 			}()
 		}, func() {
-			s.app.SetRoot(s.LayoutService.GetGrid(), true).SetFocus(s.LayoutService.GetTableResult())
+			s.app.SetRoot(s.LayoutService.GetGrid(), true).SetFocus(s.LayoutService.GetResultTable())
 		})
 		s.app.SetRoot(modal, true).SetFocus(modal)
 	}
 }
 
 func (s *AppService) handleRemovePackageEvent() {
-	row, _ := s.LayoutService.GetTableResult().GetSelection()
+	row, _ := s.LayoutService.GetResultTable().GetSelection()
 	if row > 0 {
 		info := (*s.filteredPackages)[row-1]
 		modal := s.LayoutService.GenerateModal(fmt.Sprintf("Are you sure you want to remove the package: %s?", info.Name), func() {
-			s.app.SetRoot(s.LayoutService.GetGrid(), true).SetFocus(s.LayoutService.GetTableResult())
+			s.app.SetRoot(s.LayoutService.GetGrid(), true).SetFocus(s.LayoutService.GetResultTable())
 			s.LayoutService.GetOutputView().Clear()
 			go func() {
 				_ = s.CommandService.RemovePackage(info, s.app, s.LayoutService.GetOutputView())
-				s.updateTableView()
+				s.forceRefreshResults()
 			}()
 		}, func() {
-			s.app.SetRoot(s.LayoutService.GetGrid(), true).SetFocus(s.LayoutService.GetTableResult())
+			s.app.SetRoot(s.LayoutService.GetGrid(), true).SetFocus(s.LayoutService.GetResultTable())
 		})
 		s.app.SetRoot(modal, true).SetFocus(modal)
 	}
 }
 
 func (s *AppService) handleUpdatePackageEvent() {
-	row, _ := s.LayoutService.GetTableResult().GetSelection()
+	row, _ := s.LayoutService.GetResultTable().GetSelection()
 	if row > 0 {
 		info := (*s.filteredPackages)[row-1]
 		modal := s.LayoutService.GenerateModal(fmt.Sprintf("Are you sure you want to update the package: %s?", info.Name), func() {
-			s.app.SetRoot(s.LayoutService.GetGrid(), true).SetFocus(s.LayoutService.GetTableResult())
+			s.app.SetRoot(s.LayoutService.GetGrid(), true).SetFocus(s.LayoutService.GetResultTable())
 			s.LayoutService.GetOutputView().Clear()
 			go func() {
 				_ = s.CommandService.UpdatePackage(info, s.app, s.LayoutService.GetOutputView())
-				s.updateTableView()
+				s.forceRefreshResults()
 			}()
 		}, func() {
-			s.app.SetRoot(s.LayoutService.GetGrid(), true).SetFocus(s.LayoutService.GetTableResult())
+			s.app.SetRoot(s.LayoutService.GetGrid(), true).SetFocus(s.LayoutService.GetResultTable())
 		})
 
 		s.app.SetRoot(modal, true).SetFocus(modal)

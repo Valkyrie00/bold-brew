@@ -7,7 +7,7 @@ import (
 
 func main() {
 	appService := services.NewAppService()
-	if err := appService.InitData(); err != nil {
+	if err := appService.Boot(); err != nil {
 		log.Fatalf("Error initializing data: %v", err)
 	}
 	appService.BuildApp()

@@ -10,14 +10,14 @@ type LayoutServiceInterface interface {
 	GetGrid() *tview.Grid
 	SetGrid()
 
-	GetHeader() *tview.TextView
-	SetHeader(name, version, brewVersion string)
+	GetHeaderView() *tview.TextView
+	SetHeaderView(name, version, brewVersion string)
 
-	GetLegend() *tview.TextView
-	SetLegend()
+	GetLegendView() *tview.TextView
+	SetLegendView()
 
-	GetTableResult() *tview.Table
-	SetTableResult(selectionChanged func(row, column int))
+	GetResultTable() *tview.Table
+	SetResultTable(selectionChanged func(row, column int))
 
 	GetDetailsView() *tview.TextView
 	SetDetailsView()
@@ -28,8 +28,9 @@ type LayoutServiceInterface interface {
 	GetSearchField() *tview.InputField
 	SetSearchField(done func(key tcell.Key), changed func(text string))
 
-	GetFilterCounter() *tview.TextView
-	SetFilterCounter(total, filtered int)
+	GetFilterCounterView() *tview.TextView
+	SetFilterCounterView()
+	UpdateFilterCounterView(total, filtered int)
 
 	GenerateModal(text string, confirmFunc func(), cancelFunc func()) *tview.Modal
 }
@@ -85,33 +86,33 @@ func (s *LayoutService) SetGrid() {
 		AddItem(s.legend, 2, 0, 1, 1, 0, 0, false)
 }
 
-func (s *LayoutService) GetHeader() *tview.TextView {
+func (s *LayoutService) GetHeaderView() *tview.TextView {
 	return s.header
 }
 
-func (s *LayoutService) SetHeader(name, version, brewVersion string) {
+func (s *LayoutService) SetHeaderView(name, version, brewVersion string) {
 	s.header = tview.NewTextView().
 		SetText(fmt.Sprintf("%s %s - %s", name, version, brewVersion)).
 		SetDynamicColors(true).
 		SetTextAlign(tview.AlignCenter)
 }
 
-func (s *LayoutService) GetLegend() *tview.TextView {
+func (s *LayoutService) GetLegendView() *tview.TextView {
 	return s.legend
 }
 
-func (s *LayoutService) SetLegend() {
+func (s *LayoutService) SetLegendView() {
 	s.legend = tview.NewTextView().
 		SetText(tview.Escape("[/] Search | [f] Filter Installed | [i] Install | [u] Update | [r] Remove | [Esc] Back to Table | [ctrl+u] Update Homebrew | [q] Quit")).
 		SetDynamicColors(true).
 		SetTextAlign(tview.AlignCenter)
 }
 
-func (s *LayoutService) GetTableResult() *tview.Table {
+func (s *LayoutService) GetResultTable() *tview.Table {
 	return s.table
 }
 
-func (s *LayoutService) SetTableResult(selectionChanged func(row, column int)) {
+func (s *LayoutService) SetResultTable(selectionChanged func(row, column int)) {
 	s.table = tview.NewTable().
 		SetBorders(false).
 		SetSelectable(true, false).
@@ -152,15 +153,18 @@ func (s *LayoutService) SetSearchField(done func(key tcell.Key), changed func(te
 		SetChangedFunc(changed)
 }
 
-func (s *LayoutService) GetFilterCounter() *tview.TextView {
+func (s *LayoutService) GetFilterCounterView() *tview.TextView {
 	return s.filterCounter
 }
 
-func (s *LayoutService) SetFilterCounter(total, filtered int) {
+func (s *LayoutService) SetFilterCounterView() {
 	s.filterCounter = tview.NewTextView().
 		SetDynamicColors(true).
-		SetTextAlign(tview.AlignRight).
-		SetText(fmt.Sprintf("Total: %d | Filtered: %d", total, filtered))
+		SetTextAlign(tview.AlignRight)
+}
+
+func (s *LayoutService) UpdateFilterCounterView(total, filtered int) {
+	s.filterCounter.SetText(fmt.Sprintf("Total: %d | Filtered: %d", total, filtered))
 }
 
 func (s *LayoutService) GenerateModal(text string, confirmFunc func(), cancelFunc func()) *tview.Modal {

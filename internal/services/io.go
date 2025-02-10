@@ -52,8 +52,9 @@ func (s *AppService) handleUpdateHomebrewEvent() {
 		s.app.SetRoot(s.LayoutService.GetGrid(), true).SetFocus(s.LayoutService.GetResultTable())
 		s.LayoutService.GetOutputView().Clear()
 		go func() {
-			_ = s.CommandService.UpdateHomebrew(s.app, s.LayoutService.GetOutputView())
-			s.forceRefreshResults()
+			if err := s.CommandService.UpdateHomebrew(s.app, s.LayoutService.GetOutputView()); err == nil {
+				s.forceRefreshResults()
+			}
 		}()
 	}, func() {
 		s.app.SetRoot(s.LayoutService.GetGrid(), true).SetFocus(s.LayoutService.GetResultTable())
@@ -80,8 +81,9 @@ func (s *AppService) handleInstallPackageEvent() {
 			s.app.SetRoot(s.LayoutService.GetGrid(), true).SetFocus(s.LayoutService.GetResultTable())
 			s.LayoutService.GetOutputView().Clear()
 			go func() {
-				_ = s.CommandService.InstallPackage(info, s.app, s.LayoutService.GetOutputView())
-				s.forceRefreshResults()
+				if err := s.CommandService.InstallPackage(info, s.app, s.LayoutService.GetOutputView()); err == nil {
+					s.forceRefreshResults()
+				}
 			}()
 		}, func() {
 			s.app.SetRoot(s.LayoutService.GetGrid(), true).SetFocus(s.LayoutService.GetResultTable())
@@ -98,8 +100,9 @@ func (s *AppService) handleRemovePackageEvent() {
 			s.app.SetRoot(s.LayoutService.GetGrid(), true).SetFocus(s.LayoutService.GetResultTable())
 			s.LayoutService.GetOutputView().Clear()
 			go func() {
-				_ = s.CommandService.RemovePackage(info, s.app, s.LayoutService.GetOutputView())
-				s.forceRefreshResults()
+				if err := s.CommandService.RemovePackage(info, s.app, s.LayoutService.GetOutputView()); err == nil {
+					s.forceRefreshResults()
+				}
 			}()
 		}, func() {
 			s.app.SetRoot(s.LayoutService.GetGrid(), true).SetFocus(s.LayoutService.GetResultTable())
@@ -116,13 +119,13 @@ func (s *AppService) handleUpdatePackageEvent() {
 			s.app.SetRoot(s.LayoutService.GetGrid(), true).SetFocus(s.LayoutService.GetResultTable())
 			s.LayoutService.GetOutputView().Clear()
 			go func() {
-				_ = s.CommandService.UpdatePackage(info, s.app, s.LayoutService.GetOutputView())
-				s.forceRefreshResults()
+				if err := s.CommandService.UpdatePackage(info, s.app, s.LayoutService.GetOutputView()); err == nil {
+					s.forceRefreshResults()
+				}
 			}()
 		}, func() {
 			s.app.SetRoot(s.LayoutService.GetGrid(), true).SetFocus(s.LayoutService.GetResultTable())
 		})
-
 		s.app.SetRoot(modal, true).SetFocus(modal)
 	}
 }

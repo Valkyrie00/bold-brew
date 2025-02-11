@@ -1,4 +1,4 @@
-module github.com/Valkyrie00/bold-brew
+module bbrew
 
 go 1.20
 

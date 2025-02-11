@@ -1,8 +1,8 @@
 package services
 
 import (
+	"bbrew/internal/models"
 	"fmt"
-	"github.com/Valkyrie00/bold-brew/internal/models"
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 	"strings"

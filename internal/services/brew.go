@@ -1,8 +1,8 @@
 package services
 
 import (
+	"bbrew/internal/models"
 	"encoding/json"
-	"github.com/Valkyrie00/bold-brew/internal/models"
 	"net/http"
 	"os/exec"
 	"sort"

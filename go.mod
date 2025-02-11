@@ -1,4 +1,4 @@
-module bbrew
+module github.com/Valkyrie00/bbrew
 
 go 1.20
 

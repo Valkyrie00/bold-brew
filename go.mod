@@ -1,10 +1,9 @@
-module github.com/Valkyrie00/bbrew
+module github.com/Valkyrie00/bold-brew
 
 go 1.20
 
 require (
 	github.com/gdamore/tcell/v2 v2.7.1
-	github.com/joho/godotenv v1.5.1
 	github.com/rivo/tview v0.0.0-20241227133733-17b7edb88c57
 )
 

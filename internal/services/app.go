@@ -2,7 +2,7 @@ package services
 
 import (
 	"fmt"
-	"github.com/Valkyrie00/bbrew/internal/models"
+	"github.com/Valkyrie00/bold-brew/internal/models"
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 	"strings"

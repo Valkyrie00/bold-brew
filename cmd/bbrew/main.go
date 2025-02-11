@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/Valkyrie00/bbrew/internal/services"
+	"github.com/Valkyrie00/bold-brew/internal/services"
 	"log"
 )
 

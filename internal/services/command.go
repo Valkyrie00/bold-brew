@@ -1,7 +1,7 @@
 package services
 
 import (
-	"github.com/Valkyrie00/bbrew/internal/models"
+	"github.com/Valkyrie00/bold-brew/internal/models"
 	"github.com/rivo/tview"
 	"io"
 	"os/exec"

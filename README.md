@@ -6,8 +6,11 @@
 
 ![GitHub Repo stars](https://img.shields.io/github/stars/Valkyrie00/bold-brew?style=social) ![GitHub forks](https://img.shields.io/github/forks/Valkyrie00/bold-brew?style=social) ![GitHub watchers](https://img.shields.io/github/watchers/Valkyrie00/bold-brew?style=social) 
 
-![GitHub release (latest by date)](https://img.shields.io/github/v/release/Valkyrie00/bold-brew) ![GitHub](https://img.shields.io/github/license/Valkyrie00/bold-brew) ![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/Valkyrie00/bold-brew/release.yml) ![GitHub all releases](https://img.shields.io/github/downloads/Valkyrie00/bold-brew/total)
-
+![GitHub release (latest by date)](https://img.shields.io/github/v/release/Valkyrie00/bold-brew)
+![GitHub](https://img.shields.io/github/license/Valkyrie00/bold-brew)
+![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/Valkyrie00/bold-brew/release.yml)
+![GolangCI-Lint](https://github.com/Valkyrie00/bold-brew/workflows/Quality/badge.svg)
+![GitHub all releases](https://img.shields.io/github/downloads/Valkyrie00/bold-brew/total)
 
 **Bold Brew** is a TUI application that allows you to manage your Homebrew packages on macOS. It provides a simple and intuitive interface to install, uninstall, and update packages. It also allows you to search for packages and view detailed information about them.
 

@@ -29,3 +29,10 @@ build:
 .PHONY: run
 run: build
 	./$(APP_NAME)
+
+##############################
+# QUALITY
+##############################
+.PHONY: lint
+lint:
+	@golangci-lint run

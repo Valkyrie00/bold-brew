@@ -59,12 +59,12 @@ type Versions struct {
 }
 
 type Urls struct {
-	Stable Url `json:"stable"`
-	Head   Url `json:"head"`
+	Stable URL `json:"stable"`
+	Head   URL `json:"head"`
 }
 
-type Url struct {
-	Url      string      `json:"url"`
+type URL struct {
+	URL      string      `json:"url"`
 	Tag      interface{} `json:"tag"`
 	Revision interface{} `json:"revision"`
 	Using    interface{} `json:"using"`
@@ -78,13 +78,13 @@ type Bottle struct {
 
 type BottleStable struct {
 	Rebuild int                   `json:"rebuild"`
-	RootUrl string                `json:"root_url"`
+	RootURL string                `json:"root_url"`
 	Files   map[string]BottleFile `json:"files"`
 }
 
 type BottleFile struct {
 	Cellar string `json:"cellar"`
-	Url    string `json:"url"`
+	URL    string `json:"url"`
 	Sha256 string `json:"sha256"`
 }
 

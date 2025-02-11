@@ -21,17 +21,17 @@ var NewCommandService = func() CommandServiceInterface {
 }
 
 func (s *CommandService) UpdatePackage(info models.Formula, app *tview.Application, outputView *tview.TextView) error {
-	cmd := exec.Command("brew", "upgrade", info.Name)
+	cmd := exec.Command("brew", "upgrade", info.Name) // #nosec G204
 	return s.executeCommand(app, cmd, outputView)
 }
 
 func (s *CommandService) RemovePackage(info models.Formula, app *tview.Application, outputView *tview.TextView) error {
-	cmd := exec.Command("brew", "remove", info.Name)
+	cmd := exec.Command("brew", "remove", info.Name) // #nosec G204
 	return s.executeCommand(app, cmd, outputView)
 }
 
 func (s *CommandService) InstallPackage(info models.Formula, app *tview.Application, outputView *tview.TextView) error {
-	cmd := exec.Command("brew", "install", info.Name)
+	cmd := exec.Command("brew", "install", info.Name) // #nosec G204
 	return s.executeCommand(app, cmd, outputView)
 }
 

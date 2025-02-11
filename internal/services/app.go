@@ -4,7 +4,6 @@ import (
 	"bbrew/internal/models"
 	"fmt"
 	"github.com/gdamore/tcell/v2"
-	_ "github.com/joho/godotenv/autoload"
 	"github.com/rivo/tview"
 	"strings"
 )
@@ -215,7 +214,7 @@ func (s *AppService) BuildApp() {
 	s.LayoutService.SetFilterCounterView()
 
 	// Result table section
-	tableSelectionChangedFunc := func(row, column int) {
+	tableSelectionChangedFunc := func(row, _ int) {
 		if row > 0 && row-1 < len(*s.filteredPackages) {
 			s.setDetails(&(*s.filteredPackages)[row-1])
 		}
@@ -229,7 +228,7 @@ func (s *AppService) BuildApp() {
 		}
 	}
 	changedFunc := func(text string) {
-		s.search(s.LayoutService.GetSearchField().GetText())
+		s.search(text)
 	}
 	s.LayoutService.SetSearchField(inputDoneFunc, changedFunc)
 

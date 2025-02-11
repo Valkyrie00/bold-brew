@@ -175,7 +175,7 @@ func (s *LayoutService) GenerateModal(text string, confirmFunc func(), cancelFun
 		SetTextColor(tcell.ColorWhite).
 		SetButtonBackgroundColor(tcell.ColorGray).
 		SetButtonTextColor(tcell.ColorWhite).
-		SetDoneFunc(func(buttonIndex int, buttonLabel string) {
+		SetDoneFunc(func(_ int, buttonLabel string) {
 			if buttonLabel == "Confirm" {
 				confirmFunc()
 			} else if buttonLabel == "Cancel" {

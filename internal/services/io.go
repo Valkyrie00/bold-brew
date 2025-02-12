@@ -24,7 +24,7 @@ func (s *AppService) handleKeyEventInput(event *tcell.EventKey) *tcell.EventKey 
 				action()
 			}
 		},
-		tcell.KeyCtrlU: s.handleUpdateHomebrewEvent,
+		tcell.KeyCtrlU: s.handleUpdateAllPackagesEvent,
 		tcell.KeyEsc: func() {
 			s.app.SetRoot(s.LayoutService.GetGrid(), true).SetFocus(s.LayoutService.GetResultTable())
 		},
@@ -46,8 +46,8 @@ func (s *AppService) handleQuitEvent() {
 	s.app.Stop()
 }
 
+//lint:ignore U1000 Temporarily unused
 func (s *AppService) handleUpdateHomebrewEvent() {
-	// Update homebrew
 	modal := s.LayoutService.GenerateModal("Are you sure you want to update Homebrew?", func() {
 		s.app.SetRoot(s.LayoutService.GetGrid(), true).SetFocus(s.LayoutService.GetResultTable())
 		s.LayoutService.GetOutputView().Clear()
@@ -128,4 +128,19 @@ func (s *AppService) handleUpdatePackageEvent() {
 		})
 		s.app.SetRoot(modal, true).SetFocus(modal)
 	}
+}
+
+func (s *AppService) handleUpdateAllPackagesEvent() {
+	modal := s.LayoutService.GenerateModal("Are you sure you want to update all packages?", func() {
+		s.app.SetRoot(s.LayoutService.GetGrid(), true).SetFocus(s.LayoutService.GetResultTable())
+		s.LayoutService.GetOutputView().Clear()
+		go func() {
+			if err := s.CommandService.UpdateAllPackages(s.app, s.LayoutService.GetOutputView()); err == nil {
+				s.forceRefreshResults()
+			}
+		}()
+	}, func() {
+		s.app.SetRoot(s.LayoutService.GetGrid(), true).SetFocus(s.LayoutService.GetResultTable())
+	})
+	s.app.SetRoot(modal, true).SetFocus(modal)
 }

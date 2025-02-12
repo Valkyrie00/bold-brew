@@ -8,6 +8,7 @@ import (
 )
 
 type CommandServiceInterface interface {
+	UpdateAllPackages(app *tview.Application, outputView *tview.TextView) error
 	UpdatePackage(info models.Formula, app *tview.Application, outputView *tview.TextView) error
 	RemovePackage(info models.Formula, app *tview.Application, outputView *tview.TextView) error
 	InstallPackage(info models.Formula, app *tview.Application, outputView *tview.TextView) error
@@ -18,6 +19,11 @@ type CommandService struct{}
 
 var NewCommandService = func() CommandServiceInterface {
 	return &CommandService{}
+}
+
+func (s *CommandService) UpdateAllPackages(app *tview.Application, outputView *tview.TextView) error {
+	cmd := exec.Command("brew", "upgrade") // #nosec G204
+	return s.executeCommand(app, cmd, outputView)
 }
 
 func (s *CommandService) UpdatePackage(info models.Formula, app *tview.Application, outputView *tview.TextView) error {

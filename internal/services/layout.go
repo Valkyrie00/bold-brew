@@ -102,8 +102,19 @@ func (s *LayoutService) GetLegendView() *tview.TextView {
 }
 
 func (s *LayoutService) SetLegendView() {
+	legendText := tview.Escape(
+		"[/] Search | " +
+			"[f] Filter Installed | " +
+			"[i] Install | " +
+			"[u] Update | " +
+			"[ctrl+u] Update All | " +
+			"[r] Remove | " +
+			"[Esc] Back to Table | " +
+			"[q] Quit",
+	)
+
 	s.legend = tview.NewTextView().
-		SetText(tview.Escape("[/] Search | [f] Filter Installed | [i] Install | [u] Update | [r] Remove | [Esc] Back to Table | [ctrl+u] Update Homebrew | [q] Quit")).
+		SetText(legendText).
 		SetDynamicColors(true).
 		SetTextAlign(tview.AlignCenter)
 }

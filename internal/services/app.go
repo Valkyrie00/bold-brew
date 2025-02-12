@@ -153,15 +153,14 @@ func (s *AppService) forceRefreshResults() {
 }
 
 func (s *AppService) setResults(data *[]models.Formula) {
-	headers := []string{"Name", "Description", "Version"}
+	headers := []string{"Name", "Version", "Description"}
 	s.LayoutService.GetResultTable().Clear()
 
 	for i, header := range headers {
 		s.LayoutService.GetResultTable().SetCell(0, i, tview.NewTableCell(header).
 			SetTextColor(tcell.ColorBlue).
 			SetAlign(tview.AlignLeft).
-			SetSelectable(false).
-			SetExpansion(1))
+			SetSelectable(false))
 	}
 
 	for i, info := range *data {
@@ -180,9 +179,9 @@ func (s *AppService) setResults(data *[]models.Formula) {
 			versionCell.SetTextColor(tcell.ColorOrange)
 		}
 
-		s.LayoutService.GetResultTable().SetCell(i+1, 0, nameCell)
-		s.LayoutService.GetResultTable().SetCell(i+1, 1, tview.NewTableCell(info.Description).SetSelectable(true))
-		s.LayoutService.GetResultTable().SetCell(i+1, 2, versionCell)
+		s.LayoutService.GetResultTable().SetCell(i+1, 0, nameCell.SetExpansion(0))
+		s.LayoutService.GetResultTable().SetCell(i+1, 1, versionCell.SetExpansion(0))
+		s.LayoutService.GetResultTable().SetCell(i+1, 2, tview.NewTableCell(info.Description).SetSelectable(true).SetExpansion(1))
 	}
 
 	// Update the details view with the first item in the list

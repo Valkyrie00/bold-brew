@@ -74,7 +74,7 @@ func (s *LayoutService) SetGrid() {
 		AddItem(s.outputView, 0, 1, false)
 
 	mainContent := tview.NewFlex().SetDirection(tview.FlexColumn).
-		AddItem(leftColumn, 0, 1, false).
+		AddItem(leftColumn, 0, 2, false).
 		AddItem(rightColumn, 0, 1, false)
 
 	s.grid = tview.NewGrid().

@@ -46,22 +46,6 @@ func (s *AppService) handleQuitEvent() {
 	s.app.Stop()
 }
 
-//lint:ignore U1000 Temporarily unused
-func (s *AppService) handleUpdateHomebrewEvent() {
-	modal := s.LayoutService.GenerateModal("Are you sure you want to update Homebrew?", func() {
-		s.app.SetRoot(s.LayoutService.GetGrid(), true).SetFocus(s.LayoutService.GetResultTable())
-		s.LayoutService.GetOutputView().Clear()
-		go func() {
-			if err := s.CommandService.UpdateHomebrew(s.app, s.LayoutService.GetOutputView()); err == nil {
-				s.forceRefreshResults()
-			}
-		}()
-	}, func() {
-		s.app.SetRoot(s.LayoutService.GetGrid(), true).SetFocus(s.LayoutService.GetResultTable())
-	})
-	s.app.SetRoot(modal, true).SetFocus(modal)
-}
-
 func (s *AppService) handleFilterPackagesEvent() {
 	s.showOnlyInstalled = !s.showOnlyInstalled
 	if s.showOnlyInstalled {
@@ -69,8 +53,8 @@ func (s *AppService) handleFilterPackagesEvent() {
 	} else {
 		s.LayoutService.GetSearchField().SetLabel("Search (All): ")
 	}
-	s.search(s.LayoutService.GetSearchField().GetText())
-	s.LayoutService.GetResultTable().ScrollToBeginning()
+
+	s.search(s.LayoutService.GetSearchField().GetText(), true)
 }
 
 func (s *AppService) handleInstallPackageEvent() {
@@ -81,9 +65,14 @@ func (s *AppService) handleInstallPackageEvent() {
 			s.app.SetRoot(s.LayoutService.GetGrid(), true).SetFocus(s.LayoutService.GetResultTable())
 			s.LayoutService.GetOutputView().Clear()
 			go func() {
-				if err := s.CommandService.InstallPackage(info, s.app, s.LayoutService.GetOutputView()); err == nil {
-					s.forceRefreshResults()
+				s.LayoutService.SetNotificationMessageWarning(fmt.Sprintf("Installing %s...", info.Name))
+				if err := s.CommandService.InstallPackage(info, s.app, s.LayoutService.GetOutputView()); err != nil {
+					s.LayoutService.SetNotificationMessageWarning(fmt.Sprintf("Failed to install %s", info.Name))
+					return
 				}
+
+				s.LayoutService.SetNotificationMessageSuccess(fmt.Sprintf("%s Installed", info.Name))
+				s.forceRefreshResults()
 			}()
 		}, func() {
 			s.app.SetRoot(s.LayoutService.GetGrid(), true).SetFocus(s.LayoutService.GetResultTable())
@@ -100,9 +89,14 @@ func (s *AppService) handleRemovePackageEvent() {
 			s.app.SetRoot(s.LayoutService.GetGrid(), true).SetFocus(s.LayoutService.GetResultTable())
 			s.LayoutService.GetOutputView().Clear()
 			go func() {
-				if err := s.CommandService.RemovePackage(info, s.app, s.LayoutService.GetOutputView()); err == nil {
-					s.forceRefreshResults()
+				s.LayoutService.SetNotificationMessageWarning(fmt.Sprintf("Removing %s...", info.Name))
+				if err := s.CommandService.RemovePackage(info, s.app, s.LayoutService.GetOutputView()); err != nil {
+					s.LayoutService.SetNotificationMessageWarning(fmt.Sprintf("Failed to remove %s", info.Name))
+					return
 				}
+
+				s.LayoutService.SetNotificationMessageSuccess(fmt.Sprintf("%s Removed", info.Name))
+				s.forceRefreshResults()
 			}()
 		}, func() {
 			s.app.SetRoot(s.LayoutService.GetGrid(), true).SetFocus(s.LayoutService.GetResultTable())
@@ -119,9 +113,14 @@ func (s *AppService) handleUpdatePackageEvent() {
 			s.app.SetRoot(s.LayoutService.GetGrid(), true).SetFocus(s.LayoutService.GetResultTable())
 			s.LayoutService.GetOutputView().Clear()
 			go func() {
-				if err := s.CommandService.UpdatePackage(info, s.app, s.LayoutService.GetOutputView()); err == nil {
-					s.forceRefreshResults()
+				s.LayoutService.SetNotificationMessageWarning(fmt.Sprintf("Updating %s...", info.Name))
+				if err := s.CommandService.UpdatePackage(info, s.app, s.LayoutService.GetOutputView()); err != nil {
+					s.LayoutService.SetNotificationMessageWarning(fmt.Sprintf("Failed to update %s", info.Name))
+					return
 				}
+
+				s.LayoutService.SetNotificationMessageSuccess(fmt.Sprintf("%s Updated", info.Name))
+				s.forceRefreshResults()
 			}()
 		}, func() {
 			s.app.SetRoot(s.LayoutService.GetGrid(), true).SetFocus(s.LayoutService.GetResultTable())
@@ -135,9 +134,14 @@ func (s *AppService) handleUpdateAllPackagesEvent() {
 		s.app.SetRoot(s.LayoutService.GetGrid(), true).SetFocus(s.LayoutService.GetResultTable())
 		s.LayoutService.GetOutputView().Clear()
 		go func() {
-			if err := s.CommandService.UpdateAllPackages(s.app, s.LayoutService.GetOutputView()); err == nil {
-				s.forceRefreshResults()
+			s.LayoutService.SetNotificationMessageWarning("Updating all packages...")
+			if err := s.CommandService.UpdateAllPackages(s.app, s.LayoutService.GetOutputView()); err != nil {
+				s.LayoutService.SetNotificationMessageWarning("Failed to update all packages")
+				return
 			}
+
+			s.LayoutService.SetNotificationMessageSuccess("Updated all packages")
+			s.forceRefreshResults()
 		}()
 	}, func() {
 		s.app.SetRoot(s.LayoutService.GetGrid(), true).SetFocus(s.LayoutService.GetResultTable())

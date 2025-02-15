@@ -10,6 +10,13 @@ type LayoutServiceInterface interface {
 	GetGrid() *tview.Grid
 	SetGrid()
 
+	GetNotificationView() *tview.TextView
+	SetNotificationView()
+	SetNotificationMessageSuccess(message string)
+	SetNotificationMessageWarning(message string)
+	SetNotificationMessageError(message string)
+	ClearNotificationMessage()
+
 	GetHeaderView() *tview.TextView
 	SetHeaderView(name, version, brewVersion string)
 
@@ -37,6 +44,7 @@ type LayoutServiceInterface interface {
 
 type LayoutService struct {
 	header        *tview.TextView
+	notification  *tview.TextView
 	legend        *tview.TextView
 	table         *tview.Table
 	detailsView   *tview.TextView
@@ -55,6 +63,10 @@ func (s *LayoutService) GetGrid() *tview.Grid {
 }
 
 func (s *LayoutService) SetGrid() {
+	headerContent := tview.NewFlex().SetDirection(tview.FlexColumn).
+		AddItem(s.header, 0, 1, false).
+		AddItem(s.notification, 0, 1, false)
+
 	searchRow := tview.NewFlex().SetDirection(tview.FlexColumn).
 		AddItem(s.searchField, 0, 1, false).
 		AddItem(s.filterCounter, 0, 1, false)
@@ -81,7 +93,7 @@ func (s *LayoutService) SetGrid() {
 		SetRows(1, 0, 1).
 		SetColumns(0).
 		SetBorders(true).
-		AddItem(s.header, 0, 0, 1, 1, 0, 0, false).
+		AddItem(headerContent, 0, 0, 1, 1, 0, 0, false).
 		AddItem(mainContent, 1, 0, 1, 1, 0, 0, true).
 		AddItem(s.legend, 2, 0, 1, 1, 0, 0, false)
 }
@@ -92,9 +104,9 @@ func (s *LayoutService) GetHeaderView() *tview.TextView {
 
 func (s *LayoutService) SetHeaderView(name, version, brewVersion string) {
 	s.header = tview.NewTextView().
-		SetText(fmt.Sprintf("%s %s - %s", name, version, brewVersion)).
+		SetText(fmt.Sprintf(" %s %s - %s", name, version, brewVersion)).
 		SetDynamicColors(true).
-		SetTextAlign(tview.AlignCenter)
+		SetTextAlign(tview.AlignLeft)
 }
 
 func (s *LayoutService) GetLegendView() *tview.TextView {
@@ -129,6 +141,36 @@ func (s *LayoutService) SetResultTable(selectionChanged func(row, column int)) {
 		SetSelectable(true, false).
 		SetFixed(1, 0).
 		SetSelectionChangedFunc(selectionChanged)
+}
+
+func (s *LayoutService) GetNotificationView() *tview.TextView {
+	return s.notification
+}
+
+func (s *LayoutService) SetNotificationView() {
+	s.notification = tview.NewTextView().
+		SetDynamicColors(true).
+		SetTextAlign(tview.AlignRight)
+}
+
+func (s *LayoutService) SetNotificationMessageSuccess(message string) {
+	s.setNotificationMessage(message, tcell.ColorGreen)
+}
+
+func (s *LayoutService) SetNotificationMessageWarning(message string) {
+	s.setNotificationMessage(message, tcell.ColorOrange)
+}
+
+func (s *LayoutService) SetNotificationMessageError(message string) {
+	s.setNotificationMessage(message, tcell.ColorRed)
+}
+
+func (s *LayoutService) setNotificationMessage(message string, color tcell.Color) {
+	s.GetNotificationView().SetTextColor(color).SetText(fmt.Sprintf(" %s ", message))
+}
+
+func (s *LayoutService) ClearNotificationMessage() {
+	s.GetNotificationView().Clear()
 }
 
 func (s *LayoutService) GetDetailsView() *tview.TextView {

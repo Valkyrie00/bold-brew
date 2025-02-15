@@ -12,7 +12,7 @@ type CommandServiceInterface interface {
 	UpdatePackage(info models.Formula, app *tview.Application, outputView *tview.TextView) error
 	RemovePackage(info models.Formula, app *tview.Application, outputView *tview.TextView) error
 	InstallPackage(info models.Formula, app *tview.Application, outputView *tview.TextView) error
-	UpdateHomebrew(app *tview.Application, outputView *tview.TextView) error
+	UpdateHomebrew() error
 }
 
 type CommandService struct{}
@@ -41,9 +41,12 @@ func (s *CommandService) InstallPackage(info models.Formula, app *tview.Applicat
 	return s.executeCommand(app, cmd, outputView)
 }
 
-func (s *CommandService) UpdateHomebrew(app *tview.Application, outputView *tview.TextView) error {
+func (s *CommandService) UpdateHomebrew() error {
 	cmd := exec.Command("brew", "update")
-	return s.executeCommand(app, cmd, outputView)
+	if err := cmd.Run(); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (s *CommandService) executeCommand(

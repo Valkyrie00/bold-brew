@@ -70,7 +70,19 @@ func (s *AppService) Boot() (err error) {
 	return nil
 }
 
-func (s *AppService) search(searchText string) {
+func (s *AppService) updateHomeBrew() {
+	s.LayoutService.SetNotificationMessageWarning("Updating Homebrew formulae...")
+	if err := s.CommandService.UpdateHomebrew(); err != nil {
+		s.LayoutService.SetNotificationMessageError("Could not update Homebrew formulae")
+		return
+	}
+
+	// Clear loading message and update results
+	s.LayoutService.SetNotificationMessageSuccess("Homebrew formulae updated successfully")
+	s.forceRefreshResults()
+}
+
+func (s *AppService) search(searchText string, scrollToTop bool) {
 	var filteredList []models.Formula
 	uniquePackages := make(map[string]bool)
 
@@ -102,7 +114,7 @@ func (s *AppService) search(searchText string) {
 	}
 
 	*s.filteredPackages = filteredList
-	s.setResults(s.filteredPackages)
+	s.setResults(s.filteredPackages, scrollToTop)
 }
 
 func (s *AppService) setDetails(info *models.Formula) {
@@ -147,12 +159,11 @@ func (s *AppService) setDetails(info *models.Formula) {
 func (s *AppService) forceRefreshResults() {
 	s.app.QueueUpdateDraw(func() {
 		_ = s.BrewService.LoadAllFormulae()
-		s.search(s.LayoutService.GetSearchField().GetText())
-		s.app.SetRoot(s.LayoutService.GetGrid(), true).SetFocus(s.LayoutService.GetResultTable()) //TODO: da capire se rimuovere
+		s.search(s.LayoutService.GetSearchField().GetText(), false)
 	})
 }
 
-func (s *AppService) setResults(data *[]models.Formula) {
+func (s *AppService) setResults(data *[]models.Formula, scrollToTop bool) {
 	headers := []string{"Name", "Version", "Description"}
 	s.LayoutService.GetResultTable().Clear()
 
@@ -186,9 +197,11 @@ func (s *AppService) setResults(data *[]models.Formula) {
 
 	// Update the details view with the first item in the list
 	if len(*data) > 0 {
-		s.LayoutService.GetResultTable().Select(1, 0)
-		s.LayoutService.GetResultTable().ScrollToBeginning()
-		s.setDetails(&(*data)[0])
+		if scrollToTop {
+			s.LayoutService.GetResultTable().Select(1, 0)
+			s.LayoutService.GetResultTable().ScrollToBeginning()
+			s.setDetails(&(*data)[0])
+		}
 
 		// Update the filter counter
 		s.LayoutService.UpdateFilterCounterView(len(*s.packages), len(*s.filteredPackages))
@@ -202,10 +215,11 @@ func (s *AppService) BuildApp() {
 	// Evaluate if there is a new version available
 	latestVersion, err := s.SelfUpdateService.CheckForUpdates()
 	if err == nil && latestVersion != AppVersion {
-		AppVersion = fmt.Sprintf("%s ([orange]Update available: %s[-])", AppVersion, latestVersion)
+		AppVersion = fmt.Sprintf("%s ([orange]New Version Available: %s[-])", AppVersion, latestVersion)
 	}
 
 	// Build the layout
+	s.LayoutService.SetNotificationView()
 	s.LayoutService.SetHeaderView(AppName, AppVersion, s.brewVersion)
 	s.LayoutService.SetLegendView()
 	s.LayoutService.SetDetailsView()
@@ -227,7 +241,7 @@ func (s *AppService) BuildApp() {
 		}
 	}
 	changedFunc := func(text string) {
-		s.search(text)
+		s.search(text, true)
 	}
 	s.LayoutService.SetSearchField(inputDoneFunc, changedFunc)
 
@@ -239,6 +253,6 @@ func (s *AppService) BuildApp() {
 	s.app.SetRoot(s.LayoutService.GetGrid(), true)
 	s.app.SetFocus(s.LayoutService.GetResultTable())
 
-	// Fill the table with the initial data
-	s.setResults(s.packages)
+	go s.updateHomeBrew()          // Update Async the Homebrew formulae
+	s.setResults(s.packages, true) // Set the results
 }

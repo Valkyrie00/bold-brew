@@ -8,6 +8,16 @@ body {
     color: #e0e0e0;
 }
 
+a {
+    color: #4EA1FF;
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+a:hover {
+    color: #90B8E3;
+}
+
 .hero-section {
     padding: 5rem 0;
     background: linear-gradient(180deg, #0A1622, #0D1D2D);

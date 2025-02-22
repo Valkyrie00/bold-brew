@@ -1,10 +1,10 @@
 <div align="center">
   <img src="resources/logo/bbrew-logo-rounded.png" alt="Bold Brew Logo" width="200" height="200">
+  <h1>Bold Brew (bbrew)</h1>
+  <p>A Homebrew TUI Manager</p>
 </div>
 
-# Bold Brew (bbrew) - A Homebrew TUI Manager
-
-![GitHub Repo stars](https://img.shields.io/github/stars/Valkyrie00/bold-brew?style=social) ![GitHub forks](https://img.shields.io/github/forks/Valkyrie00/bold-brew?style=social) ![GitHub watchers](https://img.shields.io/github/watchers/Valkyrie00/bold-brew?style=social) 
+<div align="center">
 
 ![GitHub release (latest by date)](https://img.shields.io/github/v/release/Valkyrie00/bold-brew)
 ![GitHub](https://img.shields.io/github/license/Valkyrie00/bold-brew)
@@ -12,40 +12,77 @@
 ![GolangCI-Lint](https://github.com/Valkyrie00/bold-brew/workflows/Quality/badge.svg)
 ![GitHub all releases](https://img.shields.io/github/downloads/Valkyrie00/bold-brew/total)
 
-**Bold Brew** is a TUI application that allows you to manage your Homebrew packages on macOS. It provides a simple and intuitive interface to install, uninstall, and update packages. It also allows you to search for packages and view detailed information about them.
+[![GitHub stars](https://img.shields.io/github/stars/Valkyrie00/bold-brew?style=social)](https://github.com/Valkyrie00/bold-brew/stargazers)
+[![GitHub forks](https://img.shields.io/github/forks/Valkyrie00/bold-brew?style=social)](https://github.com/Valkyrie00/bold-brew/network/members)
 
-<img src="resources/screenshots/main.png" alt="Bold Brew Screenshot" style="max-width: 1024px;">
-<img src="resources/screenshots/installed.png" alt="Bold Brew Screenshot" style="max-width: 1024px;">
+[Website](https://bold-brew.com/) • [Documentazione](https://bold-brew.com/docs) • [Changelog](CHANGELOG.md)
 
-## 📚 Table of Contents
+</div>
 
-- [Installation](#installation)
-- [Usage](#usage)
-- [Contributing](#contributing)
-- [License](#license)
+## ✨ Features
 
-## 💾 Installation
-You can also install **Bold Brew** using Homebrew:
+- 🚀 Modern and responsive TUI interface
+- 📦 Simplified Homebrew package management
+- 🔍 Advanced package search
+- 🔄 Real\-time updates
+- ⌨️ Intuitive keyboard shortcuts
 
+## 🛠️ Installation
+
+### Via Homebrew
 ```sh
 brew tap Valkyrie00/homebrew-bbrew
 brew install bbrew
 ```
 
-You can download the latest release of **Bold Brew** from the [releases page](https://github.com/Valkyrie00/bold-brew/releases).
+### Manuale
+Download the latest version from the [releases page](https://github.com/Valkyrie00/bold-brew/releases)
 
+## 📖 Quick Guide
 
-
-## 🚀 Usage
-To run **Bold Brew** simply execute:
+Launch the application:
 ```sh
 bbrew
 ```
-This will launch the TUI application where you can navigate and manage your Homebrew packages.
 
+### Main Commands
+- `/` - Search packages
+- `f` - Filter installed packages
+- `i` - Install package
+- `u` - Update package
+- `r` - Remove package
+- `q` - Quit
+- `Ctrl+U` - Update all packages
 
-## 🏗️ Contributing
-Contributions are welcome! Please open an issue or submit a pull request on GitHub.
+## 🖼️ Screenshots
 
-## 🌍 License
+<div align="center">
+  <img src="resources/screenshots/main.png" alt="Schermata principale" width="800">
+  <img src="resources/screenshots/installed.png" alt="Pacchetti installati" width="800">
+</div>
+
+## 🤝 Contributing
+
+Contributions are welcome! Please:
+
+1. 🍴 Fork the project
+2. 🔨 Create your feature branch
+3. 📝 Commit your changes
+4. 🚀 Submit a pull request
+
+## 📄 License
+
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 💖 Support
+
+- 🌟 Star the project
+- 🐛 [Report a bug](https://github.com/Valkyrie00/bold-brew/issues)
+- 💡 [Propose new features](https://github.com/Valkyrie00/bold-brew/issues)
+- 📣 Share the project with your friends
+
+---
+
+<div align="center">
+  <sub>Built with ❤️ for the community and for all developers</sub>
+</div>

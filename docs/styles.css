@@ -1,0 +1,88 @@
+@import url("https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap");
+@import url('https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400;1,700&family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
+body {
+    /*font-family: "Inter", serif;*/
+    font-family: "Atkinson Hyperlegible", serif;
+    background-color: #0A1622;
+    color: #e0e0e0;
+}
+.hero-section {
+    padding: 5rem 0;
+    background-color: #0A1622; /* Colore invertito */
+    border-bottom: 1px solid #1E3449;
+}
+.logo-img {
+    width: 200px;
+    height: 200px;
+    margin-bottom: 1rem;
+    filter: drop-shadow(0 0 15px rgba(78, 161, 255, 0.2));
+}
+.install-section {
+    background-color: #0D1D2D; /* Colore invertito */
+    padding: 4rem 0;
+}
+.screenshots-section {
+    background-color: #0D1D2D;
+    padding: 4rem 0;
+    border-top: 1px solid #1E3449;
+    border-bottom: 1px solid #1E3449;
+}
+.screenshot-img {
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+    margin-bottom: 1rem;
+    max-width: 100%;
+    height: auto;
+    border: 1px solid #1E3449;
+}
+pre {
+    background-color: #15202B;
+    padding: 1rem;
+    border-radius: 6px;
+    margin: 1rem 0;
+    color: #4EA1FF;
+    border: 1px solid #1E3449;
+}
+.display-4 {
+    color: #4EA1FF;
+}
+.lead {
+    color: #90B8E3;
+}
+h2 {
+    color: #4EA1FF;
+}
+footer {
+    background-color: #0A1622;
+}
+.text-muted {
+    color: #496480 !important;
+}
+.badges {
+    margin: 2rem 0;
+}
+.badges img {
+    margin: 0 0.3rem;
+}
+.install-options {
+    margin-top: 2rem;
+    padding: 1rem;
+    background-color: #15202B;
+    border-radius: 8px;
+    border: 1px solid #1E3449;
+}
+.btn-download {
+    display: inline-block;
+    padding: 0.5rem 1rem;
+    color: #4EA1FF;
+    background-color: #15202B;
+    border: 1px solid #1E3449;
+    border-radius: 4px;
+    text-decoration: none;
+    transition: background-color 0.3s ease;
+}
+
+.btn-download:hover {
+    background-color: #1E3449;
+}

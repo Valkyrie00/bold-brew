@@ -2,9 +2,118 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Bold Brew</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bold Brew - Homebrew TUI Manager</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="styles.css" rel="stylesheet">
 </head>
 <body>
-<center><h1>Bold Brew</h1></center>
+    <main>
+        <section class="hero-section">
+            <div class="container">
+                <img src="bbrew-logo-nobg.png" alt="Bold Brew Logo" class="logo-img">
+                <h1 class="display-4">Bold Brew</h1>
+                <p class="lead">An elegant Homebrew TUI manager for macOS</p>
+                <div class="badges">
+                    <img src="https://img.shields.io/github/v/release/Valkyrie00/bold-brew" alt="Version">
+                    <img src="https://img.shields.io/github/license/Valkyrie00/bold-brew" alt="License">
+                    <img src="https://img.shields.io/github/actions/workflow/status/Valkyrie00/bold-brew/release.yml" alt="Build Status">
+                </div>
+            </div>
+        </section>
+
+        <section class="install-section">
+            <div class="container">
+                <h2>Installation</h2>
+                <div class="row justify-content-center">
+                    <div class="col-lg-8">
+                        <h5>1. Tap the Repository and Install</h5>
+                        <pre class="text-center"><code>brew tap Valkyrie00/homebrew-bbrew
+brew install bbrew</code></pre>
+                        <p><i>This adds the custom Bold Brew repository and installs the application via Homebrew.</i></p>
+
+                        <h5>2. Run Bold Brew</h5>
+                        <pre class="text-center"><code>bbrew</code></pre>
+
+                        <div class="install-options">
+                            <p class="mb-2 text-center">Alternatively, you can download the latest release from GitHub:</p>
+                            <div class="text-center">
+                                <a class="btn-download" href="https://github.com/Valkyrie00/bold-brew/releases" target="_blank">
+                                    Download Latest Release
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+<section class="features-section">
+    <div class="container">
+        <h2>Features</h2>
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="features-box">
+                    <p class="text-left mb-4">
+                        Bold Brew is a TUI (Text User Interface) for managing Homebrew packages on macOS.
+                        It offers an elegant and intuitive way to:
+                    </p>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <ul>
+                                <li><span>›</span> Install and remove packages</li>
+                                <li><span>›</span> Search for new packages</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <ul>
+                                <li><span>›</span> Update existing packages</li>
+                                <li><span>›</span> Manage dependencies</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <p class="text-left mt-3">
+                        All through a modern and easy-to-use interface,
+                        making Homebrew package management more intuitive than ever.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+        <section class="faq-section">
+            <div class="container">
+                <h2>FAQ</h2>
+                <div class="row justify-content-center">
+                    <div class="col-lg-8">
+                        <h5>What is Bold Brew?</h5>
+                        <p>It's a Text User Interface for managing Homebrew packages on macOS.</p>
+
+                        <h5>How do I install Bold Brew?</h5>
+                        <p>You can install it through Homebrew or by downloading the latest release from GitHub.</p>
+
+                        <h5>How do I update Bold Brew?</h5>
+                        <p>Run <code>brew upgrade bbrew</code> to update the application to the latest version.</p>
+
+                        <h5>How do I remove Bold Brew?</h5>
+                        <p>Use <code>brew remove bbrew</code> if you need to uninstall it from your system.</p>
+
+                        <h5>Does it work on Linux or Windows?</h5>
+                        <p>Currently, Bold Brew is designed for macOS since it depends on the Homebrew package manager.</p>
+
+                        <h5>Where can I report issues or request features?</h5>
+                        <p>Feel free to open an issue on the project's GitHub <a href="https://github.com/Valkyrie00/bold-brew">repository</a>.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2024 Bold Brew | <a href="https://github.com/Valkyrie00/bold-brew">GitHub</a></p>
+        </div>
+    </footer>
 </body>
 </html>

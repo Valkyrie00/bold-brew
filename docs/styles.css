@@ -1,42 +1,54 @@
 @import url("https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;700&display=swap");
 @import url("https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap");
 @import url('https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400;1,700&family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
+
+/* docs/styles.css */
 body {
-    /*font-family: "Inter", serif;*/
     font-family: "Atkinson Hyperlegible", serif;
     background-color: #0A1622;
     color: #e0e0e0;
 }
+
 .hero-section {
     padding: 5rem 0;
-    background-color: #0A1622; /* Colore invertito */
+    background-color: #0A1622;
     border-bottom: 1px solid #1E3449;
+    text-align: center;
 }
-.logo-img {
+
+.hero-section .logo-img {
     width: 200px;
     height: 200px;
     margin-bottom: 1rem;
     filter: drop-shadow(0 0 15px rgba(78, 161, 255, 0.2));
 }
-.install-section {
-    background-color: #0D1D2D; /* Colore invertito */
-    padding: 4rem 0;
+
+.hero-section .display-4 {
+    color: #4EA1FF;
+    font-weight: bold;
 }
-.screenshots-section {
+
+.hero-section .lead {
+    color: #90B8E3;
+    margin-bottom: 2rem;
+}
+
+.hero-section .badges img {
+    margin: 0 0.3rem;
+}
+
+.install-section {
     background-color: #0D1D2D;
     padding: 4rem 0;
-    border-top: 1px solid #1E3449;
-    border-bottom: 1px solid #1E3449;
+    text-align: center;
 }
-.screenshot-img {
-    border-radius: 8px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-    margin-bottom: 1rem;
-    max-width: 100%;
-    height: auto;
-    border: 1px solid #1E3449;
+
+.install-section h2 {
+    color: #4EA1FF;
+    margin-bottom: 2rem;
 }
-pre {
+
+.install-section pre {
     background-color: #15202B;
     padding: 1rem;
     border-radius: 6px;
@@ -44,35 +56,16 @@ pre {
     color: #4EA1FF;
     border: 1px solid #1E3449;
 }
-.display-4 {
-    color: #4EA1FF;
-}
-.lead {
-    color: #90B8E3;
-}
-h2 {
-    color: #4EA1FF;
-}
-footer {
-    background-color: #0A1622;
-}
-.text-muted {
-    color: #496480 !important;
-}
-.badges {
-    margin: 2rem 0;
-}
-.badges img {
-    margin: 0 0.3rem;
-}
-.install-options {
+
+.install-section .install-options {
     margin-top: 2rem;
     padding: 1rem;
     background-color: #15202B;
     border-radius: 8px;
     border: 1px solid #1E3449;
 }
-.btn-download {
+
+.install-section .btn-download {
     display: inline-block;
     padding: 0.5rem 1rem;
     color: #4EA1FF;
@@ -83,6 +76,87 @@ footer {
     transition: background-color 0.3s ease;
 }
 
-.btn-download:hover {
+.install-section .btn-download:hover {
     background-color: #1E3449;
+}
+
+.features-section {
+    background-color: #0A1622;
+    padding: 4rem 0;
+    text-align: left; /* Cambiato da center a left */
+}
+
+.features-section h2 {
+    color: #4EA1FF;
+    margin-bottom: 2rem;
+    text-align: center; /* Mantiene il titolo centrato */
+}
+
+.features-section .features-box {
+    background-color: #15202B;
+    padding: 2rem;
+    border-radius: 8px;
+    border: 1px solid #1E3449;
+    color: #90B8E3;
+    margin-bottom: 2rem;
+}
+
+.features-section .features-box ul {
+    list-style-type: none;
+    padding-left: 0;
+}
+
+.features-section .features-box ul li {
+    margin-bottom: 1rem;
+    padding-left: 1.5rem;
+    position: relative;
+}
+
+.features-section .features-box ul li span {
+    color: #4EA1FF;
+    position: absolute;
+    left: 0;
+    top: 0;
+    font-size: 1.5rem;
+    line-height: 1;
+}
+
+.faq-section {
+    background-color: #0D1D2D;
+    padding: 4rem 0;
+    text-align: center;
+}
+
+.faq-section h2 {
+    color: #4EA1FF;
+    margin-bottom: 2rem;
+}
+
+.faq-section h5 {
+    color: #4EA1FF;
+    margin-top: 1.5rem;
+}
+
+.faq-section p {
+    color: #90B8E3;
+}
+
+footer {
+    background-color: #0A1622;
+    padding: 2rem 0;
+    text-align: center;
+}
+
+footer p {
+    color: #496480;
+}
+
+footer a {
+    color: #496480;
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+footer a:hover {
+    color: #4EA1FF;
 }

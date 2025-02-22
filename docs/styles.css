@@ -2,7 +2,6 @@
 @import url("https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap");
 @import url('https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400;1,700&family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
 
-/* docs/styles.css */
 body {
     font-family: "Atkinson Hyperlegible", serif;
     background-color: #0A1622;
@@ -11,7 +10,7 @@ body {
 
 .hero-section {
     padding: 5rem 0;
-    background-color: #0A1622;
+    background: linear-gradient(180deg, #0A1622, #0D1D2D);
     border-bottom: 1px solid #1E3449;
     text-align: center;
 }
@@ -38,7 +37,7 @@ body {
 }
 
 .install-section {
-    background-color: #0D1D2D;
+    background: linear-gradient(180deg, #0D1D2D, #0A1622);
     padding: 4rem 0;
     text-align: center;
 }
@@ -81,15 +80,15 @@ body {
 }
 
 .features-section {
-    background-color: #0A1622;
+    background: linear-gradient(180deg, #0A1622, #0D1D2D);
     padding: 4rem 0;
-    text-align: left; /* Cambiato da center a left */
+    text-align: left;
 }
 
 .features-section h2 {
     color: #4EA1FF;
     margin-bottom: 2rem;
-    text-align: center; /* Mantiene il titolo centrato */
+    text-align: center;
 }
 
 .features-section .features-box {
@@ -122,7 +121,7 @@ body {
 }
 
 .faq-section {
-    background-color: #0D1D2D;
+    background: linear-gradient(180deg, #0D1D2D, #0A1622);
     padding: 4rem 0;
     text-align: center;
 }
@@ -142,7 +141,7 @@ body {
 }
 
 footer {
-    background-color: #0A1622;
+    background: linear-gradient(180deg, #0A1622, #0D1D2D);
     padding: 2rem 0;
     text-align: center;
 }

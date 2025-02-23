@@ -1,12 +1,14 @@
 package services
 
 import (
+	"bbrew/internal/models"
 	"fmt"
 	"github.com/gdamore/tcell/v2"
+	"github.com/rivo/tview"
 )
 
 func (s *AppService) handleKeyEventInput(event *tcell.EventKey) *tcell.EventKey {
-	if s.LayoutService.GetSearchField().HasFocus() {
+	if s.layout.GetSearch().Field().HasFocus() {
 		return event
 	}
 
@@ -26,7 +28,8 @@ func (s *AppService) handleKeyEventInput(event *tcell.EventKey) *tcell.EventKey 
 		},
 		tcell.KeyCtrlU: s.handleUpdateAllPackagesEvent,
 		tcell.KeyEsc: func() {
-			s.app.SetRoot(s.LayoutService.GetGrid(), true).SetFocus(s.LayoutService.GetResultTable())
+			s.app.SetRoot(s.layout.Root(), true)
+			s.app.SetFocus(s.layout.GetTable().View())
 		},
 	}
 
@@ -39,7 +42,7 @@ func (s *AppService) handleKeyEventInput(event *tcell.EventKey) *tcell.EventKey 
 }
 
 func (s *AppService) handleSearchFieldEvent() {
-	s.app.SetFocus(s.LayoutService.GetSearchField())
+	s.app.SetFocus(s.layout.GetSearch().Field())
 }
 
 func (s *AppService) handleQuitEvent() {
@@ -49,102 +52,92 @@ func (s *AppService) handleQuitEvent() {
 func (s *AppService) handleFilterPackagesEvent() {
 	s.showOnlyInstalled = !s.showOnlyInstalled
 	if s.showOnlyInstalled {
-		s.LayoutService.GetSearchField().SetLabel("Search (Installed): ")
+		s.layout.GetSearch().Field().SetLabel("Search (Installed): ")
 	} else {
-		s.LayoutService.GetSearchField().SetLabel("Search (All): ")
+		s.layout.GetSearch().Field().SetLabel("Search (All): ")
 	}
 
-	s.search(s.LayoutService.GetSearchField().GetText(), true)
+	s.search(s.layout.GetSearch().Field().GetText(), true)
+}
+
+func (s *AppService) showModal(text string, confirmFunc func(), cancelFunc func()) {
+	modal := s.layout.GenerateModal(text, func() {
+		s.app.SetRoot(s.layout.Root(), true)
+		confirmFunc()
+	}, func() {
+		s.app.SetRoot(s.layout.Root(), true)
+		cancelFunc()
+	})
+	s.app.SetRoot(modal, true)
 }
 
 func (s *AppService) handleInstallPackageEvent() {
-	row, _ := s.LayoutService.GetResultTable().GetSelection()
+	row, _ := s.layout.GetTable().View().GetSelection()
 	if row > 0 {
 		info := (*s.filteredPackages)[row-1]
-		modal := s.LayoutService.GenerateModal(fmt.Sprintf("Are you sure you want to install the package: %s?", info.Name), func() {
-			s.app.SetRoot(s.LayoutService.GetGrid(), true).SetFocus(s.LayoutService.GetResultTable())
-			s.LayoutService.GetOutputView().Clear()
-			go func() {
-				s.LayoutService.SetNotificationMessageWarning(fmt.Sprintf("Installing %s...", info.Name))
-				if err := s.CommandService.InstallPackage(info, s.app, s.LayoutService.GetOutputView()); err != nil {
-					s.LayoutService.SetNotificationMessageWarning(fmt.Sprintf("Failed to install %s", info.Name))
-					return
-				}
-
-				s.LayoutService.SetNotificationMessageSuccess(fmt.Sprintf("%s Installed", info.Name))
-				s.forceRefreshResults()
-			}()
-		}, func() {
-			s.app.SetRoot(s.LayoutService.GetGrid(), true).SetFocus(s.LayoutService.GetResultTable())
-		})
-		s.app.SetRoot(modal, true).SetFocus(modal)
+		s.showModal(
+			fmt.Sprintf("Are you sure you want to install the package: %s?", info.Name),
+			s.createModalConfirmHandler(info, "Installing", s.CommandService.InstallPackage, "Installed"),
+			s.resetViewAfterModal,
+		)
 	}
 }
 
 func (s *AppService) handleRemovePackageEvent() {
-	row, _ := s.LayoutService.GetResultTable().GetSelection()
+	row, _ := s.layout.GetTable().View().GetSelection()
 	if row > 0 {
 		info := (*s.filteredPackages)[row-1]
-		modal := s.LayoutService.GenerateModal(fmt.Sprintf("Are you sure you want to remove the package: %s?", info.Name), func() {
-			s.app.SetRoot(s.LayoutService.GetGrid(), true).SetFocus(s.LayoutService.GetResultTable())
-			s.LayoutService.GetOutputView().Clear()
-			go func() {
-				s.LayoutService.SetNotificationMessageWarning(fmt.Sprintf("Removing %s...", info.Name))
-				if err := s.CommandService.RemovePackage(info, s.app, s.LayoutService.GetOutputView()); err != nil {
-					s.LayoutService.SetNotificationMessageWarning(fmt.Sprintf("Failed to remove %s", info.Name))
-					return
-				}
-
-				s.LayoutService.SetNotificationMessageSuccess(fmt.Sprintf("%s Removed", info.Name))
-				s.forceRefreshResults()
-			}()
-		}, func() {
-			s.app.SetRoot(s.LayoutService.GetGrid(), true).SetFocus(s.LayoutService.GetResultTable())
-		})
-		s.app.SetRoot(modal, true).SetFocus(modal)
+		s.showModal(
+			fmt.Sprintf("Are you sure you want to remove the package: %s?", info.Name),
+			s.createModalConfirmHandler(info, "Removing", s.CommandService.RemovePackage, "Removed"),
+			s.resetViewAfterModal,
+		)
 	}
 }
 
 func (s *AppService) handleUpdatePackageEvent() {
-	row, _ := s.LayoutService.GetResultTable().GetSelection()
+	row, _ := s.layout.GetTable().View().GetSelection()
 	if row > 0 {
 		info := (*s.filteredPackages)[row-1]
-		modal := s.LayoutService.GenerateModal(fmt.Sprintf("Are you sure you want to update the package: %s?", info.Name), func() {
-			s.app.SetRoot(s.LayoutService.GetGrid(), true).SetFocus(s.LayoutService.GetResultTable())
-			s.LayoutService.GetOutputView().Clear()
-			go func() {
-				s.LayoutService.SetNotificationMessageWarning(fmt.Sprintf("Updating %s...", info.Name))
-				if err := s.CommandService.UpdatePackage(info, s.app, s.LayoutService.GetOutputView()); err != nil {
-					s.LayoutService.SetNotificationMessageWarning(fmt.Sprintf("Failed to update %s", info.Name))
-					return
-				}
-
-				s.LayoutService.SetNotificationMessageSuccess(fmt.Sprintf("%s Updated", info.Name))
-				s.forceRefreshResults()
-			}()
-		}, func() {
-			s.app.SetRoot(s.LayoutService.GetGrid(), true).SetFocus(s.LayoutService.GetResultTable())
-		})
-		s.app.SetRoot(modal, true).SetFocus(modal)
+		s.showModal(
+			fmt.Sprintf("Are you sure you want to update the package: %s?", info.Name),
+			s.createModalConfirmHandler(info, "Updating", s.CommandService.UpdatePackage, "Updated"),
+			s.resetViewAfterModal,
+		)
 	}
 }
 
 func (s *AppService) handleUpdateAllPackagesEvent() {
-	modal := s.LayoutService.GenerateModal("Are you sure you want to update all packages?", func() {
-		s.app.SetRoot(s.LayoutService.GetGrid(), true).SetFocus(s.LayoutService.GetResultTable())
-		s.LayoutService.GetOutputView().Clear()
+	s.showModal("Are you sure you want to update all packages?", func() {
+		s.layout.GetDetails().View().Clear()
 		go func() {
-			s.LayoutService.SetNotificationMessageWarning("Updating all packages...")
-			if err := s.CommandService.UpdateAllPackages(s.app, s.LayoutService.GetOutputView()); err != nil {
-				s.LayoutService.SetNotificationMessageWarning("Failed to update all packages")
+			s.layout.ShowWarningNotification("Updating all packages...")
+			if err := s.CommandService.UpdateAllPackages(s.app, s.layout.GetDetails().View()); err != nil {
+				s.layout.ShowWarningNotification("Failed to update all packages")
 				return
 			}
-
-			s.LayoutService.SetNotificationMessageSuccess("Updated all packages")
+			s.layout.ShowSuccessNotification("Updated all packages")
 			s.forceRefreshResults()
 		}()
-	}, func() {
-		s.app.SetRoot(s.LayoutService.GetGrid(), true).SetFocus(s.LayoutService.GetResultTable())
-	})
-	s.app.SetRoot(modal, true).SetFocus(modal)
+	}, s.resetViewAfterModal)
+}
+
+func (s *AppService) resetViewAfterModal() {
+	s.app.SetFocus(s.layout.GetTable().View())
+}
+
+func (s *AppService) createModalConfirmHandler(info models.Formula, actionName string, action func(models.Formula, *tview.Application, *tview.TextView) error, completedAction string) func() {
+	return func() {
+		s.resetViewAfterModal()
+		s.layout.GetOutput().Clear()
+		go func() {
+			s.layout.ShowWarningNotification(fmt.Sprintf("%s %s...", actionName, info.Name))
+			if err := action(info, s.app, s.layout.GetOutput().View()); err != nil {
+				s.layout.ShowWarningNotification(fmt.Sprintf("Failed to %s %s", actionName, info.Name))
+				return
+			}
+			s.layout.ShowSuccessNotification(fmt.Sprintf("%s %s", info.Name, completedAction))
+			s.forceRefreshResults()
+		}()
+	}
 }

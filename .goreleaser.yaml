@@ -37,3 +37,27 @@ brews:
       name: homebrew-bbrew
       branch: main
       token: "{{ .Env.GITHUB_TOKEN }}"
+changelog:
+  use: github
+  sort: asc
+  filters:
+    exclude:
+      - '^docs:'
+      - '^test:'
+      - '^ci:'
+      - '^chore:'
+      - Merge pull request
+      - Merge branch
+  groups:
+    - title: '⚠️ Breaking Changes'
+      regexp: "^.*!:.+$"
+      order: 0
+    - title: '✨ Features'
+      regexp: "^.*feat[(\\w)]*:.*$"
+      order: 1
+    - title: '🐛 Bug Fixes'
+      regexp: "^.*fix[(\\w)]*:.*$"
+      order: 2
+    - title: '⚡️ Improvements'
+      regexp: "^.*perf[(\\w)]*:.*$"
+      order: 3

@@ -1,13 +1,14 @@
 package services
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"os/exec"
 )
 
 type SelfUpdateServiceInterface interface {
-	CheckForUpdates() (string, error)
+	CheckForUpdates(ctx context.Context) (string, error)
 }
 
 type SelfUpdateService struct{}
@@ -22,18 +23,13 @@ var NewSelfUpdateService = func() SelfUpdateServiceInterface {
 	return &SelfUpdateService{}
 }
 
-func (s *SelfUpdateService) CheckForUpdates() (string, error) {
-	latestVersion, err := s.getLatestVersionFromTap()
+func (s *SelfUpdateService) CheckForUpdates(ctx context.Context) (string, error) {
+	cmd := exec.CommandContext(ctx, "brew", "info", "--json=v1", "valkyrie00/bbrew/bbrew")
+	output, err := cmd.CombinedOutput()
 	if err != nil {
-		return "", err
-	}
-	return latestVersion, nil
-}
-
-func (s *SelfUpdateService) getLatestVersionFromTap() (string, error) {
-	cmd := exec.Command("brew", "info", "--json=v1", "valkyrie00/bbrew/bbrew")
-	output, err := cmd.Output()
-	if err != nil {
+		if ctx.Err() != nil {
+			return "", fmt.Errorf("operazione annullata: %v", ctx.Err())
+		}
 		return "", fmt.Errorf("failed to fetch latest version from tap: %v", err)
 	}
 

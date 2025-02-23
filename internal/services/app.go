@@ -2,10 +2,12 @@ package services
 
 import (
 	"bbrew/internal/models"
+	"context"
 	"fmt"
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 	"strings"
+	"time"
 )
 
 var (
@@ -212,12 +214,6 @@ func (s *AppService) setResults(data *[]models.Formula, scrollToTop bool) {
 }
 
 func (s *AppService) BuildApp() {
-	// Evaluate if there is a new version available
-	latestVersion, err := s.SelfUpdateService.CheckForUpdates()
-	if err == nil && latestVersion != AppVersion {
-		AppVersion = fmt.Sprintf("%s ([orange]New Version Available: %s[-])", AppVersion, latestVersion)
-	}
-
 	// Build the layout
 	s.LayoutService.SetNotificationView()
 	s.LayoutService.SetHeaderView(AppName, AppVersion, s.brewVersion)
@@ -225,6 +221,19 @@ func (s *AppService) BuildApp() {
 	s.LayoutService.SetDetailsView()
 	s.LayoutService.SetBuildOutputView()
 	s.LayoutService.SetFilterCounterView()
+
+	// Evaluate if there is a new version available
+	go func() {
+		ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+		defer cancel()
+
+		if latestVersion, err := s.SelfUpdateService.CheckForUpdates(ctx); err == nil && latestVersion != AppVersion {
+			s.app.QueueUpdateDraw(func() {
+				AppVersion = fmt.Sprintf("%s ([orange]New Version Available: %s[-])", AppVersion, latestVersion)
+				s.LayoutService.UpdateHeaderView(AppName, AppVersion, s.brewVersion)
+			})
+		}
+	}()
 
 	// Result table section
 	tableSelectionChangedFunc := func(row, _ int) {

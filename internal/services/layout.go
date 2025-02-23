@@ -19,6 +19,7 @@ type LayoutServiceInterface interface {
 
 	GetHeaderView() *tview.TextView
 	SetHeaderView(name, version, brewVersion string)
+	UpdateHeaderView(name, version, brewVersion string)
 
 	GetLegendView() *tview.TextView
 	SetLegendView()
@@ -107,6 +108,10 @@ func (s *LayoutService) SetHeaderView(name, version, brewVersion string) {
 		SetText(fmt.Sprintf(" %s %s - %s", name, version, brewVersion)).
 		SetDynamicColors(true).
 		SetTextAlign(tview.AlignLeft)
+}
+
+func (s *LayoutService) UpdateHeaderView(name, version, brewVersion string) {
+	s.GetHeaderView().SetText(fmt.Sprintf(" %s %s - %s", name, version, brewVersion))
 }
 
 func (s *LayoutService) GetLegendView() *tview.TextView {

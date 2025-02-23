@@ -26,8 +26,6 @@ brews:
       email: bot@goreleaser.com
     commit_msg_template: "Brew formula update for {{ .ProjectName }} version {{ .Tag }}"
     directory: Formula
-    dependencies:
-      - name: go
     test: |
       system "#{bin}/bbrew --version"
     install: |

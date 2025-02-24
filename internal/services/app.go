@@ -2,6 +2,8 @@ package services
 
 import (
 	"bbrew/internal/models"
+	"bbrew/internal/ui"
+	"bbrew/internal/ui/theme"
 	"context"
 	"fmt"
 	"github.com/gdamore/tcell/v2"
@@ -22,35 +24,40 @@ type AppServiceInterface interface {
 }
 
 type AppService struct {
-	app *tview.Application
+	app    *tview.Application
+	layout ui.LayoutInterface
+	theme  *theme.Theme
 
-	// Data
 	packages          *[]models.Formula
 	filteredPackages  *[]models.Formula
 	showOnlyInstalled bool
 	brewVersion       string
 
-	// Services
 	BrewService       BrewServiceInterface
 	CommandService    CommandServiceInterface
 	SelfUpdateService SelfUpdateServiceInterface
-	LayoutService     LayoutServiceInterface
 }
 
-var NewAppService = func() AppServiceInterface {
-	return &AppService{
-		app:               tview.NewApplication(), // Initialize the application
+func NewAppService() AppServiceInterface {
+	app := tview.NewApplication()
+	themeService := theme.NewTheme()
+
+	appService := &AppService{
+		app:    app,
+		theme:  themeService,
+		layout: ui.NewLayout(themeService),
+
 		packages:          new([]models.Formula),
 		filteredPackages:  new([]models.Formula),
-		showOnlyInstalled: false, // Default to show all packages
+		showOnlyInstalled: false,
 		brewVersion:       "-",
 
-		// Services
 		BrewService:       NewBrewService(),
 		CommandService:    NewCommandService(),
 		SelfUpdateService: NewSelfUpdateService(),
-		LayoutService:     NewLayoutService(),
 	}
+
+	return appService
 }
 
 func (s *AppService) GetApp() *tview.Application {
@@ -73,14 +80,14 @@ func (s *AppService) Boot() (err error) {
 }
 
 func (s *AppService) updateHomeBrew() {
-	s.LayoutService.SetNotificationMessageWarning("Updating Homebrew formulae...")
+	s.layout.GetNotifier().ShowWarning("Updating Homebrew formulae...")
 	if err := s.CommandService.UpdateHomebrew(); err != nil {
-		s.LayoutService.SetNotificationMessageError("Could not update Homebrew formulae")
+		s.layout.GetNotifier().ShowError("Could not update Homebrew formulae")
 		return
 	}
 
 	// Clear loading message and update results
-	s.LayoutService.SetNotificationMessageSuccess("Homebrew formulae updated successfully")
+	s.layout.GetNotifier().ShowSuccess("Homebrew formulae updated successfully")
 	s.forceRefreshResults()
 }
 
@@ -149,32 +156,23 @@ func (s *AppService) setDetails(info *models.Formula) {
 			installedVersion, info.Versions.Stable, packagePrefix, dependencies, installedOnRequest, info.Outdated,
 		)
 
-		s.LayoutService.GetDetailsView().SetText(
-			fmt.Sprintf("%s\n\n%s", generalInfo, installInfo),
-		)
+		s.layout.GetDetails().SetContent(fmt.Sprintf("%s\n\n%s", generalInfo, installInfo))
 		return
 	}
 
-	s.LayoutService.GetDetailsView().SetText("")
+	s.layout.GetDetails().SetContent("")
 }
 
 func (s *AppService) forceRefreshResults() {
 	s.app.QueueUpdateDraw(func() {
 		_ = s.BrewService.LoadAllFormulae()
-		s.search(s.LayoutService.GetSearchField().GetText(), false)
+		s.search(s.layout.GetSearch().Field().GetText(), false)
 	})
 }
 
 func (s *AppService) setResults(data *[]models.Formula, scrollToTop bool) {
-	headers := []string{"Name", "Version", "Description"}
-	s.LayoutService.GetResultTable().Clear()
-
-	for i, header := range headers {
-		s.LayoutService.GetResultTable().SetCell(0, i, tview.NewTableCell(header).
-			SetTextColor(tcell.ColorBlue).
-			SetAlign(tview.AlignLeft).
-			SetSelectable(false))
-	}
+	s.layout.GetTable().Clear()
+	s.layout.GetTable().SetTableHeaders("Name", "Version", "Description")
 
 	for i, info := range *data {
 		version := info.Versions.Stable
@@ -192,21 +190,21 @@ func (s *AppService) setResults(data *[]models.Formula, scrollToTop bool) {
 			versionCell.SetTextColor(tcell.ColorOrange)
 		}
 
-		s.LayoutService.GetResultTable().SetCell(i+1, 0, nameCell.SetExpansion(0))
-		s.LayoutService.GetResultTable().SetCell(i+1, 1, versionCell.SetExpansion(0))
-		s.LayoutService.GetResultTable().SetCell(i+1, 2, tview.NewTableCell(info.Description).SetSelectable(true).SetExpansion(1))
+		s.layout.GetTable().View().SetCell(i+1, 0, nameCell.SetExpansion(0))
+		s.layout.GetTable().View().SetCell(i+1, 1, versionCell.SetExpansion(0))
+		s.layout.GetTable().View().SetCell(i+1, 2, tview.NewTableCell(info.Description).SetSelectable(true).SetExpansion(1))
 	}
 
 	// Update the details view with the first item in the list
 	if len(*data) > 0 {
 		if scrollToTop {
-			s.LayoutService.GetResultTable().Select(1, 0)
-			s.LayoutService.GetResultTable().ScrollToBeginning()
+			s.layout.GetTable().View().Select(1, 0)
+			s.layout.GetTable().View().ScrollToBeginning()
 			s.setDetails(&(*data)[0])
 		}
 
 		// Update the filter counter
-		s.LayoutService.UpdateFilterCounterView(len(*s.packages), len(*s.filteredPackages))
+		s.layout.GetSearch().UpdateCounter(len(*s.packages), len(*s.filteredPackages))
 		return
 	}
 
@@ -215,12 +213,8 @@ func (s *AppService) setResults(data *[]models.Formula, scrollToTop bool) {
 
 func (s *AppService) BuildApp() {
 	// Build the layout
-	s.LayoutService.SetNotificationView()
-	s.LayoutService.SetHeaderView(AppName, AppVersion, s.brewVersion)
-	s.LayoutService.SetLegendView()
-	s.LayoutService.SetDetailsView()
-	s.LayoutService.SetBuildOutputView()
-	s.LayoutService.SetFilterCounterView()
+	s.layout.Setup()
+	s.layout.GetHeader().Update(AppName, AppVersion, s.brewVersion)
 
 	// Evaluate if there is a new version available
 	go func() {
@@ -230,7 +224,7 @@ func (s *AppService) BuildApp() {
 		if latestVersion, err := s.SelfUpdateService.CheckForUpdates(ctx); err == nil && latestVersion != AppVersion {
 			s.app.QueueUpdateDraw(func() {
 				AppVersion = fmt.Sprintf("%s ([orange]New Version Available: %s[-])", AppVersion, latestVersion)
-				s.LayoutService.UpdateHeaderView(AppName, AppVersion, s.brewVersion)
+				s.layout.GetHeader().Update(AppName, AppVersion, s.brewVersion)
 			})
 		}
 	}()
@@ -241,26 +235,23 @@ func (s *AppService) BuildApp() {
 			s.setDetails(&(*s.filteredPackages)[row-1])
 		}
 	}
-	s.LayoutService.SetResultTable(tableSelectionChangedFunc)
+	s.layout.GetTable().View().SetSelectionChangedFunc(tableSelectionChangedFunc)
 
 	// Search field section
 	inputDoneFunc := func(key tcell.Key) {
 		if key == tcell.KeyEnter || key == tcell.KeyEscape {
-			s.app.SetFocus(s.LayoutService.GetResultTable())
+			s.app.SetFocus(s.layout.GetTable().View())
 		}
 	}
 	changedFunc := func(text string) {
 		s.search(text, true)
 	}
-	s.LayoutService.SetSearchField(inputDoneFunc, changedFunc)
-
-	// Set the grid layout (final step)
-	s.LayoutService.SetGrid()
+	s.layout.GetSearch().SetHandlers(inputDoneFunc, changedFunc)
 
 	// Add key event handler and set the root view
 	s.app.SetInputCapture(s.handleKeyEventInput)
-	s.app.SetRoot(s.LayoutService.GetGrid(), true)
-	s.app.SetFocus(s.LayoutService.GetResultTable())
+	s.app.SetRoot(s.layout.Root(), true)
+	s.app.SetFocus(s.layout.GetTable().View())
 
 	go s.updateHomeBrew()          // Update Async the Homebrew formulae
 	s.setResults(s.packages, true) // Set the results

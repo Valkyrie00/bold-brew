@@ -1,29 +1,30 @@
 package components
 
 import (
-	"github.com/gdamore/tcell/v2"
+	"bbrew/internal/ui/theme"
 	"github.com/rivo/tview"
 )
 
 type Output struct {
-	view *tview.TextView
+	view  *tview.TextView
+	theme *theme.Theme
 }
 
-func NewOutput() *Output {
-	outputView := tview.NewTextView().
-		SetDynamicColors(true).
-		SetScrollable(true).
-		SetWrap(true).
-		SetTextAlign(tview.AlignLeft)
-
-	outputView.SetBorder(true).
-		SetTitle("Output").
-		SetTitleColor(tcell.ColorYellowGreen).
-		SetTitleAlign(tview.AlignLeft)
-
-	return &Output{
-		view: outputView,
+func NewOutput(theme *theme.Theme) *Output {
+	output := &Output{
+		view:  tview.NewTextView(),
+		theme: theme,
 	}
+
+	output.view.SetDynamicColors(true)
+	output.view.SetScrollable(true)
+	output.view.SetWrap(true)
+	output.view.SetTextAlign(tview.AlignLeft)
+	output.view.SetBorder(true)
+	output.view.SetTitle("Output")
+	output.view.SetTitleColor(theme.TitleColor)
+	output.view.SetTitleAlign(tview.AlignLeft)
+	return output
 }
 
 func (o *Output) View() *tview.TextView {

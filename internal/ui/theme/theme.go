@@ -2,22 +2,38 @@ package theme
 
 import "github.com/gdamore/tcell/v2"
 
-type ThemeService struct {
-	HeaderColor      tcell.Color
-	HighlightColor   tcell.Color
+type Theme struct {
+	DefaultTextColor tcell.Color
+	DefaultBgColor   tcell.Color
 	WarningColor     tcell.Color
 	SuccessColor     tcell.Color
 	ErrorColor       tcell.Color
-	DefaultTextColor tcell.Color
+
+	TitleColor      tcell.Color
+	LabelColor      tcell.Color
+	ButtonBgColor   tcell.Color
+	ButtonTextColor tcell.Color
+
+	ModalBgColor     tcell.Color
+	LegendColor      tcell.Color
+	TableHeaderColor tcell.Color
 }
 
-func NewThemeService() *ThemeService {
-	return &ThemeService{
-		HeaderColor:      tcell.ColorBlue,
-		HighlightColor:   tcell.ColorOrange,
+func NewTheme() *Theme {
+	return &Theme{
+		DefaultTextColor: tcell.ColorWhite,
+		DefaultBgColor:   tcell.ColorBlack,
 		WarningColor:     tcell.ColorYellow,
 		SuccessColor:     tcell.ColorGreen,
 		ErrorColor:       tcell.ColorRed,
-		DefaultTextColor: tcell.ColorWhite,
+
+		TitleColor:      tcell.ColorYellowGreen,
+		LabelColor:      tcell.ColorYellow,
+		ButtonBgColor:   tcell.ColorGray,
+		ButtonTextColor: tcell.ColorWhite,
+
+		ModalBgColor:     tcell.ColorDarkSlateGray,
+		LegendColor:      tcell.ColorWhite,
+		TableHeaderColor: tcell.ColorBlue,
 	}
 }

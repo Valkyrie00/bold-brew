@@ -30,20 +30,20 @@ type Layout struct {
 	legend      *components.Legend
 	notifier    *components.Notifier
 	modal       *components.Modal
-	theme       *theme.ThemeService
+	theme       *theme.Theme
 }
 
-func NewLayout(theme *theme.ThemeService) *Layout {
+func NewLayout(theme *theme.Theme) *Layout {
 	return &Layout{
 		mainContent: tview.NewGrid(),
 		header:      components.NewHeader(theme),
 		search:      components.NewSearch(theme),
 		table:       components.NewTable(theme),
 		details:     components.NewDetails(theme),
-		output:      components.NewOutput(),
-		legend:      components.NewLegend(),
-		notifier:    components.NewNotifier(),
-		modal:       components.NewModal(),
+		output:      components.NewOutput(theme),
+		legend:      components.NewLegend(theme),
+		notifier:    components.NewNotifier(theme),
+		modal:       components.NewModal(theme),
 		theme:       theme,
 	}
 }

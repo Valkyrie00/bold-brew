@@ -1,34 +1,36 @@
 package components
 
 import (
-	"github.com/gdamore/tcell/v2"
+	"bbrew/internal/ui/theme"
 	"github.com/rivo/tview"
 )
 
 type Legend struct {
-	view *tview.TextView
+	view  *tview.TextView
+	theme *theme.Theme
 }
 
-func NewLegend() *Legend {
-	legendText := "[yellow]" + tview.Escape(
-		"[/] Search | "+
-			"[f] Filter Installed | "+
-			"[i] Install | "+
-			"[u] Update | "+
-			"[ctrl+u] Update All | "+
-			"[r] Remove | "+
-			"[Esc] Back to Table | "+
+func NewLegend(theme *theme.Theme) *Legend {
+	legendText := tview.Escape(
+		"[/] Search | " +
+			"[f] Filter Installed | " +
+			"[i] Install | " +
+			"[u] Update | " +
+			"[ctrl+u] Update All | " +
+			"[r] Remove | " +
+			"[Esc] Back to Table | " +
 			"[q] Quit",
-	) + "[-]"
+	)
 
 	legendView := tview.NewTextView().
 		SetText(legendText).
 		SetDynamicColors(true).
 		SetTextAlign(tview.AlignCenter).
-		SetTextColor(tcell.ColorWhite)
+		SetTextColor(theme.LegendColor)
 
 	return &Legend{
-		view: legendView,
+		view:  legendView,
+		theme: theme,
 	}
 }
 

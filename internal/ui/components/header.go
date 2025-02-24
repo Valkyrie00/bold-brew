@@ -8,14 +8,15 @@ import (
 
 type Header struct {
 	view  *tview.TextView
-	theme *theme.ThemeService
+	theme *theme.Theme
 }
 
-func NewHeader(theme *theme.ThemeService) *Header {
+func NewHeader(theme *theme.Theme) *Header {
 	header := &Header{
 		view:  tview.NewTextView(),
 		theme: theme,
 	}
+
 	header.view.SetDynamicColors(true)
 	header.view.SetTextAlign(tview.AlignLeft)
 	return header

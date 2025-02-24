@@ -7,10 +7,10 @@ import (
 
 type Table struct {
 	view  *tview.Table
-	theme *theme.ThemeService
+	theme *theme.Theme
 }
 
-func NewTable(theme *theme.ThemeService) *Table {
+func NewTable(theme *theme.Theme) *Table {
 	table := &Table{
 		view:  tview.NewTable(),
 		theme: theme,
@@ -27,4 +27,20 @@ func (t *Table) SetSelectionHandler(handler func(row, column int)) {
 
 func (t *Table) View() *tview.Table {
 	return t.view
+}
+
+func (t *Table) Clear() {
+	t.view.Clear()
+}
+
+func (t *Table) SetTableHeaders(headers ...string) {
+	for i, header := range headers {
+		t.view.SetCell(0, i, &tview.TableCell{
+			Text:            header,
+			NotSelectable:   true,
+			Align:           tview.AlignLeft,
+			Color:           t.theme.TableHeaderColor,
+			BackgroundColor: t.theme.DefaultBgColor,
+		})
+	}
 }

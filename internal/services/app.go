@@ -26,7 +26,7 @@ type AppServiceInterface interface {
 type AppService struct {
 	app    *tview.Application
 	layout ui.LayoutInterface
-	theme  *theme.ThemeService
+	theme  *theme.Theme
 
 	packages          *[]models.Formula
 	filteredPackages  *[]models.Formula
@@ -40,7 +40,7 @@ type AppService struct {
 
 func NewAppService() AppServiceInterface {
 	app := tview.NewApplication()
-	themeService := theme.NewThemeService()
+	themeService := theme.NewTheme()
 
 	appService := &AppService{
 		app:    app,
@@ -171,15 +171,8 @@ func (s *AppService) forceRefreshResults() {
 }
 
 func (s *AppService) setResults(data *[]models.Formula, scrollToTop bool) {
-	headers := []string{"Name", "Version", "Description"}
-	s.layout.GetTable().View().Clear()
-
-	for i, header := range headers {
-		s.layout.GetTable().View().SetCell(0, i, tview.NewTableCell(header).
-			SetTextColor(tcell.ColorBlue).
-			SetAlign(tview.AlignLeft).
-			SetSelectable(false))
-	}
+	s.layout.GetTable().Clear()
+	s.layout.GetTable().SetTableHeaders("Name", "Version", "Description")
 
 	for i, info := range *data {
 		version := info.Versions.Stable

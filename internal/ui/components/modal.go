@@ -1,23 +1,25 @@
 package components
 
 import (
-	"github.com/gdamore/tcell/v2"
+	"bbrew/internal/ui/theme"
 	"github.com/rivo/tview"
 )
 
 type Modal struct {
-	view *tview.Modal
+	view  *tview.Modal
+	theme *theme.Theme
 }
 
-func NewModal() *Modal {
+func NewModal(theme *theme.Theme) *Modal {
 	modal := tview.NewModal().
-		SetBackgroundColor(tcell.ColorDarkSlateGray).
-		SetTextColor(tcell.ColorWhite).
-		SetButtonBackgroundColor(tcell.ColorGray).
-		SetButtonTextColor(tcell.ColorWhite)
+		SetBackgroundColor(theme.ModalBgColor).
+		SetTextColor(theme.DefaultTextColor).
+		SetButtonBackgroundColor(theme.ButtonBgColor).
+		SetButtonTextColor(theme.ButtonTextColor)
 
 	return &Modal{
-		view: modal,
+		view:  modal,
+		theme: theme,
 	}
 }
 
@@ -25,7 +27,7 @@ func (m *Modal) View() *tview.Modal {
 	return m.view
 }
 
-func (m *Modal) Generate(text string, confirmFunc func(), cancelFunc func()) *tview.Modal {
+func (m *Modal) Build(text string, confirmFunc func(), cancelFunc func()) *tview.Modal {
 	m.view.ClearButtons()
 	m.view.
 		SetText(text).

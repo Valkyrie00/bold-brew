@@ -61,7 +61,7 @@ func (s *AppService) handleFilterPackagesEvent() {
 }
 
 func (s *AppService) showModal(text string, confirmFunc func(), cancelFunc func()) {
-	modal := s.layout.GetModal().Generate(text, func() {
+	modal := s.layout.GetModal().Build(text, func() {
 		s.app.SetRoot(s.layout.Root(), true)
 		confirmFunc()
 	}, func() {
@@ -109,7 +109,7 @@ func (s *AppService) handleUpdatePackageEvent() {
 
 func (s *AppService) handleUpdateAllPackagesEvent() {
 	s.showModal("Are you sure you want to update all packages?", func() {
-		s.layout.GetDetails().View().Clear()
+		s.layout.GetDetails().Clear()
 		go func() {
 			s.layout.GetNotifier().ShowWarning("Updating all packages...")
 			if err := s.CommandService.UpdateAllPackages(s.app, s.layout.GetDetails().View()); err != nil {

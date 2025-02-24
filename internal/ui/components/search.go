@@ -10,10 +10,10 @@ import (
 type Search struct {
 	field   *tview.InputField
 	counter *tview.TextView
-	theme   *theme.ThemeService
+	theme   *theme.Theme
 }
 
-func NewSearch(theme *theme.ThemeService) *Search {
+func NewSearch(theme *theme.Theme) *Search {
 	search := &Search{
 		field:   tview.NewInputField(),
 		counter: tview.NewTextView(),
@@ -21,14 +21,12 @@ func NewSearch(theme *theme.ThemeService) *Search {
 	}
 
 	search.field.SetLabel("Search (All): ")
-	search.field.SetFieldBackgroundColor(tcell.ColorBlack)
-	search.field.SetFieldTextColor(tcell.ColorWhite)
-	search.field.SetLabelColor(tcell.ColorYellow)
+	search.field.SetFieldBackgroundColor(theme.DefaultBgColor)
+	search.field.SetFieldTextColor(theme.DefaultTextColor)
+	search.field.SetLabelColor(theme.LabelColor)
 	search.field.SetFieldWidth(30)
-
 	search.counter.SetDynamicColors(true)
 	search.counter.SetTextAlign(tview.AlignRight)
-
 	return search
 }
 

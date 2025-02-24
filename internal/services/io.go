@@ -61,7 +61,7 @@ func (s *AppService) handleFilterPackagesEvent() {
 }
 
 func (s *AppService) showModal(text string, confirmFunc func(), cancelFunc func()) {
-	modal := s.layout.GenerateModal(text, func() {
+	modal := s.layout.GetModal().Generate(text, func() {
 		s.app.SetRoot(s.layout.Root(), true)
 		confirmFunc()
 	}, func() {
@@ -111,12 +111,12 @@ func (s *AppService) handleUpdateAllPackagesEvent() {
 	s.showModal("Are you sure you want to update all packages?", func() {
 		s.layout.GetDetails().View().Clear()
 		go func() {
-			s.layout.ShowWarningNotification("Updating all packages...")
+			s.layout.GetNotifier().ShowWarning("Updating all packages...")
 			if err := s.CommandService.UpdateAllPackages(s.app, s.layout.GetDetails().View()); err != nil {
-				s.layout.ShowWarningNotification("Failed to update all packages")
+				s.layout.GetNotifier().ShowError("Failed to update all packages")
 				return
 			}
-			s.layout.ShowSuccessNotification("Updated all packages")
+			s.layout.GetNotifier().ShowSuccess("Updated all packages")
 			s.forceRefreshResults()
 		}()
 	}, s.resetViewAfterModal)
@@ -131,12 +131,12 @@ func (s *AppService) createModalConfirmHandler(info models.Formula, actionName s
 		s.resetViewAfterModal()
 		s.layout.GetOutput().Clear()
 		go func() {
-			s.layout.ShowWarningNotification(fmt.Sprintf("%s %s...", actionName, info.Name))
+			s.layout.GetNotifier().ShowWarning(fmt.Sprintf("%s %s...", actionName, info.Name))
 			if err := action(info, s.app, s.layout.GetOutput().View()); err != nil {
-				s.layout.ShowWarningNotification(fmt.Sprintf("Failed to %s %s", actionName, info.Name))
+				s.layout.GetNotifier().ShowError(fmt.Sprintf("Failed to %s %s", actionName, info.Name))
 				return
 			}
-			s.layout.ShowSuccessNotification(fmt.Sprintf("%s %s", info.Name, completedAction))
+			s.layout.GetNotifier().ShowSuccess(fmt.Sprintf("%s %s", info.Name, completedAction))
 			s.forceRefreshResults()
 		}()
 	}

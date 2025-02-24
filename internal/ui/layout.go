@@ -3,7 +3,6 @@ package ui
 import (
 	"bbrew/internal/ui/components"
 	"bbrew/internal/ui/theme"
-	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 )
 
@@ -18,20 +17,7 @@ type LayoutInterface interface {
 	GetOutput() *components.Output
 	GetLegend() *components.Legend
 	GetNotifier() *components.Notifier
-
-	//UpdateHeader(appName, version, brewVersion string)
-	UpdateDetails(text string)
-	UpdateSearchCounter(total, filtered int)
-
-	ShowSuccessNotification(message string)
-	ShowWarningNotification(message string)
-	ShowErrorNotification(message string)
-	ClearNotification()
-
-	SetSearchHandlers(doneFunc func(key tcell.Key), changedFunc func(text string))
-	SetTableSelectionHandler(handler func(row, column int))
-
-	GenerateModal(text string, confirmFunc func(), cancelFunc func()) *tview.Modal
+	GetModal() *components.Modal
 }
 
 type Layout struct {
@@ -48,7 +34,7 @@ type Layout struct {
 }
 
 func NewLayout(theme *theme.ThemeService) *Layout {
-	l := &Layout{
+	return &Layout{
 		mainContent: tview.NewGrid(),
 		header:      components.NewHeader(theme),
 		search:      components.NewSearch(theme),
@@ -60,8 +46,6 @@ func NewLayout(theme *theme.ThemeService) *Layout {
 		modal:       components.NewModal(),
 		theme:       theme,
 	}
-	l.setupLayout()
-	return l
 }
 
 func (l *Layout) setupLayout() {
@@ -110,6 +94,10 @@ func (l *Layout) setupLayout() {
 		AddItem(footerContent, 2, 0, 1, 1, 0, 0, false)
 }
 
+func (l *Layout) Setup() {
+	l.setupLayout()
+}
+
 func (l *Layout) Root() tview.Primitive {
 	return l.mainContent
 }
@@ -121,48 +109,4 @@ func (l *Layout) GetDetails() *components.Details   { return l.details }
 func (l *Layout) GetOutput() *components.Output     { return l.output }
 func (l *Layout) GetLegend() *components.Legend     { return l.legend }
 func (l *Layout) GetNotifier() *components.Notifier { return l.notifier }
-
-func (l *Layout) GenerateModal(text string, confirmFunc func(), cancelFunc func()) *tview.Modal {
-	return l.modal.Generate(text, confirmFunc, cancelFunc)
-}
-
-func (l *Layout) Setup() {
-	l.setupLayout()
-}
-
-//func (l *Layout) UpdateHeader(appName, version, brewVersion string) {
-//	l.header.Update(appName, version, brewVersion)
-//}
-
-func (l *Layout) UpdateDetails(text string) {
-	l.details.SetContent(text)
-}
-
-func (l *Layout) UpdateSearchCounter(total, filtered int) {
-	l.search.UpdateCounter(total, filtered)
-}
-
-func (l *Layout) ShowSuccessNotification(message string) {
-	l.notifier.ShowSuccess(message)
-}
-
-func (l *Layout) ShowWarningNotification(message string) {
-	l.notifier.ShowWarning(message)
-}
-
-func (l *Layout) ShowErrorNotification(message string) {
-	l.notifier.ShowError(message)
-}
-
-func (l *Layout) ClearNotification() {
-	l.notifier.Clear()
-}
-
-func (l *Layout) SetSearchHandlers(doneFunc func(key tcell.Key), changedFunc func(text string)) {
-	l.search.Field().SetDoneFunc(doneFunc)
-	l.search.Field().SetChangedFunc(changedFunc)
-}
-
-func (l *Layout) SetTableSelectionHandler(handler func(row, column int)) {
-	l.table.View().SetSelectionChangedFunc(handler)
-}
+func (l *Layout) GetModal() *components.Modal       { return l.modal }

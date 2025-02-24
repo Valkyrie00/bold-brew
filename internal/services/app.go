@@ -80,14 +80,14 @@ func (s *AppService) Boot() (err error) {
 }
 
 func (s *AppService) updateHomeBrew() {
-	s.layout.ShowWarningNotification("Updating Homebrew formulae...")
+	s.layout.GetNotifier().ShowWarning("Updating Homebrew formulae...")
 	if err := s.CommandService.UpdateHomebrew(); err != nil {
-		s.layout.ShowErrorNotification("Could not update Homebrew formulae")
+		s.layout.GetNotifier().ShowError("Could not update Homebrew formulae")
 		return
 	}
 
 	// Clear loading message and update results
-	s.layout.ShowSuccessNotification("Homebrew formulae updated successfully")
+	s.layout.GetNotifier().ShowSuccess("Homebrew formulae updated successfully")
 	s.forceRefreshResults()
 }
 
@@ -156,11 +156,11 @@ func (s *AppService) setDetails(info *models.Formula) {
 			installedVersion, info.Versions.Stable, packagePrefix, dependencies, installedOnRequest, info.Outdated,
 		)
 
-		s.layout.UpdateDetails(fmt.Sprintf("%s\n\n%s", generalInfo, installInfo))
+		s.layout.GetDetails().SetContent(fmt.Sprintf("%s\n\n%s", generalInfo, installInfo))
 		return
 	}
 
-	s.layout.UpdateDetails("")
+	s.layout.GetDetails().SetContent("")
 }
 
 func (s *AppService) forceRefreshResults() {
@@ -211,7 +211,7 @@ func (s *AppService) setResults(data *[]models.Formula, scrollToTop bool) {
 		}
 
 		// Update the filter counter
-		s.layout.UpdateSearchCounter(len(*s.packages), len(*s.filteredPackages))
+		s.layout.GetSearch().UpdateCounter(len(*s.packages), len(*s.filteredPackages))
 		return
 	}
 
@@ -242,7 +242,7 @@ func (s *AppService) BuildApp() {
 			s.setDetails(&(*s.filteredPackages)[row-1])
 		}
 	}
-	s.layout.SetTableSelectionHandler(tableSelectionChangedFunc)
+	s.layout.GetTable().View().SetSelectionChangedFunc(tableSelectionChangedFunc)
 
 	// Search field section
 	inputDoneFunc := func(key tcell.Key) {
@@ -253,7 +253,7 @@ func (s *AppService) BuildApp() {
 	changedFunc := func(text string) {
 		s.search(text, true)
 	}
-	s.layout.SetSearchHandlers(inputDoneFunc, changedFunc)
+	s.layout.GetSearch().SetHandlers(inputDoneFunc, changedFunc)
 
 	// Add key event handler and set the root view
 	s.app.SetInputCapture(s.handleKeyEventInput)

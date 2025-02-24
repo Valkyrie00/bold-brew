@@ -79,7 +79,7 @@ func (s *AppService) handleInstallPackageEvent() {
 				s.layout.GetOutput().Clear()
 				go func() {
 					s.layout.GetNotifier().ShowWarning(fmt.Sprintf("Installing %s...", info.Name))
-					if err := s.CommandService.UpdatePackage(info, s.app, s.layout.GetOutput().View()); err != nil {
+					if err := s.CommandService.InstallPackage(info, s.app, s.layout.GetOutput().View()); err != nil {
 						s.layout.GetNotifier().ShowError(fmt.Sprintf("Failed to install %s", info.Name))
 						return
 					}

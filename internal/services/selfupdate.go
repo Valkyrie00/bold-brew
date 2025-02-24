@@ -28,7 +28,7 @@ func (s *SelfUpdateService) CheckForUpdates(ctx context.Context) (string, error)
 	output, err := cmd.CombinedOutput()
 	if err != nil {
 		if ctx.Err() != nil {
-			return "", fmt.Errorf("operazione annullata: %v", ctx.Err())
+			return "", fmt.Errorf("context cancelled")
 		}
 		return "", fmt.Errorf("failed to fetch latest version from tap: %v", err)
 	}

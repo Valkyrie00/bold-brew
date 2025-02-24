@@ -1,10 +1,8 @@
 package services
 
 import (
-	"bbrew/internal/models"
 	"fmt"
 	"github.com/gdamore/tcell/v2"
-	"github.com/rivo/tview"
 )
 
 func (s *AppService) handleKeyEventInput(event *tcell.EventKey) *tcell.EventKey {
@@ -61,14 +59,13 @@ func (s *AppService) handleFilterPackagesEvent() {
 }
 
 func (s *AppService) showModal(text string, confirmFunc func(), cancelFunc func()) {
-	modal := s.layout.GetModal().Build(text, func() {
-		s.app.SetRoot(s.layout.Root(), true)
-		confirmFunc()
-	}, func() {
-		s.app.SetRoot(s.layout.Root(), true)
-		cancelFunc()
-	})
+	modal := s.layout.GetModal().Build(text, confirmFunc, cancelFunc)
 	s.app.SetRoot(modal, true)
+}
+
+func (s *AppService) closeModal() {
+	s.app.SetRoot(s.layout.Root(), true)
+	s.app.SetFocus(s.layout.GetTable().View())
 }
 
 func (s *AppService) handleInstallPackageEvent() {
@@ -77,9 +74,19 @@ func (s *AppService) handleInstallPackageEvent() {
 		info := (*s.filteredPackages)[row-1]
 		s.showModal(
 			fmt.Sprintf("Are you sure you want to install the package: %s?", info.Name),
-			s.createModalConfirmHandler(info, "Installing", s.CommandService.InstallPackage, "Installed"),
-			s.resetViewAfterModal,
-		)
+			func() {
+				s.closeModal()
+				s.layout.GetOutput().Clear()
+				go func() {
+					s.layout.GetNotifier().ShowWarning(fmt.Sprintf("Installing %s...", info.Name))
+					if err := s.CommandService.UpdatePackage(info, s.app, s.layout.GetOutput().View()); err != nil {
+						s.layout.GetNotifier().ShowError(fmt.Sprintf("Failed to install %s", info.Name))
+						return
+					}
+					s.layout.GetNotifier().ShowSuccess(fmt.Sprintf("Installed %s", info.Name))
+					s.forceRefreshResults()
+				}()
+			}, s.closeModal)
 	}
 }
 
@@ -89,9 +96,19 @@ func (s *AppService) handleRemovePackageEvent() {
 		info := (*s.filteredPackages)[row-1]
 		s.showModal(
 			fmt.Sprintf("Are you sure you want to remove the package: %s?", info.Name),
-			s.createModalConfirmHandler(info, "Removing", s.CommandService.RemovePackage, "Removed"),
-			s.resetViewAfterModal,
-		)
+			func() {
+				s.closeModal()
+				s.layout.GetOutput().Clear()
+				go func() {
+					s.layout.GetNotifier().ShowWarning(fmt.Sprintf("Removing %s...", info.Name))
+					if err := s.CommandService.RemovePackage(info, s.app, s.layout.GetOutput().View()); err != nil {
+						s.layout.GetNotifier().ShowError(fmt.Sprintf("Failed to remove %s", info.Name))
+						return
+					}
+					s.layout.GetNotifier().ShowSuccess(fmt.Sprintf("Removed %s", info.Name))
+					s.forceRefreshResults()
+				}()
+			}, s.closeModal)
 	}
 }
 
@@ -101,43 +118,34 @@ func (s *AppService) handleUpdatePackageEvent() {
 		info := (*s.filteredPackages)[row-1]
 		s.showModal(
 			fmt.Sprintf("Are you sure you want to update the package: %s?", info.Name),
-			s.createModalConfirmHandler(info, "Updating", s.CommandService.UpdatePackage, "Updated"),
-			s.resetViewAfterModal,
-		)
+			func() {
+				s.closeModal()
+				s.layout.GetOutput().Clear()
+				go func() {
+					s.layout.GetNotifier().ShowWarning(fmt.Sprintf("Updating %s...", info.Name))
+					if err := s.CommandService.UpdatePackage(info, s.app, s.layout.GetOutput().View()); err != nil {
+						s.layout.GetNotifier().ShowError(fmt.Sprintf("Failed to update %s", info.Name))
+						return
+					}
+					s.layout.GetNotifier().ShowSuccess(fmt.Sprintf("Updated %s", info.Name))
+					s.forceRefreshResults()
+				}()
+			}, s.closeModal)
 	}
 }
 
 func (s *AppService) handleUpdateAllPackagesEvent() {
 	s.showModal("Are you sure you want to update all packages?", func() {
-		s.layout.GetDetails().Clear()
+		s.closeModal()
+		s.layout.GetOutput().Clear()
 		go func() {
 			s.layout.GetNotifier().ShowWarning("Updating all packages...")
-			if err := s.CommandService.UpdateAllPackages(s.app, s.layout.GetDetails().View()); err != nil {
+			if err := s.CommandService.UpdateAllPackages(s.app, s.layout.GetOutput().View()); err != nil {
 				s.layout.GetNotifier().ShowError("Failed to update all packages")
 				return
 			}
 			s.layout.GetNotifier().ShowSuccess("Updated all packages")
 			s.forceRefreshResults()
 		}()
-	}, s.resetViewAfterModal)
-}
-
-func (s *AppService) resetViewAfterModal() {
-	s.app.SetFocus(s.layout.GetTable().View())
-}
-
-func (s *AppService) createModalConfirmHandler(info models.Formula, actionName string, action func(models.Formula, *tview.Application, *tview.TextView) error, completedAction string) func() {
-	return func() {
-		s.resetViewAfterModal()
-		s.layout.GetOutput().Clear()
-		go func() {
-			s.layout.GetNotifier().ShowWarning(fmt.Sprintf("%s %s...", actionName, info.Name))
-			if err := action(info, s.app, s.layout.GetOutput().View()); err != nil {
-				s.layout.GetNotifier().ShowError(fmt.Sprintf("Failed to %s %s", actionName, info.Name))
-				return
-			}
-			s.layout.GetNotifier().ShowSuccess(fmt.Sprintf("%s %s", info.Name, completedAction))
-			s.forceRefreshResults()
-		}()
-	}
+	}, s.closeModal)
 }

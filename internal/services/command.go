@@ -2,9 +2,11 @@ package services
 
 import (
 	"bbrew/internal/models"
+	"fmt"
 	"github.com/rivo/tview"
 	"io"
 	"os/exec"
+	"sync"
 )
 
 type CommandServiceInterface interface {
@@ -63,45 +65,70 @@ func (s *CommandService) executeCommand(
 		return err
 	}
 
+	// Add a WaitGroup to wait for all goroutines to finish
+	var wg sync.WaitGroup
+	wg.Add(3)
+
+	// Wait for the command to finish
 	go func() {
+		defer wg.Done()
 		defer stdoutWriter.Close()
 		defer stderrWriter.Close()
 		cmd.Wait()
 	}()
 
+	// Stdout handler
 	go func() {
+		defer wg.Done()
+		defer stdoutPipe.Close()
 		buf := make([]byte, 1024)
 		for {
 			n, err := stdoutPipe.Read(buf)
 			if n > 0 {
+				output := make([]byte, n)
+				copy(output, buf[:n])
 				app.QueueUpdateDraw(func() {
-					outputView.Write(buf[:n])
+					outputView.Write(output)
 					outputView.ScrollToEnd()
 				})
 			}
 			if err != nil {
+				if err != io.EOF {
+					app.QueueUpdateDraw(func() {
+						outputView.Write([]byte(fmt.Sprintf("\nError: %v\n", err)))
+					})
+				}
 				break
 			}
 		}
 	}()
 
+	// Stderr handler
 	go func() {
+		defer wg.Done()
+		defer stderrPipe.Close()
 		buf := make([]byte, 1024)
 		for {
 			n, err := stderrPipe.Read(buf)
 			if n > 0 {
+				output := make([]byte, n)
+				copy(output, buf[:n])
 				app.QueueUpdateDraw(func() {
-					outputView.Write(buf[:n])
+					outputView.Write(output)
 					outputView.ScrollToEnd()
 				})
 			}
 			if err != nil {
+				if err != io.EOF {
+					app.QueueUpdateDraw(func() {
+						outputView.Write([]byte(fmt.Sprintf("\nError: %v\n", err)))
+					})
+				}
 				break
 			}
 		}
 	}()
 
-	cmd.Wait()
-
+	wg.Wait()
 	return nil
 }

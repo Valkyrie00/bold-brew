@@ -22,3 +22,16 @@ jobs:
         with:
           version: v1.63.4
           skip-cache: true
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: stable
+      - name: Get dependencies
+        run: go mod download
+      - name: Build
+        run: go build -v ./

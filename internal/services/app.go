@@ -193,7 +193,7 @@ func (s *AppService) getPackageVersionInfo(info *models.Formula) string {
 			installedVersion, stableVersion)
 	}
 
-	// Per altri casi (versione dev, etc)
+	// Other cases
 	return fmt.Sprintf("([green]%s[-])", installedVersion)
 }
 

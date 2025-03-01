@@ -533,6 +533,120 @@ footer a:hover {
     }
 }
 
+/* SEO Content Section */
+.seo-content {
+    background: linear-gradient(180deg, #0D1D2D, #0A1622);
+    padding: 5rem 0;
+}
+
+.seo-content h2 {
+    color: #4EA1FF;
+    margin-bottom: 2rem;
+    text-align: center;
+}
+
+.seo-content h3 {
+    color: #4EA1FF;
+    font-size: 1.35rem;
+    margin-top: 2rem;
+    margin-bottom: 1rem;
+}
+
+.seo-content p {
+    color: #90B8E3;
+    font-size: 1rem;
+    line-height: 1.6;
+    margin-bottom: 1.5rem;
+}
+
+.seo-content ul {
+    color: #90B8E3;
+    padding-left: 1.2rem;
+    margin-bottom: 1.5rem;
+}
+
+.seo-content ul li {
+    margin-bottom: 0.75rem;
+    line-height: 1.5;
+}
+
+.seo-content strong {
+    color: #4EA1FF;
+    font-weight: 600;
+}
+
+/* About Section */
+.about-section {
+    background: linear-gradient(180deg, #0A1622, #0D1D2D);
+    padding: 5rem 0;
+}
+
+.about-section h2 {
+    color: #4EA1FF;
+    margin-bottom: 1rem;
+    text-align: center;
+}
+
+.about-section .lead {
+    color: #90B8E3;
+    text-align: center;
+    margin-bottom: 2.5rem;
+    font-style: italic;
+}
+
+.about-section h3 {
+    color: #4EA1FF;
+    font-size: 1.35rem;
+    margin-top: 2rem;
+    margin-bottom: 1rem;
+}
+
+.about-section p {
+    color: #90B8E3;
+    font-size: 1rem;
+    line-height: 1.6;
+    margin-bottom: 1.5rem;
+}
+
+.compatibility-info {
+    background-color: #15202B;
+    border: 1px solid #1E3449;
+    border-radius: 10px;
+    padding: 1.5rem;
+    margin: 2rem 0;
+}
+
+.compatibility-info h4 {
+    color: #4EA1FF;
+    font-size: 1.2rem;
+    margin-bottom: 1rem;
+}
+
+.compatibility-info ul {
+    color: #90B8E3;
+    padding-left: 1.2rem;
+    margin-bottom: 0;
+}
+
+.compatibility-info ul li {
+    margin-bottom: 0.5rem;
+    line-height: 1.5;
+}
+
+@media (max-width: 768px) {
+    .seo-content, .about-section {
+        padding: 3rem 0;
+    }
+
+    .seo-content h2, .about-section h2 {
+        font-size: 1.75rem;
+    }
+
+    .seo-content h3, .about-section h3 {
+        font-size: 1.25rem;
+    }
+}
+
 /* FAQ Section */
 .faq-section {
     background: linear-gradient(180deg, #0D1D2D, #0A1622);

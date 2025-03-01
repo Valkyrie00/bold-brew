@@ -127,40 +127,110 @@ func (s *AppService) search(searchText string, scrollToTop bool) {
 }
 
 func (s *AppService) setDetails(info *models.Formula) {
-	if info != nil {
-		installedVersion := "Not installed"
-		packagePrefix := "-"
-		installedOnRequest := false
-		if len(info.Installed) > 0 {
-			if info.Installed[0].Version == info.Versions.Stable {
-				installedVersion = info.Installed[0].Version
-			} else {
-				installedVersion = fmt.Sprintf("[orange]%s[-]", info.Installed[0].Version)
-			}
-			packagePrefix, _ = s.BrewService.GetPrefixPath(info.Name)
-			installedOnRequest = info.Installed[0].InstalledOnRequest
-		}
-
-		dependencies := strings.Join(info.Dependencies, ", ")
-		if dependencies == "" {
-			dependencies = "None"
-		}
-
-		generalInfo := fmt.Sprintf(
-			"[blue]Name:[-] %s\n[blue]Description:[-] %s\n[blue]Homepage:[-] %s\n[blue]License:[-] %s\n[blue]Tap:[-] %s",
-			info.FullName, info.Description, info.Homepage, info.License, info.Tap,
-		)
-
-		installInfo := fmt.Sprintf(
-			"[blue]Installed:[-] %s\n[blue]Available Version:[-] %s\n[blue]Install Path:[-] %s\n[blue]Dependencies:[-] %s\n[blue]Installed On Request:[-] %t\n[blue]Outdated:[-] %t\n",
-			installedVersion, info.Versions.Stable, packagePrefix, dependencies, installedOnRequest, info.Outdated,
-		)
-
-		s.layout.GetDetails().SetContent(fmt.Sprintf("%s\n\n%s", generalInfo, installInfo))
+	if info == nil {
+		s.layout.GetDetails().SetContent("")
 		return
 	}
 
-	s.layout.GetDetails().SetContent("")
+	// Installation status with colors
+	installedStatus := "[red]Not installed[-]"
+	installedIcon := "✗"
+	if len(info.Installed) > 0 {
+		installedStatus = "[green]Installed[-]"
+		installedIcon = "✓"
+
+		if info.Outdated {
+			installedStatus = "[orange]Update available[-]"
+			installedIcon = "⟳"
+		}
+	}
+
+	// Basic information with icons
+	basicInfo := fmt.Sprintf(
+		"[yellow::b]%s %s[-]\n\n"+
+			"[blue]• Name:[-] %s\n"+
+			"[blue]• Version:[-] %s\n"+
+			"[blue]• Status:[-] %s %s\n"+
+			"[blue]• Tap:[-] %s\n"+
+			"[blue]• License:[-] %s\n\n"+
+			"[yellow::b]Description[-]\n%s\n\n"+
+			"[blue]• Homepage:[-] %s",
+		info.Name, installedIcon,
+		info.FullName,
+		info.Versions.Stable,
+		installedStatus, s.getPackageVersionInfo(info),
+		info.Tap,
+		info.License,
+		info.Description,
+		info.Homepage,
+	)
+
+	// Installation details
+	installDetails := s.getPackageInstallationDetails(info)
+
+	// Dependencies with improved formatting
+	dependenciesInfo := s.getDependenciesInfo(info)
+
+	s.layout.GetDetails().SetContent(fmt.Sprintf("%s\n\n%s\n\n%s",
+		basicInfo, installDetails, dependenciesInfo))
+}
+
+func (s *AppService) getPackageVersionInfo(info *models.Formula) string {
+	if len(info.Installed) == 0 {
+		return ""
+	}
+
+	if info.Installed[0].Version < info.Versions.Stable {
+		return fmt.Sprintf("([orange]%s[-] → [green]%s[-])",
+			info.Installed[0].Version, info.Versions.Stable)
+	}
+
+	return fmt.Sprintf("([green]%s[-])", info.Installed[0].Version)
+}
+
+func (s *AppService) getPackageInstallationDetails(info *models.Formula) string {
+	if len(info.Installed) == 0 {
+		return "[yellow::b]Installation[-]\nNot installed"
+	}
+
+	packagePrefix, _ := s.BrewService.GetPrefixPath(info.Name)
+	installedOnRequest := "No"
+	if info.Installed[0].InstalledOnRequest {
+		installedOnRequest = "Yes"
+	}
+
+	return fmt.Sprintf(
+		"[yellow::b]Installation Details[-]\n"+
+			"[blue]• Path:[-] %s\n"+
+			"[blue]• Installed on request:[-] %s\n"+
+			"[blue]• Installed version:[-] %s",
+		packagePrefix,
+		installedOnRequest,
+		info.Installed[0].Version,
+	)
+}
+
+func (s *AppService) getDependenciesInfo(info *models.Formula) string {
+	title := "[yellow::b]Dependencies[-]\n"
+
+	if len(info.Dependencies) == 0 {
+		return title + "No dependencies"
+	}
+
+	// Format dependencies in multiple columns or with separators
+	deps := ""
+	for i, dep := range info.Dependencies {
+		deps += dep
+		if i < len(info.Dependencies)-1 {
+			if (i+1)%3 == 0 {
+				deps += "\n"
+			} else {
+				deps += ", "
+			}
+		}
+	}
+
+	return title + deps
 }
 
 func (s *AppService) forceRefreshResults() {

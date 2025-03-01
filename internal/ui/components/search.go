@@ -20,11 +20,11 @@ func NewSearch(theme *theme.Theme) *Search {
 		theme:   theme,
 	}
 
-	search.field.SetLabel("Search (All): ")
+	search.field.SetLabel(tview.Escape("Search (All): "))
+	search.field.SetLabelColor(theme.SearchLabelColor)
+	search.field.SetFieldStyle(tcell.StyleDefault.Italic(true).Underline(true))
 	search.field.SetFieldBackgroundColor(theme.DefaultBgColor)
 	search.field.SetFieldTextColor(theme.DefaultTextColor)
-	search.field.SetLabelColor(theme.LabelColor)
-	search.field.SetFieldWidth(30)
 	search.counter.SetDynamicColors(true)
 	search.counter.SetTextAlign(tview.AlignRight)
 	return search

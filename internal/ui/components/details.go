@@ -22,6 +22,7 @@ func NewDetails(theme *theme.Theme) *Details {
 	details.view.SetTitleColor(theme.TitleColor)
 	details.view.SetTitleAlign(tview.AlignLeft)
 	details.view.SetBorder(true)
+	details.view.SetBorderPadding(0, 0, 1, 1)
 	return details
 }
 

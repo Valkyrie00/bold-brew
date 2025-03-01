@@ -17,6 +17,7 @@ type Theme struct {
 	ModalBgColor     tcell.Color
 	LegendColor      tcell.Color
 	TableHeaderColor tcell.Color
+	SearchLabelColor tcell.Color
 }
 
 func NewTheme() *Theme {
@@ -27,7 +28,7 @@ func NewTheme() *Theme {
 		SuccessColor:     tcell.ColorGreen,
 		ErrorColor:       tcell.ColorRed,
 
-		TitleColor:      tcell.ColorYellowGreen,
+		TitleColor:      tcell.ColorMediumVioletRed,
 		LabelColor:      tcell.ColorYellow,
 		ButtonBgColor:   tcell.ColorGray,
 		ButtonTextColor: tcell.ColorWhite,
@@ -35,5 +36,6 @@ func NewTheme() *Theme {
 		ModalBgColor:     tcell.ColorDarkSlateGray,
 		LegendColor:      tcell.ColorWhite,
 		TableHeaderColor: tcell.ColorBlue,
+		SearchLabelColor: tcell.ColorMediumVioletRed,
 	}
 }

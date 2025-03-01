@@ -24,6 +24,7 @@ func NewOutput(theme *theme.Theme) *Output {
 	output.view.SetTitle("Output")
 	output.view.SetTitleColor(theme.TitleColor)
 	output.view.SetTitleAlign(tview.AlignLeft)
+	output.view.SetBorderPadding(0, 0, 1, 1)
 	return output
 }
 

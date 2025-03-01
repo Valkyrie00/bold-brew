@@ -69,7 +69,7 @@
                                     <h5>Install Bold Brew</h5>
                                 </div>
                                 <div class="code-block">
-                                    <pre><code>brew install Valkyrie00/homebrew-bbrew/bbrew</code></pre>
+                                    <pre><code><span class="prompt">></span> brew install Valkyrie00/homebrew-bbrew/bbrew</code></pre>
                                     <button class="copy-btn" onclick="copyToClipboard(this)">
                                         <span class="copy-icon">⧉</span>
                                         <span class="copy-text">Copy</span>
@@ -84,7 +84,7 @@
                                     <h5>Run Bold Brew</h5>
                                 </div>
                                 <div class="code-block">
-                                    <pre><code>bbrew</code></pre>
+                                    <pre><code><span class="prompt">></span> bbrew</code></pre>
                                     <button class="copy-btn" onclick="copyToClipboard(this)">
                                         <span class="copy-icon">⧉</span>
                                         <span class="copy-text">Copy</span>
@@ -301,9 +301,10 @@
 <script>
 function copyToClipboard(button) {
     const preEl = button.parentElement.querySelector('pre');
-    const textToCopy = preEl.textContent;
+    const codeText = preEl.textContent;
+    const cleanText = codeText.replace(/^>\s/, '');
 
-    navigator.clipboard.writeText(textToCopy).then(() => {
+    navigator.clipboard.writeText(cleanText).then(() => {
         const copyText = button.querySelector('.copy-text');
         copyText.textContent = 'Copied!';
 

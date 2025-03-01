@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="resources/logo/bbrew-logo-rounded.png" alt="Bold Brew Logo" width="200" height="200">
+  <img src="docs/assets/logo/bbrew-logo-rounded.png" alt="Bold Brew Logo" width="200" height="200">
   <h1>Bold Brew (bbrew)</h1>
   <p>A Homebrew TUI Manager</p>
 </div>
@@ -31,8 +31,7 @@
 
 ### Via Homebrew
 ```sh
-brew tap Valkyrie00/homebrew-bbrew
-brew install bbrew
+brew install Valkyrie00/homebrew-bbrew/bbrew
 ```
 
 ### Manuale
@@ -57,8 +56,9 @@ bbrew
 ## 🖼️ Screenshots
 
 <div align="center">
-  <img src="resources/screenshots/main.png" alt="Schermata principale" width="800">
-  <img src="resources/screenshots/installed.png" alt="Pacchetti installati" width="800">
+  <img src="docs/assets/screenshots/bbrew-main-screenshot.png" alt="Main Screenshot" width="800">
+  <img src="docs/assets/screenshots/bbrew-installed-screenshot.png" alt="Install Screenshot" width="800">
+  <img src="docs/assets/screenshots/bbrew-search-screenshot.png" alt="Search Screenshot" width="800">
 </div>
 
 ## 🤝 Contributing

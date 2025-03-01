@@ -375,23 +375,6 @@
     </footer>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const menuToggle = document.querySelector('.mobile-menu-toggle');
-    const mainNav = document.querySelector('.main-nav');
-
-    menuToggle.addEventListener('click', function() {
-        mainNav.classList.toggle('show');
-    });
-
-    document.querySelectorAll('.nav-list a').forEach(link => {
-        link.addEventListener('click', () => {
-            if (mainNav.classList.contains('show')) {
-                mainNav.classList.remove('show');
-            }
-        });
-    });
-});
-
 function copyToClipboard(button) {
     const preEl = button.parentElement.querySelector('pre');
     const codeText = preEl.textContent;

@@ -100,7 +100,7 @@ func (s *AppService) search(searchText string, scrollToTop bool) {
 	if s.showOnlyInstalled {
 		sourceList = &[]models.Formula{}
 		for _, info := range *s.packages {
-			if len(info.Installed) > 0 {
+			if len(info.Installed) > 0 && info.Installed[0].InstalledOnRequest {
 				*sourceList = append(*sourceList, info)
 			}
 		}
@@ -180,12 +180,21 @@ func (s *AppService) getPackageVersionInfo(info *models.Formula) string {
 		return ""
 	}
 
-	if info.Installed[0].Version < info.Versions.Stable {
+	installedVersion := info.Installed[0].Version
+	stableVersion := info.Versions.Stable
+
+	// Revision version
+	if strings.HasPrefix(installedVersion, stableVersion+"_") {
+		return fmt.Sprintf("([green]%s[-])", installedVersion)
+	} else if installedVersion == stableVersion {
+		return fmt.Sprintf("([green]%s[-])", installedVersion)
+	} else if installedVersion < stableVersion || info.Outdated {
 		return fmt.Sprintf("([orange]%s[-] → [green]%s[-])",
-			info.Installed[0].Version, info.Versions.Stable)
+			installedVersion, stableVersion)
 	}
 
-	return fmt.Sprintf("([green]%s[-])", info.Installed[0].Version)
+	// Per altri casi (versione dev, etc)
+	return fmt.Sprintf("([green]%s[-])", installedVersion)
 }
 
 func (s *AppService) getPackageInstallationDetails(info *models.Formula) string {
@@ -246,8 +255,13 @@ func (s *AppService) setResults(data *[]models.Formula, scrollToTop bool) {
 
 	for i, info := range *data {
 		version := info.Versions.Stable
-		if len(info.Installed) > 0 && info.Installed[0].Version != info.Versions.Stable {
-			version = fmt.Sprintf("(%s) < %s", info.Installed[0].Version, info.Versions.Stable)
+		if len(info.Installed) > 0 {
+			// Check if the installed version is the same as the stable version (handle revisions)
+			if strings.HasPrefix(info.Installed[0].Version, info.Versions.Stable) {
+				version = info.Installed[0].Version
+			} else if info.Installed[0].Version != info.Versions.Stable {
+				version = fmt.Sprintf("%s → %s", info.Installed[0].Version, info.Versions.Stable)
+			}
 		}
 
 		nameCell := tview.NewTableCell(info.Name).SetSelectable(true)
@@ -256,7 +270,7 @@ func (s *AppService) setResults(data *[]models.Formula, scrollToTop bool) {
 		}
 
 		versionCell := tview.NewTableCell(version).SetSelectable(true)
-		if version != "" && len(info.Installed) > 0 && info.Installed[0].Version < info.Versions.Stable {
+		if len(info.Installed) > 0 && info.Outdated {
 			versionCell.SetTextColor(tcell.ColorOrange)
 		}
 

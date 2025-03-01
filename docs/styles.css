@@ -40,12 +40,16 @@ footer a:hover {
 
 /** Hero Section */
 .hero-section {
-    padding: 7rem 0 6rem;
+    min-height: 100vh;
+    padding: 2rem 0;
     background: radial-gradient(ellipse at top, #0D1D2D, #0A1622);
     border-bottom: 1px solid #1E3449;
     text-align: center;
     position: relative;
     overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .hero-bg-overlay {
@@ -62,6 +66,7 @@ footer a:hover {
 .hero-content {
     position: relative;
     z-index: 1;
+    width: 100%;
 }
 
 .hero-section .logo-img {

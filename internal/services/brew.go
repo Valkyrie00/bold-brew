@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os/exec"
 	"sort"
+	"strconv"
 	"strings"
 	"sync"
 )
@@ -24,6 +25,7 @@ type BrewService struct {
 	all       *[]models.Formula
 	installed *[]models.Formula
 	remote    *[]models.Formula
+	analytics map[string]models.AnalyticsItem
 }
 
 var NewBrewService = func() BrewServiceInterface {
@@ -62,8 +64,10 @@ func (s *BrewService) GetAllFormulae() (formulae *[]models.Formula) {
 func (s *BrewService) LoadAllFormulae() (err error) {
 	_ = s.loadInstalled()
 	_ = s.loadRemote()
+	_ = s.loadAnalytics()
 
 	packageMap := make(map[string]models.Formula)
+
 	// Add installed packages to the map
 	for _, formula := range *s.installed {
 		packageMap[formula.Name] = formula
@@ -78,6 +82,12 @@ func (s *BrewService) LoadAllFormulae() (err error) {
 
 	*s.all = make([]models.Formula, 0, len(packageMap))
 	for _, formula := range packageMap {
+		// patch analytics info
+		if a, exists := s.analytics[formula.Name]; exists && a.Number > 0 {
+			downloads, _ := strconv.Atoi(strings.ReplaceAll(a.Count, ",", ""))
+			formula.Analytics90dRank = a.Number
+			formula.Analytics90dDownloads = downloads
+		}
 		*s.all = append(*s.all, formula)
 	}
 
@@ -117,6 +127,29 @@ func (s *BrewService) loadRemote() (err error) {
 	if err != nil {
 		return err
 	}
+
+	return nil
+}
+
+func (s *BrewService) loadAnalytics() (err error) {
+	resp, err := http.Get("https://formulae.brew.sh/api/analytics/install-on-request/90d.json")
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	analytics := models.Analytics{}
+	err = json.NewDecoder(resp.Body).Decode(&analytics)
+	if err != nil {
+		return err
+	}
+
+	analyticsByFormula := map[string]models.AnalyticsItem{}
+	for _, f := range analytics.Items {
+		analyticsByFormula[f.Formula] = f
+	}
+
+	s.analytics = analyticsByFormula
 
 	return nil
 }

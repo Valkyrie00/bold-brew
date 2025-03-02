@@ -6,10 +6,14 @@ import (
 	"bbrew/internal/ui/theme"
 	"context"
 	"fmt"
-	"github.com/gdamore/tcell/v2"
-	"github.com/rivo/tview"
+	"sort"
 	"strings"
 	"time"
+
+	"github.com/gdamore/tcell/v2"
+	"github.com/rivo/tview"
+	"golang.org/x/text/language"
+	"golang.org/x/text/message"
 )
 
 var (
@@ -111,15 +115,27 @@ func (s *AppService) search(searchText string, scrollToTop bool) {
 		filteredList = *sourceList
 	} else {
 		// Apply the search filter
+		searchTextLower := strings.ToLower(searchText)
 		for _, info := range *sourceList {
-			if strings.Contains(strings.ToLower(info.Name), strings.ToLower(searchText)) ||
-				strings.Contains(strings.ToLower(info.Description), strings.ToLower(searchText)) {
+			if strings.Contains(strings.ToLower(info.Name), searchTextLower) ||
+				strings.Contains(strings.ToLower(info.Description), searchTextLower) {
 				if !uniquePackages[info.Name] {
 					filteredList = append(filteredList, info)
 					uniquePackages[info.Name] = true
 				}
 			}
 		}
+
+		// sort by analytics rank
+		sort.Slice(filteredList, func(i, j int) bool {
+			if filteredList[i].Analytics90dRank == 0 {
+				return false
+			}
+			if filteredList[j].Analytics90dRank == 0 {
+				return true
+			}
+			return filteredList[i].Analytics90dRank < filteredList[j].Analytics90dRank
+		})
 	}
 
 	*s.filteredPackages = filteredList
@@ -171,8 +187,9 @@ func (s *AppService) setDetails(info *models.Formula) {
 	// Dependencies with improved formatting
 	dependenciesInfo := s.getDependenciesInfo(info)
 
-	s.layout.GetDetails().SetContent(fmt.Sprintf("%s\n\n%s\n\n%s",
-		basicInfo, installDetails, dependenciesInfo))
+	analyticsInfo := s.getAnalyticsInfo(info)
+
+	s.layout.GetDetails().SetContent(strings.Join([]string{basicInfo, installDetails, dependenciesInfo, analyticsInfo}, "\n\n"))
 }
 
 func (s *AppService) getPackageVersionInfo(info *models.Formula) string {
@@ -242,6 +259,17 @@ func (s *AppService) getDependenciesInfo(info *models.Formula) string {
 	return title + deps
 }
 
+func (s *AppService) getAnalyticsInfo(info *models.Formula) string {
+	title := "[yellow::b]Analytics[-]\n"
+
+	p := message.NewPrinter(language.English)
+
+	title += fmt.Sprintf("[blue]• 90d Global Rank:[-] %s\n", p.Sprintf("%d", info.Analytics90dRank))
+	title += fmt.Sprintf("[blue]• 90d   Downloads:[-] %s\n", p.Sprintf("%d", info.Analytics90dDownloads))
+
+	return title
+}
+
 func (s *AppService) forceRefreshResults() {
 	s.app.QueueUpdateDraw(func() {
 		_ = s.BrewService.LoadAllFormulae()
@@ -251,7 +279,7 @@ func (s *AppService) forceRefreshResults() {
 
 func (s *AppService) setResults(data *[]models.Formula, scrollToTop bool) {
 	s.layout.GetTable().Clear()
-	s.layout.GetTable().SetTableHeaders("Name", "Version", "Description")
+	s.layout.GetTable().SetTableHeaders("Name", "Version", "Description", "↓ (90d)")
 
 	for i, info := range *data {
 		version := info.Versions.Stable
@@ -274,9 +302,13 @@ func (s *AppService) setResults(data *[]models.Formula, scrollToTop bool) {
 			versionCell.SetTextColor(tcell.ColorOrange)
 		}
 
+		downloads := message.NewPrinter(language.English).Sprintf("%d", info.Analytics90dDownloads)
+		downloadsCell := tview.NewTableCell(downloads).SetSelectable(true).SetAlign(tview.AlignRight)
+
 		s.layout.GetTable().View().SetCell(i+1, 0, nameCell.SetExpansion(0))
 		s.layout.GetTable().View().SetCell(i+1, 1, versionCell.SetExpansion(0))
 		s.layout.GetTable().View().SetCell(i+1, 2, tview.NewTableCell(info.Description).SetSelectable(true).SetExpansion(1))
+		s.layout.GetTable().View().SetCell(i+1, 3, downloadsCell.SetExpansion(0))
 	}
 
 	// Update the details view with the first item in the list

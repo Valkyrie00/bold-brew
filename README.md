@@ -15,7 +15,7 @@
 [![GitHub stars](https://img.shields.io/github/stars/Valkyrie00/bold-brew?style=social)](https://github.com/Valkyrie00/bold-brew/stargazers)
 [![GitHub forks](https://img.shields.io/github/forks/Valkyrie00/bold-brew?style=social)](https://github.com/Valkyrie00/bold-brew/network/members)
 
-[Website](https://bold-brew.com/) • [Documentazione](https://bold-brew.com/docs) • [Changelog](https://github.com/Valkyrie00/bold-brew/releases)
+[Website](https://bold-brew.com/) • [Docs](https://bold-brew.com/docs) • [Changelog](https://github.com/Valkyrie00/bold-brew/releases)
 
 </div>
 
@@ -34,10 +34,10 @@
 brew install Valkyrie00/homebrew-bbrew/bbrew
 ```
 
-### Manuale
+### Manually
 Download the latest version from the [releases page](https://github.com/Valkyrie00/bold-brew/releases)
 
-## 📖 Quick Guide
+## 📖 Quick start
 
 Launch the application:
 ```sh

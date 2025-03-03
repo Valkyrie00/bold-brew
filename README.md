@@ -70,6 +70,13 @@ Contributions are welcome! Please:
 3. 📝 Commit your changes
 4. 🚀 Submit a pull request
 
+## 🦸Contributors
+Bold Brew exists thanks to the efforts of these wonderful people
+
+<a href="https://github.com/Valkyrie00/bold-brew/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=Valkyrie00/bold-brew" />
+</a>
+
 ## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

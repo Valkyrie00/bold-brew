@@ -50,6 +50,24 @@ type Formula struct {
 	TapGitHead             string             `json:"tap_git_head"`
 	RubySourcePath         string             `json:"ruby_source_path"`
 	RubySourceChecksum     RubySourceChecksum `json:"ruby_source_checksum"`
+	Analytics90dRank       int
+	Analytics90dDownloads  int
+}
+
+type Analytics struct {
+	Category   string          `json:"category"`
+	TotalItems int             `json:"total_items"`
+	StartDate  interface{}     `json:"start_date"`
+	EndDate    interface{}     `json:"end_date"`
+	TotalCount int             `json:"total_count"`
+	Items      []AnalyticsItem `json:"items"`
+}
+
+type AnalyticsItem struct {
+	Number  int    `json:"number"`
+	Formula string `json:"formula"`
+	Count   string `json:"count"`
+	Percent string `json:"percent"`
 }
 
 type Versions struct {

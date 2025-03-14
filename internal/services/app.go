@@ -32,10 +32,11 @@ type AppService struct {
 	layout ui.LayoutInterface
 	theme  *theme.Theme
 
-	packages          *[]models.Formula
-	filteredPackages  *[]models.Formula
-	showOnlyInstalled bool
-	brewVersion       string
+	packages                *[]models.Formula
+	filteredPackages        *[]models.Formula
+	showOnlyInstalled       bool
+	showOnlyUpdateAvailable bool
+	brewVersion             string
 
 	BrewService       BrewServiceInterface
 	CommandService    CommandServiceInterface
@@ -108,6 +109,16 @@ func (s *AppService) search(searchText string, scrollToTop bool) {
 				*sourceList = append(*sourceList, info)
 			}
 		}
+	}
+
+	if s.showOnlyUpdateAvailable {
+		tempList := &[]models.Formula{}
+		for _, info := range *sourceList {
+			if info.Outdated {
+				*tempList = append(*tempList, info)
+			}
+		}
+		sourceList = tempList
 	}
 
 	if searchText == "" {

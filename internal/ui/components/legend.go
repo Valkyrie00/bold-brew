@@ -14,6 +14,7 @@ func NewLegend(theme *theme.Theme) *Legend {
 	legendText := tview.Escape(
 		"[/] Search | " +
 			"[f] Filter Installed | " +
+			"[o] Filter Outdated | " +
 			"[i] Install | " +
 			"[u] Update | " +
 			"[ctrl+u] Update All | " +

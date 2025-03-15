@@ -32,11 +32,11 @@ type AppService struct {
 	layout ui.LayoutInterface
 	theme  *theme.Theme
 
-	packages                *[]models.Formula
-	filteredPackages        *[]models.Formula
-	showOnlyInstalled       bool
-	showOnlyUpdateAvailable bool
-	brewVersion             string
+	packages          *[]models.Formula
+	filteredPackages  *[]models.Formula
+	showOnlyInstalled bool
+	showOnlyOutdated  bool
+	brewVersion       string
 
 	BrewService       BrewServiceInterface
 	CommandService    CommandServiceInterface
@@ -55,6 +55,7 @@ func NewAppService() AppServiceInterface {
 		packages:          new([]models.Formula),
 		filteredPackages:  new([]models.Formula),
 		showOnlyInstalled: false,
+		showOnlyOutdated:  false,
 		brewVersion:       "-",
 
 		BrewService:       NewBrewService(),
@@ -102,7 +103,7 @@ func (s *AppService) search(searchText string, scrollToTop bool) {
 
 	// Determine the source list based on the current filter state
 	sourceList := s.packages
-	if s.showOnlyInstalled {
+	if s.showOnlyInstalled && !s.showOnlyOutdated {
 		sourceList = &[]models.Formula{}
 		for _, info := range *s.packages {
 			if len(info.Installed) > 0 && info.Installed[0].InstalledOnRequest {
@@ -111,7 +112,7 @@ func (s *AppService) search(searchText string, scrollToTop bool) {
 		}
 	}
 
-	if s.showOnlyUpdateAvailable {
+	if s.showOnlyOutdated {
 		tempList := &[]models.Formula{}
 		for _, info := range *sourceList {
 			if info.Outdated {

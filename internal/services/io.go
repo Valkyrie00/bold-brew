@@ -19,7 +19,7 @@ func (s *AppService) handleKeyEventInput(event *tcell.EventKey) *tcell.EventKey 
 				'i': s.handleInstallPackageEvent,
 				'/': s.handleSearchFieldEvent,
 				'f': s.handleFilterPackagesEvent,
-				'o': s.handleFilterUpdateAvailablePackagesEvent, // New key binding for filtering outdated packages
+				'o': s.handleFilterOutdatedPackagesEvent, // New key binding for filtering outdated packages
 			}
 			if action, exists := runeActions[event.Rune()]; exists {
 				action()
@@ -50,7 +50,9 @@ func (s *AppService) handleQuitEvent() {
 
 func (s *AppService) handleFilterPackagesEvent() {
 	s.showOnlyInstalled = !s.showOnlyInstalled
-	if s.showOnlyInstalled {
+	if s.showOnlyOutdated {
+		s.layout.GetSearch().Field().SetLabel("Search (Outdated): ")
+	} else if s.showOnlyInstalled {
 		s.layout.GetSearch().Field().SetLabel("Search (Installed): ")
 	} else {
 		s.layout.GetSearch().Field().SetLabel("Search (All): ")
@@ -59,10 +61,12 @@ func (s *AppService) handleFilterPackagesEvent() {
 	s.search(s.layout.GetSearch().Field().GetText(), true)
 }
 
-func (s *AppService) handleFilterUpdateAvailablePackagesEvent() {
-	s.showOnlyUpdateAvailable = !s.showOnlyUpdateAvailable
-	if s.showOnlyUpdateAvailable {
-		s.layout.GetSearch().Field().SetLabel("Search (Update available): ")
+func (s *AppService) handleFilterOutdatedPackagesEvent() {
+	s.showOnlyOutdated = !s.showOnlyOutdated
+	if s.showOnlyOutdated {
+		s.layout.GetSearch().Field().SetLabel("Search (Outdated): ")
+	} else if s.showOnlyInstalled {
+		s.layout.GetSearch().Field().SetLabel("Search (Installed): ")
 	} else {
 		s.layout.GetSearch().Field().SetLabel("Search (All): ")
 	}

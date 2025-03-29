@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>10 Essential Homebrew Commands You Should Know | Bold Brew Blog</title>
+    <meta name="description" content="Master the most important Homebrew commands for macOS package management. Learn how to install, update, and manage packages efficiently.">
+    <meta name="keywords" content="Homebrew commands, brew commands, macOS package management, Homebrew tutorial, brew install, brew update">
+    <meta name="author" content="Valkyrie00">
+    <meta name="robots" content="index, follow">
+    <meta property="og:title" content="10 Essential Homebrew Commands You Should Know">
+    <meta property="og:description" content="Master the most important Homebrew commands for macOS package management. Learn how to install, update, and manage packages efficiently.">
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://bold-brew.com/blog/essential-homebrew-commands.html">
+    <link rel="canonical" href="https://bold-brew.com/blog/essential-homebrew-commands.html">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="../styles.css" rel="stylesheet">
+</head>
+<body>
+    <header>
+        <nav class="navbar navbar-expand-lg navbar-dark">
+            <div class="container">
+                <a class="navbar-brand" href="/">
+                    <img src="../assets/bbrew-logo-nobg.png" alt="Bold Brew Logo" width="32" height="32">
+                    <span>Bold Brew</span>
+                </a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    <ul class="navbar-nav ms-auto">
+                        <li class="nav-item">
+                            <a class="nav-link" href="/#features">Features</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/#install">Install</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/#about">About</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/blog">Blog</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="https://github.com/Valkyrie00/bold-brew" target="_blank" rel="noopener noreferrer">GitHub</a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main class="container my-5">
+        <article>
+            <header class="mb-5">
+                <h1>10 Essential Homebrew Commands You Should Know</h1>
+                <div class="meta">
+                    <span class="date">March 29, 2024</span>
+                    <span class="author">By Valkyrie00</span>
+                </div>
+            </header>
+
+            <div class="content">
+                <p>Homebrew is a powerful package manager for macOS, but its command-line interface can be overwhelming. In this guide, we'll cover the 10 most essential Homebrew commands that every macOS user should know.</p>
+
+                <h2>1. Package Installation</h2>
+                <pre><code>brew install package_name</code></pre>
+                <p>This is the most basic and commonly used command. For example:</p>
+                <pre><code>brew install git</code></pre>
+                <p>You can also install multiple packages at once:</p>
+                <pre><code>brew install git node python</code></pre>
+
+                <h2>2. Package Updates</h2>
+                <pre><code>brew update</code></pre>
+                <p>Updates Homebrew's package database. Always run this before installing new packages or upgrading existing ones.</p>
+
+                <h2>3. Upgrade Packages</h2>
+                <pre><code>brew upgrade</code></pre>
+                <p>Upgrades all installed packages to their latest versions. To upgrade a specific package:</p>
+                <pre><code>brew upgrade package_name</code></pre>
+
+                <h2>4. Package Removal</h2>
+                <pre><code>brew uninstall package_name</code></pre>
+                <p>Removes a package from your system. For example:</p>
+                <pre><code>brew uninstall git</code></pre>
+
+                <h2>5. Package Information</h2>
+                <pre><code>brew info package_name</code></pre>
+                <p>Shows detailed information about a package, including its dependencies and installation status.</p>
+
+                <h2>6. List Installed Packages</h2>
+                <pre><code>brew list</code></pre>
+                <p>Shows all packages currently installed on your system.</p>
+
+                <h2>7. Search for Packages</h2>
+                <pre><code>brew search package_name</code></pre>
+                <p>Searches for packages in the Homebrew repository. For example:</p>
+                <pre><code>brew search python</code></pre>
+
+                <h2>8. System Check</h2>
+                <pre><code>brew doctor</code></pre>
+                <p>Diagnoses your Homebrew installation and suggests fixes for common issues.</p>
+
+                <h2>9. Clean Up</h2>
+                <pre><code>brew cleanup</code></pre>
+                <p>Removes old versions of installed packages and cleans up the Homebrew cache.</p>
+
+                <h2>10. Tap Management</h2>
+                <pre><code>brew tap</code></pre>
+                <p>Lists all tapped repositories. To add a new tap:</p>
+                <pre><code>brew tap user/repo</code></pre>
+
+                <h2>Making Command Management Easier with Bold Brew</h2>
+                <p>While these commands are powerful, remembering them all can be challenging. That's where Bold Brew comes in. It provides a visual interface for all these operations:</p>
+                <pre><code>brew install Valkyrie00/homebrew-bbrew/bbrew</code></pre>
+                <p>With Bold Brew, you can:</p>
+                <ul>
+                    <li>Search and install packages with a visual interface</li>
+                    <li>Update packages with a few clicks</li>
+                    <li>View package information in a structured format</li>
+                    <li>Manage dependencies visually</li>
+                </ul>
+
+                <h2>Pro Tips</h2>
+                <ul>
+                    <li>Use <code>brew update && brew upgrade</code> to update everything at once</li>
+                    <li>Combine <code>brew cleanup</code> with upgrades to keep your system clean</li>
+                    <li>Use <code>brew doctor</code> regularly to maintain a healthy Homebrew installation</li>
+                </ul>
+
+                <div class="cta">
+                    <p>Want to make package management even easier? Try Bold Brew:</p>
+                    <pre><code>brew install Valkyrie00/homebrew-bbrew/bbrew</code></pre>
+                </div>
+
+                <div class="share">
+                    <h3>Share this article</h3>
+                    <div class="social-links">
+                        <a href="https://www.linkedin.com/shareArticle?mini=true&url=https://bold-brew.com/blog/essential-homebrew-commands.html&title=10 Essential Homebrew Commands You Should Know" target="_blank" rel="noopener noreferrer">LinkedIn</a>
+                    </div>
+                </div>
+            </div>
+
+            <footer class="mt-5">
+                <div class="tags">
+                    <span class="tag">Homebrew</span>
+                    <span class="tag">macOS</span>
+                    <span class="tag">Command Line</span>
+                    <span class="tag">Development Tools</span>
+                </div>
+            </footer>
+        </article>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2024 Bold Brew | <a href="https://github.com/Valkyrie00/bold-brew" target="_blank" rel="noopener noreferrer">GitHub</a></p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" defer></script>
+</body>
+</html> 

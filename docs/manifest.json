@@ -1,0 +1,61 @@
+{
+    "name": "Bold Brew",
+    "short_name": "bbrew",
+    "description": "Modern Homebrew TUI Manager for macOS",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#1a1a1a",
+    "theme_color": "#1a1a1a",
+    "orientation": "portrait",
+    "icons": [
+        {
+            "src": "assets/ico/bbrew-16.ico",
+            "sizes": "16x16",
+            "type": "image/x-icon"
+        },
+        {
+            "src": "assets/ico/bbrew-24.ico",
+            "sizes": "24x24",
+            "type": "image/x-icon"
+        },
+        {
+            "src": "assets/ico/bbrew-32.ico",
+            "sizes": "32x32",
+            "type": "image/x-icon"
+        },
+        {
+            "src": "assets/ico/bbrew-48.ico",
+            "sizes": "48x48",
+            "type": "image/x-icon"
+        },
+        {
+            "src": "assets/ico/bbrew-180.ico",
+            "sizes": "180x180",
+            "type": "image/x-icon"
+        }
+    ],
+    "categories": ["developer tools", "utilities"],
+    "screenshots": [
+        {
+            "src": "assets/screenshots/bbrew-main-screenshot.png",
+            "sizes": "400x300",
+            "type": "image/png",
+            "platform": "macOS",
+            "label": "Main Dashboard"
+        },
+        {
+            "src": "assets/screenshots/bbrew-installed-screenshot.png",
+            "sizes": "400x300",
+            "type": "image/png",
+            "platform": "macOS",
+            "label": "Installed Packages"
+        },
+        {
+            "src": "assets/screenshots/bbrew-search-screenshot.png",
+            "sizes": "400x300",
+            "type": "image/png",
+            "platform": "macOS",
+            "label": "Package Search"
+        }
+    ]
+} 

@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>How to Install and Configure Homebrew on macOS | Bold Brew Blog</title>
+    <meta name="description" content="Learn how to install and configure Homebrew on macOS. A step-by-step guide to setting up the most popular package manager for macOS.">
+    <meta name="keywords" content="Homebrew installation, macOS package manager, brew install, Homebrew setup, macOS development">
+    <meta name="author" content="Valkyrie00">
+    <meta name="robots" content="index, follow">
+    <meta property="og:title" content="How to Install and Configure Homebrew on macOS">
+    <meta property="og:description" content="Learn how to install and configure Homebrew on macOS. A step-by-step guide to setting up the most popular package manager for macOS.">
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://bold-brew.com/blog/install-homebrew-macos.html">
+    <link rel="canonical" href="https://bold-brew.com/blog/install-homebrew-macos.html">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="../styles.css" rel="stylesheet">
+</head>
+<body>
+    <header>
+        <nav class="navbar navbar-expand-lg navbar-dark">
+            <div class="container">
+                <a class="navbar-brand" href="/">
+                    <img src="../assets/bbrew-logo-nobg.png" alt="Bold Brew Logo" width="32" height="32">
+                    <span>Bold Brew</span>
+                </a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    <ul class="navbar-nav ms-auto">
+                        <li class="nav-item">
+                            <a class="nav-link" href="/#features">Features</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/#install">Install</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/#about">About</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/blog">Blog</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="https://github.com/Valkyrie00/bold-brew" target="_blank" rel="noopener noreferrer">GitHub</a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main class="container my-5">
+        <article>
+            <header class="mb-5">
+                <h1>How to Install and Configure Homebrew on macOS</h1>
+                <div class="meta">
+                    <span class="date">March 29, 2024</span>
+                    <span class="author">By Valkyrie00</span>
+                </div>
+            </header>
+
+            <div class="content">
+                <p>Homebrew is the most popular package manager for macOS, making it easy to install and manage software packages. In this comprehensive guide, we'll walk you through the installation process and show you how to configure it properly.</p>
+
+                <h2>Prerequisites</h2>
+                <p>Before installing Homebrew, make sure you have:</p>
+                <ul>
+                    <li>macOS 10.15 Catalina or newer</li>
+                    <li>Command Line Tools for Xcode installed</li>
+                    <li>Administrator access to your Mac</li>
+                </ul>
+
+                <h2>Installing Command Line Tools</h2>
+                <p>First, install the Command Line Tools by running:</p>
+                <pre><code>xcode-select --install</code></pre>
+                <p>A popup window will appear asking you to confirm the installation. Click "Install" and wait for the process to complete.</p>
+
+                <h2>Installing Homebrew</h2>
+                <p>Now, let's install Homebrew. Open Terminal and run:</p>
+                <pre><code>/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"</code></pre>
+                <p>This command will:</p>
+                <ol>
+                    <li>Download the Homebrew installation script</li>
+                    <li>Install Homebrew in the recommended location</li>
+                    <li>Set up the necessary directories and permissions</li>
+                </ol>
+
+                <h2>Configuring Homebrew</h2>
+                <p>After installation, you need to add Homebrew to your PATH. Run these commands:</p>
+                <pre><code>echo 'eval "$(/opt/homebrew/bin/brew shellenv)"' >> ~/.zshrc
+eval "$(/opt/homebrew/bin/brew shellenv)"</code></pre>
+
+                <h2>Verifying the Installation</h2>
+                <p>To verify that Homebrew is installed correctly, run:</p>
+                <pre><code>brew --version</code></pre>
+                <p>You should see the Homebrew version number. Also, run:</p>
+                <pre><code>brew doctor</code></pre>
+                <p>This command will check your system for potential problems and provide recommendations.</p>
+
+                <h2>Updating Homebrew</h2>
+                <p>It's important to keep Homebrew up to date. Run:</p>
+                <pre><code>brew update</code></pre>
+
+                <h2>Installing Your First Package</h2>
+                <p>Now that Homebrew is installed, you can install packages. For example, to install Git:</p>
+                <pre><code>brew install git</code></pre>
+
+                <h2>Using Bold Brew for Package Management</h2>
+                <p>While Homebrew's command-line interface is powerful, managing packages can be more intuitive with a Terminal User Interface (TUI). That's where Bold Brew comes in:</p>
+                <pre><code>brew install Valkyrie00/homebrew-bbrew/bbrew</code></pre>
+                <p>Bold Brew provides a visual interface for managing your Homebrew packages, making it easier to:</p>
+                <ul>
+                    <li>Search for packages</li>
+                    <li>Install and remove packages</li>
+                    <li>Update packages</li>
+                    <li>Manage dependencies</li>
+                </ul>
+
+                <h2>Common Issues and Solutions</h2>
+                <h3>Permission Issues</h3>
+                <p>If you encounter permission issues, run:</p>
+                <pre><code>sudo chown -R $(whoami) /usr/local/*</code></pre>
+
+                <h3>Update Failures</h3>
+                <p>If updates fail, try:</p>
+                <pre><code>brew update-reset</code></pre>
+
+                <h2>Next Steps</h2>
+                <p>Now that you have Homebrew installed, you can:</p>
+                <ul>
+                    <li>Install development tools</li>
+                    <li>Set up your development environment</li>
+                    <li>Install productivity applications</li>
+                    <li>Manage system utilities</li>
+                </ul>
+
+                <div class="cta">
+                    <p>Want to make package management even easier? Try Bold Brew:</p>
+                    <pre><code>brew install Valkyrie00/homebrew-bbrew/bbrew</code></pre>
+                </div>
+
+                <div class="share">
+                    <h3>Share this article</h3>
+                    <div class="social-links">
+                        <a href="https://www.linkedin.com/shareArticle?mini=true&url=https://bold-brew.com/blog/install-homebrew-macos.html&title=How to Install and Configure Homebrew on macOS" target="_blank" rel="noopener noreferrer">LinkedIn</a>
+                    </div>
+                </div>
+            </div>
+
+            <footer class="mt-5">
+                <div class="tags">
+                    <span class="tag">Homebrew</span>
+                    <span class="tag">macOS</span>
+                    <span class="tag">Installation</span>
+                    <span class="tag">Development Tools</span>
+                </div>
+            </footer>
+        </article>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2024 Bold Brew | <a href="https://github.com/Valkyrie00/bold-brew" target="_blank" rel="noopener noreferrer">GitHub</a></p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" defer></script>
+</body>
+</html> 

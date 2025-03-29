@@ -1,3 +1,11 @@
 User-agent: *
 Allow: /
+Allow: /assets/
+Allow: /screenshots/
+Allow: /sitemap.xml
+
+Disallow: /admin/
+Disallow: /private/
+Disallow: /tmp/
+
 Sitemap: https://bold-brew.com/sitemap.xml

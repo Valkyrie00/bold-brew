@@ -1066,3 +1066,123 @@ article .tags {
 .share {
     display: none;
 }
+
+/* Latest Articles Section */
+#latest-posts {
+    background: linear-gradient(180deg, #0D1D2D, #0A1622);
+    padding: 5rem 0;
+    border-top: 1px solid #1E3449;
+    border-bottom: 1px solid #1E3449;
+    position: relative;
+    z-index: 1;
+}
+
+#latest-posts::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(180deg, #0D1D2D, #0A1622);
+    z-index: -1;
+}
+
+#latest-posts h2 {
+    color: #4EA1FF;
+    margin-bottom: 3rem;
+}
+
+#latest-posts .lead {
+    color: #90B8E3;
+    margin-bottom: 3rem;
+}
+
+.blog-card {
+    background: #15202B;
+    border: 1px solid #1E3449;
+    padding: 1.5rem;
+    border-radius: 8px;
+    height: 100%;
+    transition: all 0.3s ease;
+    position: relative;
+    z-index: 2;
+}
+
+.blog-card:hover {
+    transform: translateY(-2px);
+    border-color: #4EA1FF;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+}
+
+.blog-card h3 {
+    font-size: 1.4rem;
+    margin: 1rem 0;
+}
+
+.blog-card h3 a {
+    color: #4EA1FF;
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+.blog-card h3 a:hover {
+    color: #90B8E3;
+}
+
+.blog-card p {
+    color: #90B8E3;
+    margin-bottom: 1rem;
+    line-height: 1.6;
+}
+
+.blog-card .read-more {
+    color: #4EA1FF;
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.2s ease;
+}
+
+.blog-card .read-more:hover {
+    color: #90B8E3;
+}
+
+/* Breadcrumb Styles */
+.breadcrumb {
+    background: #15202B;
+    border: 1px solid #1E3449;
+    border-radius: 8px;
+    padding: 1rem 1.5rem;
+    margin-bottom: 2rem;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.breadcrumb-item {
+    display: flex;
+    align-items: center;
+    color: #90B8E3;
+    font-size: 0.9rem;
+}
+
+.breadcrumb-item:not(:last-child)::after {
+    content: '/';
+    margin-left: 0.5rem;
+    color: #4EA1FF;
+}
+
+.breadcrumb-item a {
+    color: #4EA1FF;
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+.breadcrumb-item a:hover {
+    color: #90B8E3;
+}
+
+.breadcrumb-item.active {
+    color: #90B8E3;
+}

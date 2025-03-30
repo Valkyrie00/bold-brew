@@ -101,6 +101,13 @@
 
     <%- include('partials/footer') %>
 
+    <!-- Back to top button -->
+    <button class="back-to-top" aria-label="Torna in alto">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18" />
+        </svg>
+    </button>
+
     <!-- Scripts -->
     <script>
         function copyToClipboard(button) {
@@ -129,6 +136,24 @@
                     if (window.innerWidth < 992) { // Solo su mobile
                         bsCollapse.hide();
                     }
+                });
+            });
+
+            // Gestione del pulsante back-to-top
+            const backToTop = document.querySelector('.back-to-top');
+            
+            window.addEventListener('scroll', () => {
+                if (window.scrollY > 300) {
+                    backToTop.classList.add('visible');
+                } else {
+                    backToTop.classList.remove('visible');
+                }
+            });
+
+            backToTop.addEventListener('click', () => {
+                window.scrollTo({
+                    top: 0,
+                    behavior: 'smooth'
                 });
             });
         });

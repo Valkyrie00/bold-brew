@@ -1186,3 +1186,71 @@ article .tags {
 .breadcrumb-item.active {
     color: #90B8E3;
 }
+
+.navbar .nav-link {
+    color: #ffffff !important;
+    transition: all 0.3s ease;
+    position: relative;
+    padding-bottom: 2px;
+}
+
+.navbar .nav-link::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 0;
+    height: 2px;
+    background: linear-gradient(90deg, #4EA1FF, #90B8E3);
+    transition: width 0.3s ease;
+}
+
+.navbar .nav-link:hover {
+    color: #ffffff !important;
+    transform: translateY(-1px);
+}
+
+.navbar .nav-link:hover::after {
+    width: 100%;
+}
+
+.navbar .navbar-brand {
+    color: #ffffff !important;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.navbar .navbar-brand:hover {
+    color: #ffffff !important;
+    transform: translateY(-1px);
+}
+
+.navbar .navbar-brand img {
+    transition: transform 0.3s ease;
+}
+
+.navbar .navbar-brand:hover img {
+    transform: scale(1.1);
+}
+
+/* Mobile menu alignment */
+@media (max-width: 991px) {
+    .navbar-collapse {
+        text-align: right;
+    }
+    
+    .navbar-nav {
+        align-items: flex-end;
+    }
+    
+    .nav-item {
+        width: 100%;
+        text-align: right;
+    }
+    
+    .nav-link {
+        padding-right: 1rem;
+    }
+}

@@ -1,0 +1,28 @@
+<main class="container my-5">
+    <% if (locals.breadcrumb) { %>
+        <%- include('../partials/breadcrumb') %>
+    <% } %>
+
+    <article>
+        <header class="mb-5">
+            <h1><%= title %></h1>
+            <div class="meta">
+                <span class="date"><%= date %></span>
+                <span class="author">By Valkyrie00</span>
+            </div>
+        </header>
+
+        <div class="content">
+            <%- content %>
+        </div>
+
+        <footer class="mt-5">
+            <div class="tags">
+                <span class="tag">Homebrew</span>
+                <span class="tag">macOS</span>
+                <span class="tag">Command Line</span>
+                <span class="tag">Development Tools</span>
+            </div>
+        </footer>
+    </article>
+</main>

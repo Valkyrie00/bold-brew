@@ -27,11 +27,6 @@
             "src": "assets/ico/bbrew-48.ico",
             "sizes": "48x48",
             "type": "image/x-icon"
-        },
-        {
-            "src": "assets/ico/bbrew-180.ico",
-            "sizes": "180x180",
-            "type": "image/x-icon"
         }
     ],
     "categories": ["developer tools", "utilities"],

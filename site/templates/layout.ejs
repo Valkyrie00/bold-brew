@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <meta name="description" content="<%= description %>">
+    <meta name="keywords" content="<%= keywords %>">
+    <meta name="author" content="Valkyrie00">
+    <meta name="robots" content="index, follow, max-image-preview:large">
+    <meta name="theme-color" content="#1a1a1a">
+
+    <!-- OpenGraph Tags -->
+    <meta property="og:title" content="<%= title %>">
+    <meta property="og:description" content="<%= description %>">
+    <meta property="og:image" content="https://bold-brew.com/assets/logo/bbrew-logo-rounded.png">
+    <meta property="og:url" content="<%= canonicalUrl %>">
+    <meta property="og:type" content="<%= ogType || 'website' %>">
+    <meta property="og:site_name" content="Bold Brew">
+
+    <!-- Twitter Card Tags -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="<%= title %>">
+    <meta name="twitter:description" content="<%= description %>">
+    <meta name="twitter:image" content="https://bold-brew.com/assets/logo/bbrew-logo-rounded.png">
+    <meta name="twitter:creator" content="@Valkyrie00">
+
+    <!-- Additional SEO Meta Tags -->
+    <meta name="application-name" content="Bold Brew">
+    <meta name="apple-mobile-web-app-title" content="Bold Brew">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="format-detection" content="telephone=no">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="msapplication-TileColor" content="#1a1a1a">
+    <meta name="msapplication-config" content="none">
+
+    <link rel="canonical" href="<%= canonicalUrl %>">
+    <link rel="alternate" hreflang="en" href="<%= canonicalUrl %>">
+    <link rel="alternate" hreflang="x-default" href="<%= canonicalUrl %>">
+    
+    <!-- Stylesheets -->
+    <link rel="preload" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" as="stylesheet">
+    <link rel="preload" href="/assets/css/styles.css" as="stylesheet">
+    <link rel="preload" href="/assets/bbrew-logo-nobg.png" as="image">
+    
+    <!-- Stylesheets -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/assets/css/styles.css" rel="stylesheet">
+    
+    <!-- Favicons -->
+    <link rel="icon" href="/assets/ico/bbrew-16.ico" sizes="16x16" type="image/x-icon">
+    <link rel="icon" href="/assets/ico/bbrew-24.ico" sizes="24x24" type="image/x-icon">
+    <link rel="icon" href="/assets/ico/bbrew-32.ico" sizes="32x32" type="image/x-icon">
+    <link rel="icon" href="/assets/ico/bbrew-48.ico" sizes="48x48" type="image/x-icon">
+    <link rel="manifest" href="/manifest.json">
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" defer></script>
+    
+    <!-- Schema.org Markup -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "Bold Brew (bbrew)",
+      "operatingSystem": "macOS",
+      "applicationCategory": "DeveloperApplication",
+      "description": "Bold Brew: A modern TUI interface for managing Homebrew packages on macOS. Effortlessly install, search, update, and remove packages with an elegant and intuitive interface.",
+      "url": "https://bold-brew.com",
+      "author": {
+        "@type": "Person",
+        "name": "Valkyrie00"
+      },
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      },
+      "aggregateRating": {
+        "@type": "AggregateRating",
+        "ratingValue": "4.8",
+        "ratingCount": "150"
+      }
+    }
+    </script>
+
+    <!-- Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-MM4FCW9XZM"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-MM4FCW9XZM');
+    </script>
+</head>
+<body>
+    <%- include('partials/header') %>
+
+    <%- content %>
+
+    <%- include('partials/footer') %>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        function copyToClipboard(button) {
+            const preEl = button.parentElement.querySelector('pre');
+            const codeText = preEl.textContent;
+            const cleanText = codeText.replace(/^>\s/, '');
+        
+            navigator.clipboard.writeText(cleanText).then(() => {
+                const copyText = button.querySelector('.copy-text');
+                copyText.textContent = 'Copied!';
+        
+                setTimeout(() => {
+                    copyText.textContent = 'Copy';
+                }, 2000);
+            });
+        }
+    </script>
+
+</body>
+</html> 

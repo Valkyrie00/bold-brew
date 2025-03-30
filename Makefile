@@ -36,3 +36,17 @@ run: build
 .PHONY: lint
 lint:
 	@golangci-lint run
+
+##############################
+# WEBSITE
+##############################
+.PHONY: build-site
+build-site:
+	@node build.js
+
+.PHONY: serve-site
+serve-site:
+	@npx http-server docs -p 3000
+
+.PHONY: dev-site
+dev-site: build-site serve-site

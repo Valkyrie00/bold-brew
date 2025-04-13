@@ -1,6 +1,6 @@
 ---
 title: "10 Essential Homebrew Commands You Should Know"
-date: "2024-03-29"
+date: "2025-03-29"
 description: "Master the most important Homebrew commands for macOS package management. Learn how to install, update, and manage packages efficiently."
 keywords: "Homebrew commands, brew commands, macOS package management, brew update, brew install, brew upgrade, brew search, essential commands"
 ---

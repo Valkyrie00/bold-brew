@@ -1,6 +1,6 @@
 ---
 title: "How to Install and Configure Homebrew on macOS"
-date: "2024-03-29"
+date: "2025-03-29"
 description: "Learn how to install and configure Homebrew on macOS. A step-by-step guide to setting up the most popular package manager for macOS."
 keywords: "Homebrew installation, macOS package manager, brew install, Homebrew setup, macOS development, package manager installation, brew configuration"
 ---

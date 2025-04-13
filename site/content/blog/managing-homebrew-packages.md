@@ -1,6 +1,6 @@
 ---
 title: "Managing Homebrew Packages on macOS with Bold Brew"
-date: "2024-03-29"
+date: "2025-03-29"
 description: "Learn how to efficiently manage Homebrew packages on macOS using Bold Brew. Discover best practices, tips, and tricks for package management."
 keywords: "Homebrew, package management, macOS, Bold Brew, bbrew, terminal, package manager, TUI, terminal user interface, brew packages"
 ---

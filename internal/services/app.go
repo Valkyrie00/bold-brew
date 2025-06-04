@@ -106,7 +106,7 @@ func (s *AppService) search(searchText string, scrollToTop bool) {
 	if s.showOnlyInstalled && !s.showOnlyOutdated {
 		sourceList = &[]models.Formula{}
 		for _, info := range *s.packages {
-			if len(info.Installed) > 0 && info.Installed[0].InstalledOnRequest {
+			if info.LocallyInstalled {
 				*sourceList = append(*sourceList, info)
 			}
 		}

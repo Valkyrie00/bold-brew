@@ -112,6 +112,11 @@ func (s *BrewService) loadInstalled() (err error) {
 		return err
 	}
 
+	// Mark all installed packages as locally installed
+	for i := range *s.installed {
+		(*s.installed)[i].LocallyInstalled = true
+	}
+
 	return nil
 }
 

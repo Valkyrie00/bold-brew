@@ -52,6 +52,7 @@ type Formula struct {
 	RubySourceChecksum     RubySourceChecksum `json:"ruby_source_checksum"`
 	Analytics90dRank       int
 	Analytics90dDownloads  int
+	LocallyInstalled       bool `json:"-"`
 }
 
 type Analytics struct {

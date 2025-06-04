@@ -115,7 +115,7 @@ func (s *AppService) search(searchText string, scrollToTop bool) {
 	if s.showOnlyOutdated {
 		sourceList = &[]models.Formula{}
 		for _, info := range *s.packages {
-			if info.Outdated {
+			if info.LocallyInstalled && info.Outdated {
 				*sourceList = append(*sourceList, info)
 			}
 		}
@@ -311,12 +311,12 @@ func (s *AppService) setResults(data *[]models.Formula, scrollToTop bool) {
 		}
 
 		nameCell := tview.NewTableCell(info.Name).SetSelectable(true)
-		if len(info.Installed) > 0 {
+		if info.LocallyInstalled {
 			nameCell.SetTextColor(tcell.ColorGreen)
 		}
 
 		versionCell := tview.NewTableCell(version).SetSelectable(true)
-		if len(info.Installed) > 0 && info.Outdated {
+		if info.LocallyInstalled && info.Outdated {
 			versionCell.SetTextColor(tcell.ColorOrange)
 		}
 

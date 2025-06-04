@@ -106,20 +106,19 @@ func (s *AppService) search(searchText string, scrollToTop bool) {
 	if s.showOnlyInstalled && !s.showOnlyOutdated {
 		sourceList = &[]models.Formula{}
 		for _, info := range *s.packages {
-			if len(info.Installed) > 0 && info.Installed[0].InstalledOnRequest {
+			if info.LocallyInstalled {
 				*sourceList = append(*sourceList, info)
 			}
 		}
 	}
 
 	if s.showOnlyOutdated {
-		tempList := &[]models.Formula{}
-		for _, info := range *sourceList {
-			if info.Outdated {
-				*tempList = append(*tempList, info)
+		sourceList = &[]models.Formula{}
+		for _, info := range *s.packages {
+			if info.LocallyInstalled && info.Outdated {
+				*sourceList = append(*sourceList, info)
 			}
 		}
-		sourceList = tempList
 	}
 
 	if searchText == "" {
@@ -237,13 +236,20 @@ func (s *AppService) getPackageInstallationDetails(info *models.Formula) string 
 		installedOnRequest = "Yes"
 	}
 
+	installedAsDependency := "No"
+	if info.Installed[0].InstalledAsDependency {
+		installedAsDependency = "Yes"
+	}
+
 	return fmt.Sprintf(
 		"[yellow::b]Installation Details[-]\n"+
 			"[blue]• Path:[-] %s\n"+
 			"[blue]• Installed on request:[-] %s\n"+
+			"[blue]• Installed as dependency:[-] %s\n"+
 			"[blue]• Installed version:[-] %s",
 		packagePrefix,
 		installedOnRequest,
+		installedAsDependency,
 		info.Installed[0].Version,
 	)
 }
@@ -305,12 +311,12 @@ func (s *AppService) setResults(data *[]models.Formula, scrollToTop bool) {
 		}
 
 		nameCell := tview.NewTableCell(info.Name).SetSelectable(true)
-		if len(info.Installed) > 0 {
+		if info.LocallyInstalled {
 			nameCell.SetTextColor(tcell.ColorGreen)
 		}
 
 		versionCell := tview.NewTableCell(version).SetSelectable(true)
-		if len(info.Installed) > 0 && info.Outdated {
+		if info.LocallyInstalled && info.Outdated {
 			versionCell.SetTextColor(tcell.ColorOrange)
 		}
 

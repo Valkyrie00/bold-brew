@@ -49,7 +49,14 @@ func (s *AppService) handleQuitEvent() {
 }
 
 func (s *AppService) handleFilterPackagesEvent() {
-	s.showOnlyInstalled = !s.showOnlyInstalled
+	if s.showOnlyOutdated {
+		s.showOnlyOutdated = false
+		s.showOnlyInstalled = true
+	} else {
+		s.showOnlyInstalled = !s.showOnlyInstalled
+	}
+
+	// Update the search field label
 	if s.showOnlyOutdated {
 		s.layout.GetSearch().Field().SetLabel("Search (Outdated): ")
 	} else if s.showOnlyInstalled {
@@ -62,7 +69,14 @@ func (s *AppService) handleFilterPackagesEvent() {
 }
 
 func (s *AppService) handleFilterOutdatedPackagesEvent() {
-	s.showOnlyOutdated = !s.showOnlyOutdated
+	if s.showOnlyInstalled {
+		s.showOnlyInstalled = false
+		s.showOnlyOutdated = true
+	} else {
+		s.showOnlyOutdated = !s.showOnlyOutdated
+	}
+
+	// Update the search field label
 	if s.showOnlyOutdated {
 		s.layout.GetSearch().Field().SetLabel("Search (Outdated): ")
 	} else if s.showOnlyInstalled {

@@ -3,75 +3,64 @@ package services
 import (
 	"bbrew/internal/models"
 	"encoding/json"
+	"io"
 	"net/http"
+	"os"
 	"os/exec"
+	"path/filepath"
 	"sort"
 	"strconv"
 	"strings"
-	"sync"
 )
 
-var prefixPathCache = make(map[string]string)
+const FormulaeAPIURL = "https://formulae.brew.sh/api/formula.json"
+const AnalyticsAPIURL = "https://formulae.brew.sh/api/analytics/install-on-request/90d.json"
 
 type BrewServiceInterface interface {
-	GetPrefixPath(packageName string) (path string, err error)
-	GetAllFormulae() (formulae *[]models.Formula)
-	LoadAllFormulae() (err error)
-	GetCurrentBrewVersion() (version string, err error)
+	GetPrefixPath() (path string)
+	GetFormulae() (formulae *[]models.Formula)
+	SetupData(forceDownload bool) (err error)
+	GetBrewVersion() (version string, err error)
+	UpdateHomebrew() error
 }
 
 type BrewService struct {
-	cache     sync.Mutex
+	// Package lists
 	all       *[]models.Formula
 	installed *[]models.Formula
 	remote    *[]models.Formula
 	analytics map[string]models.AnalyticsItem
+
+	brewVersion string
+	prefixPath  string
 }
 
 var NewBrewService = func() BrewServiceInterface {
 	return &BrewService{
-		cache:     sync.Mutex{},
 		all:       new([]models.Formula),
 		installed: new([]models.Formula),
 		remote:    new([]models.Formula),
 	}
 }
 
-func (s *BrewService) GetPrefixPath(packageName string) (path string, err error) {
-	s.cache.Lock()
-	defer s.cache.Unlock()
-
-	var found bool
-	if path, found = prefixPathCache[packageName]; found {
-		return path, nil
+func (s *BrewService) GetPrefixPath() (path string) {
+	if s.prefixPath != "" {
+		return s.prefixPath
 	}
 
-	cmd := exec.Command("brew", "--prefix", packageName)
+	cmd := exec.Command("brew", "--prefix")
 	output, err := cmd.Output()
 	if err != nil {
-		return "Unknown", err
+		s.prefixPath = "Unknown"
+		return
 	}
 
-	path = strings.TrimSpace(string(output))
-	prefixPathCache[packageName] = path
-	return path, nil
+	s.prefixPath = strings.TrimSpace(string(output))
+	return s.prefixPath
 }
 
-func (s *BrewService) GetAllFormulae() (formulae *[]models.Formula) {
-	return s.all
-}
-
-func (s *BrewService) LoadAllFormulae() (err error) {
-	_ = s.loadInstalled()
-	_ = s.loadRemote()
-	_ = s.loadAnalytics()
-
+func (s *BrewService) GetFormulae() (formulae *[]models.Formula) {
 	packageMap := make(map[string]models.Formula)
-
-	// Add installed packages to the map
-	for _, formula := range *s.installed {
-		packageMap[formula.Name] = formula
-	}
 
 	// Add remote packages to the map if they don't already exist
 	for _, formula := range *s.remote {
@@ -80,14 +69,20 @@ func (s *BrewService) LoadAllFormulae() (err error) {
 		}
 	}
 
+	// Add installed packages to the map
+	for _, formula := range *s.installed {
+		packageMap[formula.Name] = formula
+	}
+
 	*s.all = make([]models.Formula, 0, len(packageMap))
 	for _, formula := range packageMap {
-		// patch analytics info
+		// Merge analytics data if available
 		if a, exists := s.analytics[formula.Name]; exists && a.Number > 0 {
 			downloads, _ := strconv.Atoi(strings.ReplaceAll(a.Count, ",", ""))
 			formula.Analytics90dRank = a.Number
 			formula.Analytics90dDownloads = downloads
 		}
+
 		*s.all = append(*s.all, formula)
 	}
 
@@ -95,6 +90,22 @@ func (s *BrewService) LoadAllFormulae() (err error) {
 	sort.Slice(*s.all, func(i, j int) bool {
 		return (*s.all)[i].Name < (*s.all)[j].Name
 	})
+
+	return s.all
+}
+
+func (s *BrewService) SetupData(forceDownload bool) (err error) {
+	if err = s.loadInstalled(); err != nil {
+		return err
+	}
+
+	if err = s.loadRemote(forceDownload); err != nil {
+		return err
+	}
+
+	if err = s.loadAnalytics(); err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -120,24 +131,57 @@ func (s *BrewService) loadInstalled() (err error) {
 	return nil
 }
 
-func (s *BrewService) loadRemote() (err error) {
-	resp, err := http.Get("https://formulae.brew.sh/api/formula.json")
+func (s *BrewService) loadRemote(forceDownload bool) (err error) {
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		return err
+	}
+
+	bbrewDir := filepath.Join(homeDir, ".bbrew") // TODO: Move to config
+	formulaFile := filepath.Join(bbrewDir, "formula.json")
+	if _, err := os.Stat(bbrewDir); os.IsNotExist(err) {
+		if err := os.MkdirAll(bbrewDir, 0755); err != nil {
+			return err
+		}
+	}
+
+	// Check if we should use the cached file
+	if !forceDownload {
+		if _, err := os.Stat(formulaFile); err == nil {
+			data, err := os.ReadFile(formulaFile)
+			if err == nil {
+				*s.remote = make([]models.Formula, 0)
+				if err := json.Unmarshal(data, &s.remote); err == nil {
+					return nil
+				}
+			}
+		}
+	}
+
+	resp, err := http.Get(FormulaeAPIURL)
 	if err != nil {
 		return err
 	}
 	defer resp.Body.Close()
 
-	*s.remote = make([]models.Formula, 0)
-	err = json.NewDecoder(resp.Body).Decode(&s.remote)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return err
 	}
 
+	*s.remote = make([]models.Formula, 0)
+	err = json.Unmarshal(body, &s.remote)
+	if err != nil {
+		return err
+	}
+
+	// Cache the remote formulae data
+	_ = os.WriteFile(formulaFile, body, 0600)
 	return nil
 }
 
 func (s *BrewService) loadAnalytics() (err error) {
-	resp, err := http.Get("https://formulae.brew.sh/api/analytics/install-on-request/90d.json")
+	resp, err := http.Get(AnalyticsAPIURL)
 	if err != nil {
 		return err
 	}
@@ -155,16 +199,28 @@ func (s *BrewService) loadAnalytics() (err error) {
 	}
 
 	s.analytics = analyticsByFormula
-
 	return nil
 }
 
-func (s *BrewService) GetCurrentBrewVersion() (version string, err error) {
+func (s *BrewService) GetBrewVersion() (version string, err error) {
+	if s.brewVersion != "" {
+		return s.brewVersion, nil
+	}
+
 	cmd := exec.Command("brew", "--version")
 	output, err := cmd.Output()
 	if err != nil {
 		return "", err
 	}
 
-	return strings.TrimSpace(string(output)), nil
+	s.brewVersion = strings.TrimSpace(string(output))
+	return s.brewVersion, nil
+}
+
+func (s *BrewService) UpdateHomebrew() error {
+	cmd := exec.Command("brew", "update")
+	if err := cmd.Run(); err != nil {
+		return err
+	}
+	return nil
 }

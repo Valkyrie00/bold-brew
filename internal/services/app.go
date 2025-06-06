@@ -71,27 +71,28 @@ func (s *AppService) GetApp() *tview.Application {
 }
 
 func (s *AppService) Boot() (err error) {
-	if err = s.BrewService.LoadAllFormulae(); err != nil {
+	if s.brewVersion, err = s.BrewService.GetBrewVersion(); err != nil {
+		// This error is critical, as we need Homebrew to function
+		return fmt.Errorf("failed to get Homebrew version: %v", err)
+	}
+
+	// Download and parse Homebrew formulae data
+	if err = s.BrewService.SetupData(false); err != nil {
 		return fmt.Errorf("failed to load Homebrew formulae: %v", err)
 	}
 
-	s.packages = s.BrewService.GetAllFormulae()
+	s.packages = s.BrewService.GetFormulae()
 	*s.filteredPackages = *s.packages
-
-	if s.brewVersion, err = s.BrewService.GetCurrentBrewVersion(); err != nil {
-		return fmt.Errorf("failed to get Homebrew version: %v", err)
-	}
 
 	return nil
 }
 
 func (s *AppService) updateHomeBrew() {
 	s.layout.GetNotifier().ShowWarning("Updating Homebrew formulae...")
-	if err := s.CommandService.UpdateHomebrew(); err != nil {
+	if err := s.BrewService.UpdateHomebrew(); err != nil {
 		s.layout.GetNotifier().ShowError("Could not update Homebrew formulae")
 		return
 	}
-
 	// Clear loading message and update results
 	s.layout.GetNotifier().ShowSuccess("Homebrew formulae updated successfully")
 	s.forceRefreshResults()
@@ -230,7 +231,7 @@ func (s *AppService) getPackageInstallationDetails(info *models.Formula) string 
 		return "[yellow::b]Installation[-]\nNot installed"
 	}
 
-	packagePrefix, _ := s.BrewService.GetPrefixPath(info.Name)
+	packagePrefix := s.BrewService.GetPrefixPath() + "/" + info.Name
 	installedOnRequest := "No"
 	if info.Installed[0].InstalledOnRequest {
 		installedOnRequest = "Yes"
@@ -289,8 +290,11 @@ func (s *AppService) getAnalyticsInfo(info *models.Formula) string {
 }
 
 func (s *AppService) forceRefreshResults() {
+	_ = s.BrewService.SetupData(true)
+	s.packages = s.BrewService.GetFormulae()
+	*s.filteredPackages = *s.packages
+
 	s.app.QueueUpdateDraw(func() {
-		_ = s.BrewService.LoadAllFormulae()
 		s.search(s.layout.GetSearch().Field().GetText(), false)
 	})
 }

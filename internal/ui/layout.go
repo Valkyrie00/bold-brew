@@ -3,8 +3,14 @@ package ui
 import (
 	"bbrew/internal/ui/components"
 	"bbrew/internal/ui/theme"
+
 	"github.com/rivo/tview"
 )
+
+// BrewServiceInterface defines the required methods from the brew service
+type BrewServiceInterface interface {
+	GetPrefixPath(packageName string) (path string, err error)
+}
 
 type LayoutInterface interface {
 	Setup()
@@ -33,13 +39,13 @@ type Layout struct {
 	theme       *theme.Theme
 }
 
-func NewLayout(theme *theme.Theme) *Layout {
+func NewLayout(theme *theme.Theme, brewService BrewServiceInterface) *Layout {
 	return &Layout{
 		mainContent: tview.NewGrid(),
 		header:      components.NewHeader(theme),
 		search:      components.NewSearch(theme),
 		table:       components.NewTable(theme),
-		details:     components.NewDetails(theme),
+		details:     components.NewDetails(theme, brewService),
 		output:      components.NewOutput(theme),
 		legend:      components.NewLegend(theme),
 		notifier:    components.NewNotifier(theme),

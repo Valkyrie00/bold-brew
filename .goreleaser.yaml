@@ -19,7 +19,7 @@ archives:
 brews:
   - name: bbrew
     homepage: "https://github.com/Valkyrie00/bold-brew"
-    description: "A simple TUI tool to make your brews bold."
+    description: "A simple TUI tool to make your homebrew bold."
     url_template: "https://github.com/Valkyrie00/bold-brew/releases/download/{{ .Tag }}/{{ .ArtifactName }}"
     commit_author:
       name: goreleaserbot

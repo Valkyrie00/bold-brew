@@ -170,7 +170,7 @@ func (s *BrewService) loadRemote(forceDownload bool) (err error) {
 	}
 
 	*s.remote = make([]models.Formula, 0)
-	err = json.Unmarshal(body, &s.remote)
+	err = json.Unmarshal(body, s.remote)
 	if err != nil {
 		return err
 	}

@@ -53,11 +53,7 @@ type Formula struct {
 	Analytics90dRank       int
 	Analytics90dDownloads  int
 	LocallyInstalled       bool   `json:"-"`
-<<<<<<< HEAD
 	LocalPath              string `json:"-"` // Local installation path
-=======
-	LocalPath              string `json:"-"`
->>>>>>> 96b9878 (refactored the setContent for details formatting and remove setFormula)
 }
 
 type Analytics struct {

@@ -110,12 +110,6 @@ func (d *Details) getPackageInstallationDetails(info *models.Formula) string {
 	}
 
 	packagePrefix := info.LocalPath
-<<<<<<< HEAD
-=======
-	if packagePrefix == "" {
-		packagePrefix = "Unknown"
-	}
->>>>>>> 96b9878 (refactored the setContent for details formatting and remove setFormula)
 
 	installedOnRequest := "No"
 	if info.Installed[0].InstalledOnRequest {

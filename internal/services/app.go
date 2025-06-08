@@ -154,11 +154,14 @@ func (s *AppService) search(searchText string, scrollToTop bool) {
 }
 
 func (s *AppService) setDetails(info *models.Formula) {
+<<<<<<< HEAD
 	if info == nil {
 		s.layout.GetDetails().SetContent(nil)
 		return
 	}
 
+=======
+>>>>>>> 96b9878 (refactored the setContent for details formatting and remove setFormula)
 	s.layout.GetDetails().SetContent(info)
 }
 

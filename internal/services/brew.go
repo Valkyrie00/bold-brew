@@ -127,7 +127,13 @@ func (s *BrewService) loadInstalled() (err error) {
 	prefix := s.GetPrefixPath()
 	for i := range *s.installed {
 		(*s.installed)[i].LocallyInstalled = true
+<<<<<<< HEAD
 		(*s.installed)[i].LocalPath = filepath.Join(prefix, "Cellar", (*s.installed)[i].Name)
+=======
+		if path, err := s.GetPrefixPath((*s.installed)[i].Name); err == nil {
+			(*s.installed)[i].LocalPath = path
+		}
+>>>>>>> 96b9878 (refactored the setContent for details formatting and remove setFormula)
 	}
 
 	return nil

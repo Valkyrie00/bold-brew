@@ -123,9 +123,11 @@ func (s *BrewService) loadInstalled() (err error) {
 		return err
 	}
 
-	// Mark all installed packages as locally installed
+	// Mark all installed packages as locally installed and set LocalPath
+	prefix := s.GetPrefixPath()
 	for i := range *s.installed {
 		(*s.installed)[i].LocallyInstalled = true
+		(*s.installed)[i].LocalPath = filepath.Join(prefix, "Cellar", (*s.installed)[i].Name)
 	}
 
 	return nil

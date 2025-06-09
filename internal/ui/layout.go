@@ -3,6 +3,7 @@ package ui
 import (
 	"bbrew/internal/ui/components"
 	"bbrew/internal/ui/theme"
+
 	"github.com/rivo/tview"
 )
 

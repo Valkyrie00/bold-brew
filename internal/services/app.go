@@ -260,6 +260,7 @@ func (s *AppService) BuildApp() {
 
 	// Add key event handler and set the root view
 	s.app.SetInputCapture(s.handleKeyEventInput)
+	s.layout.GetLegend().SetText(s.GetLegendText("")) // Initialize the legend text
 	s.app.SetRoot(s.layout.Root(), true)
 	s.app.SetFocus(s.layout.GetTable().View())
 

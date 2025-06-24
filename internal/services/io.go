@@ -5,36 +5,75 @@ import (
 	"github.com/gdamore/tcell/v2"
 )
 
+type IOMap struct {
+	Key     tcell.Key
+	Rune    rune
+	Name    string
+	KeySlug string
+	Action  func()
+}
+
+var (
+	IO_SEARCH           = IOMap{Key: tcell.KeyRune, Rune: '/', KeySlug: "/", Name: "Search"}
+	IO_FILTER_INSTALLED = IOMap{Key: tcell.KeyRune, Rune: 'f', KeySlug: "f", Name: "Filter Installed"}
+	IO_FILTER_OUTDATED  = IOMap{Key: tcell.KeyRune, Rune: 'o', KeySlug: "o", Name: "Filter Outdated"}
+	IO_INSTALL          = IOMap{Key: tcell.KeyRune, Rune: 'i', KeySlug: "i", Name: "Install"}
+	IO_UPDATE           = IOMap{Key: tcell.KeyRune, Rune: 'u', KeySlug: "u", Name: "Update"}
+	IO_REMOVE           = IOMap{Key: tcell.KeyRune, Rune: 'r', KeySlug: "r", Name: "Remove"}
+	IO_UPDATE_ALL       = IOMap{Key: tcell.KeyCtrlU, Rune: 0, KeySlug: "ctrl+u", Name: "Update All"}
+	IO_BACK             = IOMap{Key: tcell.KeyEsc, Rune: 0, KeySlug: "esc", Name: "Back to Table"}
+	IO_QUIT             = IOMap{Key: tcell.KeyRune, Rune: 'q', KeySlug: "q", Name: "Quit"}
+)
+
+var IOKeys = []*IOMap{&IO_SEARCH, &IO_FILTER_INSTALLED, &IO_FILTER_OUTDATED, &IO_INSTALL, &IO_UPDATE, &IO_UPDATE_ALL, &IO_REMOVE, &IO_BACK, &IO_QUIT}
+
+func (s *AppService) GetLegendText(activeSection string) (legendText string) {
+	for i, legend := range IOKeys {
+		if legend.KeySlug == activeSection {
+			legendText += s.layout.GetLegend().GetFormattedLabel(legend.KeySlug, legend.Name, true)
+		} else {
+			legendText += s.layout.GetLegend().GetFormattedLabel(legend.KeySlug, legend.Name, false)
+		}
+
+		if i < len(IOKeys)-1 {
+			legendText += " | "
+		}
+	}
+
+	return legendText
+}
+
 func (s *AppService) handleKeyEventInput(event *tcell.EventKey) *tcell.EventKey {
 	if s.layout.GetSearch().Field().HasFocus() {
 		return event
 	}
 
-	keyActions := map[tcell.Key]func(){
-		tcell.KeyRune: func() {
-			runeActions := map[rune]func(){
-				'q': s.handleQuitEvent,
-				'u': s.handleUpdatePackageEvent,
-				'r': s.handleRemovePackageEvent,
-				'i': s.handleInstallPackageEvent,
-				'/': s.handleSearchFieldEvent,
-				'f': s.handleFilterPackagesEvent,
-				'o': s.handleFilterOutdatedPackagesEvent, // New key binding for filtering outdated packages
-			}
-			if action, exists := runeActions[event.Rune()]; exists {
-				action()
-			}
-		},
-		tcell.KeyCtrlU: s.handleUpdateAllPackagesEvent,
-		tcell.KeyEsc: func() {
-			s.app.SetRoot(s.layout.Root(), true)
-			s.app.SetFocus(s.layout.GetTable().View())
-		},
+	// Define actions for each key input
+	IO_QUIT.Action = s.handleQuitEvent
+	IO_UPDATE.Action = s.handleUpdatePackageEvent
+	IO_UPDATE_ALL.Action = s.handleUpdateAllPackagesEvent
+	IO_REMOVE.Action = s.handleRemovePackageEvent
+	IO_INSTALL.Action = s.handleInstallPackageEvent
+	IO_SEARCH.Action = s.handleSearchFieldEvent
+	IO_FILTER_INSTALLED.Action = s.handleFilterPackagesEvent
+	IO_FILTER_OUTDATED.Action = s.handleFilterOutdatedPackagesEvent
+	IO_BACK.Action = func() {
+		s.app.SetRoot(s.layout.Root(), true)
+		s.app.SetFocus(s.layout.GetTable().View())
 	}
 
-	if action, exists := keyActions[event.Key()]; exists {
-		action()
-		return nil
+	for _, input := range IOKeys {
+		if input.Key == event.Key() && input.Rune == event.Rune() { // Check Rune
+			if input.Action != nil {
+				input.Action()
+				return nil
+			}
+		} else if input.Key == event.Key() { // Check Key only
+			if input.Action != nil {
+				input.Action()
+				return nil
+			}
+		}
 	}
 
 	return event
@@ -55,6 +94,8 @@ func (s *AppService) handleFilterPackagesEvent() {
 	} else {
 		s.showOnlyInstalled = !s.showOnlyInstalled
 	}
+
+	s.layout.GetLegend().SetText(s.GetLegendText(IO_FILTER_INSTALLED.KeySlug))
 
 	// Update the search field label
 	if s.showOnlyOutdated {

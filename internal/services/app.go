@@ -21,14 +21,15 @@ var (
 
 type AppServiceInterface interface {
 	GetApp() *tview.Application
+	GetLayout() ui.LayoutInterface
 	Boot() (err error)
 	BuildApp()
 }
 
 type AppService struct {
 	app    *tview.Application
-	layout ui.LayoutInterface
 	theme  *theme.Theme
+	layout ui.LayoutInterface
 
 	packages          *[]models.Formula
 	filteredPackages  *[]models.Formula
@@ -39,35 +40,37 @@ type AppService struct {
 	BrewService       BrewServiceInterface
 	CommandService    CommandServiceInterface
 	SelfUpdateService SelfUpdateServiceInterface
+	IOService         IOServiceInterface
 }
 
 func NewAppService() AppServiceInterface {
 	app := tview.NewApplication()
 	themeService := theme.NewTheme()
-	brewService := NewBrewService()
+	layout := ui.NewLayout(themeService)
 
 	appService := &AppService{
 		app:    app,
 		theme:  themeService,
-		layout: ui.NewLayout(themeService),
+		layout: layout,
 
 		packages:          new([]models.Formula),
 		filteredPackages:  new([]models.Formula),
 		showOnlyInstalled: false,
 		showOnlyOutdated:  false,
 		brewVersion:       "-",
-
-		BrewService:       brewService,
-		CommandService:    NewCommandService(),
-		SelfUpdateService: NewSelfUpdateService(),
 	}
+
+	// Initialize services
+	appService.IOService = NewIOService(appService)
+	appService.BrewService = NewBrewService()
+	appService.CommandService = NewCommandService()
+	appService.SelfUpdateService = NewSelfUpdateService()
 
 	return appService
 }
 
-func (s *AppService) GetApp() *tview.Application {
-	return s.app
-}
+func (s *AppService) GetApp() *tview.Application    { return s.app }
+func (s *AppService) GetLayout() ui.LayoutInterface { return s.layout }
 
 func (s *AppService) Boot() (err error) {
 	if s.brewVersion, err = s.BrewService.GetBrewVersion(); err != nil {
@@ -259,8 +262,7 @@ func (s *AppService) BuildApp() {
 	s.layout.GetSearch().SetHandlers(inputDoneFunc, changedFunc)
 
 	// Add key event handler and set the root view
-	s.app.SetInputCapture(s.handleKeyEventInput)
-	s.layout.GetLegend().SetText(s.GetLegendText("")) // Initialize the legend text
+	s.app.SetInputCapture(s.IOService.HandleKeyEventInput)
 	s.app.SetRoot(s.layout.Root(), true)
 	s.app.SetFocus(s.layout.GetTable().View())
 

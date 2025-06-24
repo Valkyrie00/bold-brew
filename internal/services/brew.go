@@ -62,14 +62,14 @@ func (s *BrewService) GetPrefixPath() (path string) {
 func (s *BrewService) GetFormulae() (formulae *[]models.Formula) {
 	packageMap := make(map[string]models.Formula)
 
-	// Add remote packages to the map if they don't already exist
+	// Add remote Packages to the map if they don't already exist
 	for _, formula := range *s.remote {
 		if _, exists := packageMap[formula.Name]; !exists {
 			packageMap[formula.Name] = formula
 		}
 	}
 
-	// Add installed packages to the map
+	// Add installed Packages to the map
 	for _, formula := range *s.installed {
 		packageMap[formula.Name] = formula
 	}
@@ -123,7 +123,7 @@ func (s *BrewService) loadInstalled() (err error) {
 		return err
 	}
 
-	// Mark all installed packages as locally installed and set LocalPath
+	// Mark all installed Packages as locally installed and set LocalPath
 	prefix := s.GetPrefixPath()
 	for i := range *s.installed {
 		(*s.installed)[i].LocallyInstalled = true

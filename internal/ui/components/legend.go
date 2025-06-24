@@ -29,7 +29,7 @@ func (l *Legend) View() *tview.TextView {
 
 func (l *Legend) GetFormattedLabel(keySlug, label string, active bool) string {
 	if active {
-		return fmt.Sprintf("[yellow::b] %s [-]", tview.Escape(fmt.Sprintf("[%s] %s", keySlug, label)))
+		return fmt.Sprintf("[yellow::b]%s[-]", tview.Escape(fmt.Sprintf("[%s] %s", keySlug, label)))
 	}
 
 	return tview.Escape(fmt.Sprintf("[%s] %s", keySlug, label))

@@ -86,7 +86,7 @@ func (s *CommandService) executeCommand(
 			if err != nil {
 				if err != io.EOF {
 					app.QueueUpdateDraw(func() {
-						outputView.Write([]byte(fmt.Sprintf("\nError: %v\n", err)))
+						fmt.Fprintf(outputView, "\nError: %v\n", err)
 					})
 				}
 				break
@@ -112,7 +112,7 @@ func (s *CommandService) executeCommand(
 			if err != nil {
 				if err != io.EOF {
 					app.QueueUpdateDraw(func() {
-						outputView.Write([]byte(fmt.Sprintf("\nError: %v\n", err)))
+						fmt.Fprintf(outputView, "\nError: %v\n", err)
 					})
 				}
 				break

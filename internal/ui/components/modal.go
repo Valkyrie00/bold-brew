@@ -33,9 +33,10 @@ func (m *Modal) Build(text string, confirmFunc func(), cancelFunc func()) *tview
 		SetText(text).
 		AddButtons([]string{"Confirm", "Cancel"}).
 		SetDoneFunc(func(buttonIndex int, _ string) {
-			if buttonIndex == 0 {
+			switch buttonIndex {
+			case 0:
 				confirmFunc()
-			} else if buttonIndex == 1 {
+			case 1:
 				cancelFunc()
 			}
 		})

@@ -34,7 +34,7 @@ type Layout struct {
 	theme       *theme.Theme
 }
 
-func NewLayout(theme *theme.Theme) *Layout {
+func NewLayout(theme *theme.Theme) LayoutInterface {
 	return &Layout{
 		mainContent: tview.NewGrid(),
 		header:      components.NewHeader(theme),

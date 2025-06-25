@@ -21,14 +21,15 @@ var (
 
 type AppServiceInterface interface {
 	GetApp() *tview.Application
+	GetLayout() ui.LayoutInterface
 	Boot() (err error)
 	BuildApp()
 }
 
 type AppService struct {
 	app    *tview.Application
-	layout ui.LayoutInterface
 	theme  *theme.Theme
+	layout ui.LayoutInterface
 
 	packages          *[]models.Formula
 	filteredPackages  *[]models.Formula
@@ -37,37 +38,37 @@ type AppService struct {
 	brewVersion       string
 
 	BrewService       BrewServiceInterface
-	CommandService    CommandServiceInterface
 	SelfUpdateService SelfUpdateServiceInterface
+	IOService         IOServiceInterface
 }
 
 func NewAppService() AppServiceInterface {
 	app := tview.NewApplication()
 	themeService := theme.NewTheme()
-	brewService := NewBrewService()
+	layout := ui.NewLayout(themeService)
 
-	appService := &AppService{
+	s := &AppService{
 		app:    app,
 		theme:  themeService,
-		layout: ui.NewLayout(themeService),
+		layout: layout,
 
 		packages:          new([]models.Formula),
 		filteredPackages:  new([]models.Formula),
 		showOnlyInstalled: false,
 		showOnlyOutdated:  false,
 		brewVersion:       "-",
-
-		BrewService:       brewService,
-		CommandService:    NewCommandService(),
-		SelfUpdateService: NewSelfUpdateService(),
 	}
 
-	return appService
+	// Initialize services
+	s.IOService = NewIOService(s)
+	s.BrewService = NewBrewService()
+	s.SelfUpdateService = NewSelfUpdateService()
+
+	return s
 }
 
-func (s *AppService) GetApp() *tview.Application {
-	return s.app
-}
+func (s *AppService) GetApp() *tview.Application    { return s.app }
+func (s *AppService) GetLayout() ui.LayoutInterface { return s.layout }
 
 func (s *AppService) Boot() (err error) {
 	if s.brewVersion, err = s.BrewService.GetBrewVersion(); err != nil {
@@ -259,7 +260,7 @@ func (s *AppService) BuildApp() {
 	s.layout.GetSearch().SetHandlers(inputDoneFunc, changedFunc)
 
 	// Add key event handler and set the root view
-	s.app.SetInputCapture(s.handleKeyEventInput)
+	s.app.SetInputCapture(s.IOService.HandleKeyEventInput)
 	s.app.SetRoot(s.layout.Root(), true)
 	s.app.SetFocus(s.layout.GetTable().View())
 

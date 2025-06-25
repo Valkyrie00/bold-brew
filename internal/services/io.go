@@ -7,15 +7,15 @@ import (
 )
 
 var (
-	IO_SEARCH           = IOAction{Key: tcell.KeyRune, Rune: '/', KeySlug: "/", Name: "Search"}
-	IO_FILTER_INSTALLED = IOAction{Key: tcell.KeyRune, Rune: 'f', KeySlug: "f", Name: "Filter Installed"}
-	IO_FILTER_OUTDATED  = IOAction{Key: tcell.KeyRune, Rune: 'o', KeySlug: "o", Name: "Filter Outdated"}
-	IO_INSTALL          = IOAction{Key: tcell.KeyRune, Rune: 'i', KeySlug: "i", Name: "Install"}
-	IO_UPDATE           = IOAction{Key: tcell.KeyRune, Rune: 'u', KeySlug: "u", Name: "Update"}
-	IO_REMOVE           = IOAction{Key: tcell.KeyRune, Rune: 'r', KeySlug: "r", Name: "Remove"}
-	IO_UPDATE_ALL       = IOAction{Key: tcell.KeyCtrlU, Rune: 0, KeySlug: "ctrl+u", Name: "Update All"}
-	IO_BACK             = IOAction{Key: tcell.KeyEsc, Rune: 0, KeySlug: "esc", Name: "Back to Table"}
-	IO_QUIT             = IOAction{Key: tcell.KeyRune, Rune: 'q', KeySlug: "q", Name: "Quit"}
+	IoSearch          = IOAction{Key: tcell.KeyRune, Rune: '/', KeySlug: "/", Name: "Search"}
+	IoFilterInstalled = IOAction{Key: tcell.KeyRune, Rune: 'f', KeySlug: "f", Name: "Filter Installed"}
+	IoFilterOutdated  = IOAction{Key: tcell.KeyRune, Rune: 'o', KeySlug: "o", Name: "Filter Outdated"}
+	IoInstall         = IOAction{Key: tcell.KeyRune, Rune: 'i', KeySlug: "i", Name: "Install"}
+	IoUpdate          = IOAction{Key: tcell.KeyRune, Rune: 'u', KeySlug: "u", Name: "Update"}
+	IoRemove          = IOAction{Key: tcell.KeyRune, Rune: 'r', KeySlug: "r", Name: "Remove"}
+	IoUpdateAll       = IOAction{Key: tcell.KeyCtrlU, Rune: 0, KeySlug: "ctrl+u", Name: "Update All"}
+	IoBack            = IOAction{Key: tcell.KeyEsc, Rune: 0, KeySlug: "esc", Name: "Back to Table"}
+	IoQuit            = IOAction{Key: tcell.KeyRune, Rune: 'q', KeySlug: "q", Name: "Quit"}
 )
 
 type IOAction struct {
@@ -50,16 +50,16 @@ var NewIOService = func(appService *AppService) IOServiceInterface {
 	}
 
 	// Define actions for each key input
-	s.keyActions = []*IOAction{&IO_SEARCH, &IO_FILTER_INSTALLED, &IO_FILTER_OUTDATED, &IO_INSTALL, &IO_UPDATE, &IO_UPDATE_ALL, &IO_REMOVE, &IO_BACK, &IO_QUIT}
-	IO_QUIT.SetAction(s.handleQuitEvent)
-	IO_UPDATE.SetAction(s.handleUpdatePackageEvent)
-	IO_UPDATE_ALL.SetAction(s.handleUpdateAllPackagesEvent)
-	IO_REMOVE.SetAction(s.handleRemovePackageEvent)
-	IO_INSTALL.SetAction(s.handleInstallPackageEvent)
-	IO_SEARCH.SetAction(s.handleSearchFieldEvent)
-	IO_FILTER_INSTALLED.SetAction(s.handleFilterPackagesEvent)
-	IO_FILTER_OUTDATED.SetAction(s.handleFilterOutdatedPackagesEvent)
-	IO_BACK.SetAction(s.handleBack)
+	s.keyActions = []*IOAction{&IoSearch, &IoFilterInstalled, &IoFilterOutdated, &IoInstall, &IoUpdate, &IoUpdateAll, &IoRemove, &IoBack, &IoQuit}
+	IoQuit.SetAction(s.handleQuitEvent)
+	IoUpdate.SetAction(s.handleUpdatePackageEvent)
+	IoUpdateAll.SetAction(s.handleUpdateAllPackagesEvent)
+	IoRemove.SetAction(s.handleRemovePackageEvent)
+	IoInstall.SetAction(s.handleInstallPackageEvent)
+	IoSearch.SetAction(s.handleSearchFieldEvent)
+	IoFilterInstalled.SetAction(s.handleFilterPackagesEvent)
+	IoFilterOutdated.SetAction(s.handleFilterOutdatedPackagesEvent)
+	IoBack.SetAction(s.handleBack)
 
 	// Convert IOMap to a map for easier access
 	s.legendEntries = make([]struct{ KeySlug, Name string }, len(s.keyActions))
@@ -120,10 +120,10 @@ func (s *IOService) handleFilterPackagesEvent() {
 	// Update the search field label
 	if s.appService.showOnlyOutdated {
 		s.layout.GetSearch().Field().SetLabel("Search (Outdated): ")
-		s.layout.GetLegend().SetLegend(s.legendEntries, IO_FILTER_OUTDATED.KeySlug)
+		s.layout.GetLegend().SetLegend(s.legendEntries, IoFilterOutdated.KeySlug)
 	} else if s.appService.showOnlyInstalled {
 		s.layout.GetSearch().Field().SetLabel("Search (Installed): ")
-		s.layout.GetLegend().SetLegend(s.legendEntries, IO_FILTER_INSTALLED.KeySlug)
+		s.layout.GetLegend().SetLegend(s.legendEntries, IoFilterInstalled.KeySlug)
 	} else {
 		s.layout.GetSearch().Field().SetLabel("Search (All): ")
 	}
@@ -144,10 +144,10 @@ func (s *IOService) handleFilterOutdatedPackagesEvent() {
 	// Update the search field label
 	if s.appService.showOnlyOutdated {
 		s.layout.GetSearch().Field().SetLabel("Search (Outdated): ")
-		s.layout.GetLegend().SetLegend(s.legendEntries, IO_FILTER_OUTDATED.KeySlug)
+		s.layout.GetLegend().SetLegend(s.legendEntries, IoFilterOutdated.KeySlug)
 	} else if s.appService.showOnlyInstalled {
 		s.layout.GetSearch().Field().SetLabel("Search (Installed): ")
-		s.layout.GetLegend().SetLegend(s.legendEntries, IO_FILTER_INSTALLED.KeySlug)
+		s.layout.GetLegend().SetLegend(s.legendEntries, IoFilterInstalled.KeySlug)
 	} else {
 		s.layout.GetSearch().Field().SetLabel("Search (All): ")
 	}

@@ -1,27 +1,30 @@
+version: "2"
 run:
-  timeout: 5m
+  concurrency: 4
+  go: "1.20"
   tests: false
   allow-parallel-runners: true
-  go: '1.20'
-  concurrency: 4
-
 output:
   formats:
-    - format: colored-line-number
+    text:
       path: stdout
-  print-issued-lines: true
-  print-linter-name: true
-  sort-results: true
-  show-stats: true
-
+      print-linter-name: true
+      print-issued-lines: true
 linters:
-    disable-all: true
-    enable:
-      - gosimple
-      - govet
-      - staticcheck
-      - unused
-      - gofmt
-      - gosec
-      - stylecheck
-      - revive
+  default: none
+  enable:
+    - gosec
+    - govet
+    - revive
+    - staticcheck
+    - unused
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+formatters:
+  enable:
+    - gofmt

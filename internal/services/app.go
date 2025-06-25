@@ -38,7 +38,6 @@ type AppService struct {
 	brewVersion       string
 
 	BrewService       BrewServiceInterface
-	CommandService    CommandServiceInterface
 	SelfUpdateService SelfUpdateServiceInterface
 	IOService         IOServiceInterface
 }
@@ -48,7 +47,7 @@ func NewAppService() AppServiceInterface {
 	themeService := theme.NewTheme()
 	layout := ui.NewLayout(themeService)
 
-	appService := &AppService{
+	s := &AppService{
 		app:    app,
 		theme:  themeService,
 		layout: layout,
@@ -61,12 +60,11 @@ func NewAppService() AppServiceInterface {
 	}
 
 	// Initialize services
-	appService.IOService = NewIOService(appService)
-	appService.BrewService = NewBrewService()
-	appService.CommandService = NewCommandService()
-	appService.SelfUpdateService = NewSelfUpdateService()
+	s.IOService = NewIOService(s)
+	s.BrewService = NewBrewService()
+	s.SelfUpdateService = NewSelfUpdateService()
 
-	return appService
+	return s
 }
 
 func (s *AppService) GetApp() *tview.Application    { return s.app }

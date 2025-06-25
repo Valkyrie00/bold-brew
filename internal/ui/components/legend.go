@@ -35,6 +35,23 @@ func (l *Legend) GetFormattedLabel(keySlug, label string, active bool) string {
 	return tview.Escape(fmt.Sprintf("[%s] %s", keySlug, label))
 }
 
+func (l *Legend) SetLegend(legend []struct{ KeySlug, Name string }, activeKey string) {
+	var formattedLegend string
+	for i, item := range legend {
+		active := false
+		if item.KeySlug == activeKey {
+			active = true
+		}
+
+		formattedLegend += l.GetFormattedLabel(item.KeySlug, item.Name, active)
+		if i < len(legend)-1 {
+			formattedLegend += " | "
+		}
+	}
+
+	l.SetText(formattedLegend)
+}
+
 func (l *Legend) SetText(text string) {
 	l.view.SetText(text)
 }

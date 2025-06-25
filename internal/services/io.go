@@ -6,7 +6,19 @@ import (
 	"github.com/gdamore/tcell/v2"
 )
 
-type IOKey struct {
+var (
+	IO_SEARCH           = IOAction{Key: tcell.KeyRune, Rune: '/', KeySlug: "/", Name: "Search"}
+	IO_FILTER_INSTALLED = IOAction{Key: tcell.KeyRune, Rune: 'f', KeySlug: "f", Name: "Filter Installed"}
+	IO_FILTER_OUTDATED  = IOAction{Key: tcell.KeyRune, Rune: 'o', KeySlug: "o", Name: "Filter Outdated"}
+	IO_INSTALL          = IOAction{Key: tcell.KeyRune, Rune: 'i', KeySlug: "i", Name: "Install"}
+	IO_UPDATE           = IOAction{Key: tcell.KeyRune, Rune: 'u', KeySlug: "u", Name: "Update"}
+	IO_REMOVE           = IOAction{Key: tcell.KeyRune, Rune: 'r', KeySlug: "r", Name: "Remove"}
+	IO_UPDATE_ALL       = IOAction{Key: tcell.KeyCtrlU, Rune: 0, KeySlug: "ctrl+u", Name: "Update All"}
+	IO_BACK             = IOAction{Key: tcell.KeyEsc, Rune: 0, KeySlug: "esc", Name: "Back to Table"}
+	IO_QUIT             = IOAction{Key: tcell.KeyRune, Rune: 'q', KeySlug: "q", Name: "Quit"}
+)
+
+type IOAction struct {
 	Key     tcell.Key
 	Rune    rune
 	Name    string
@@ -14,17 +26,9 @@ type IOKey struct {
 	Action  func()
 }
 
-var (
-	IO_SEARCH           = IOKey{Key: tcell.KeyRune, Rune: '/', KeySlug: "/", Name: "Search"}
-	IO_FILTER_INSTALLED = IOKey{Key: tcell.KeyRune, Rune: 'f', KeySlug: "f", Name: "Filter Installed"}
-	IO_FILTER_OUTDATED  = IOKey{Key: tcell.KeyRune, Rune: 'o', KeySlug: "o", Name: "Filter Outdated"}
-	IO_INSTALL          = IOKey{Key: tcell.KeyRune, Rune: 'i', KeySlug: "i", Name: "Install"}
-	IO_UPDATE           = IOKey{Key: tcell.KeyRune, Rune: 'u', KeySlug: "u", Name: "Update"}
-	IO_REMOVE           = IOKey{Key: tcell.KeyRune, Rune: 'r', KeySlug: "r", Name: "Remove"}
-	IO_UPDATE_ALL       = IOKey{Key: tcell.KeyCtrlU, Rune: 0, KeySlug: "ctrl+u", Name: "Update All"}
-	IO_BACK             = IOKey{Key: tcell.KeyEsc, Rune: 0, KeySlug: "esc", Name: "Back to Table"}
-	IO_QUIT             = IOKey{Key: tcell.KeyRune, Rune: 'q', KeySlug: "q", Name: "Quit"}
-)
+func (k *IOAction) SetAction(action func()) {
+	k.Action = action
+}
 
 type IOServiceInterface interface {
 	HandleKeyEventInput(event *tcell.EventKey) *tcell.EventKey
@@ -34,48 +38,38 @@ type IOService struct {
 	appService     *AppService
 	layout         ui.LayoutInterface
 	commandService CommandServiceInterface
-	IOMap          []*IOKey
+	keyActions     []*IOAction
+	legendEntries  []struct{ KeySlug, Name string }
 }
 
 var NewIOService = func(appService *AppService) IOServiceInterface {
 	s := &IOService{
 		appService:     appService,
 		layout:         appService.GetLayout(),
-		commandService: appService.CommandService,
+		commandService: NewCommandService(),
 	}
 
 	// Define actions for each key input
-	s.IOMap = []*IOKey{&IO_SEARCH, &IO_FILTER_INSTALLED, &IO_FILTER_OUTDATED, &IO_INSTALL, &IO_UPDATE, &IO_UPDATE_ALL, &IO_REMOVE, &IO_BACK, &IO_QUIT}
-	IO_QUIT.Action = s.handleQuitEvent
-	IO_UPDATE.Action = s.handleUpdatePackageEvent
-	IO_UPDATE_ALL.Action = s.handleUpdateAllPackagesEvent
-	IO_REMOVE.Action = s.handleRemovePackageEvent
-	IO_INSTALL.Action = s.handleInstallPackageEvent
-	IO_SEARCH.Action = s.handleSearchFieldEvent
-	IO_FILTER_INSTALLED.Action = s.handleFilterPackagesEvent
-	IO_FILTER_OUTDATED.Action = s.handleFilterOutdatedPackagesEvent
-	IO_BACK.Action = s.handleBack
+	s.keyActions = []*IOAction{&IO_SEARCH, &IO_FILTER_INSTALLED, &IO_FILTER_OUTDATED, &IO_INSTALL, &IO_UPDATE, &IO_UPDATE_ALL, &IO_REMOVE, &IO_BACK, &IO_QUIT}
+	IO_QUIT.SetAction(s.handleQuitEvent)
+	IO_UPDATE.SetAction(s.handleUpdatePackageEvent)
+	IO_UPDATE_ALL.SetAction(s.handleUpdateAllPackagesEvent)
+	IO_REMOVE.SetAction(s.handleRemovePackageEvent)
+	IO_INSTALL.SetAction(s.handleInstallPackageEvent)
+	IO_SEARCH.SetAction(s.handleSearchFieldEvent)
+	IO_FILTER_INSTALLED.SetAction(s.handleFilterPackagesEvent)
+	IO_FILTER_OUTDATED.SetAction(s.handleFilterOutdatedPackagesEvent)
+	IO_BACK.SetAction(s.handleBack)
 
-	// Initialize the legend text
-	s.layout.GetLegend().SetText(s.getLegendText(""))
-
-	return s
-}
-
-func (s *IOService) getLegendText(activeSection string) (legendText string) {
-	for i, legend := range s.IOMap {
-		if legend.KeySlug == activeSection {
-			legendText += s.layout.GetLegend().GetFormattedLabel(legend.KeySlug, legend.Name, true)
-		} else {
-			legendText += s.layout.GetLegend().GetFormattedLabel(legend.KeySlug, legend.Name, false)
-		}
-
-		if i < len(s.IOMap)-1 {
-			legendText += " | "
-		}
+	// Convert IOMap to a map for easier access
+	s.legendEntries = make([]struct{ KeySlug, Name string }, len(s.keyActions))
+	for i, input := range s.keyActions {
+		s.legendEntries[i] = struct{ KeySlug, Name string }{KeySlug: input.KeySlug, Name: input.Name}
 	}
 
-	return legendText
+	// Initialize the legend text
+	s.layout.GetLegend().SetLegend(s.legendEntries, "")
+	return s
 }
 
 func (s *IOService) HandleKeyEventInput(event *tcell.EventKey) *tcell.EventKey {
@@ -83,7 +77,7 @@ func (s *IOService) HandleKeyEventInput(event *tcell.EventKey) *tcell.EventKey {
 		return event
 	}
 
-	for _, input := range s.IOMap {
+	for _, input := range s.keyActions {
 		if event.Modifiers() == tcell.ModNone && input.Key == event.Key() && input.Rune == event.Rune() { // Check Rune
 			if input.Action != nil {
 				input.Action()
@@ -101,13 +95,11 @@ func (s *IOService) HandleKeyEventInput(event *tcell.EventKey) *tcell.EventKey {
 }
 
 func (s *IOService) handleBack() {
-	s.layout.GetLegend().SetText(s.getLegendText(""))
 	s.appService.GetApp().SetRoot(s.layout.Root(), true)
 	s.appService.GetApp().SetFocus(s.layout.GetTable().View())
 }
 
 func (s *IOService) handleSearchFieldEvent() {
-	s.layout.GetLegend().SetText(s.getLegendText(IO_SEARCH.KeySlug))
 	s.appService.GetApp().SetFocus(s.layout.GetSearch().Field())
 }
 
@@ -116,7 +108,7 @@ func (s *IOService) handleQuitEvent() {
 }
 
 func (s *IOService) handleFilterPackagesEvent() {
-	s.layout.GetLegend().SetText(s.getLegendText(""))
+	s.layout.GetLegend().SetLegend(s.legendEntries, "")
 
 	if s.appService.showOnlyOutdated {
 		s.appService.showOnlyOutdated = false
@@ -128,10 +120,10 @@ func (s *IOService) handleFilterPackagesEvent() {
 	// Update the search field label
 	if s.appService.showOnlyOutdated {
 		s.layout.GetSearch().Field().SetLabel("Search (Outdated): ")
-		s.layout.GetLegend().SetText(s.getLegendText(IO_FILTER_OUTDATED.KeySlug))
+		s.layout.GetLegend().SetLegend(s.legendEntries, IO_FILTER_OUTDATED.KeySlug)
 	} else if s.appService.showOnlyInstalled {
 		s.layout.GetSearch().Field().SetLabel("Search (Installed): ")
-		s.layout.GetLegend().SetText(s.getLegendText(IO_FILTER_INSTALLED.KeySlug))
+		s.layout.GetLegend().SetLegend(s.legendEntries, IO_FILTER_INSTALLED.KeySlug)
 	} else {
 		s.layout.GetSearch().Field().SetLabel("Search (All): ")
 	}
@@ -140,7 +132,7 @@ func (s *IOService) handleFilterPackagesEvent() {
 }
 
 func (s *IOService) handleFilterOutdatedPackagesEvent() {
-	s.layout.GetLegend().SetText(s.getLegendText(""))
+	s.layout.GetLegend().SetLegend(s.legendEntries, "")
 
 	if s.appService.showOnlyInstalled {
 		s.appService.showOnlyInstalled = false
@@ -152,10 +144,10 @@ func (s *IOService) handleFilterOutdatedPackagesEvent() {
 	// Update the search field label
 	if s.appService.showOnlyOutdated {
 		s.layout.GetSearch().Field().SetLabel("Search (Outdated): ")
-		s.layout.GetLegend().SetText(s.getLegendText(IO_FILTER_OUTDATED.KeySlug))
+		s.layout.GetLegend().SetLegend(s.legendEntries, IO_FILTER_OUTDATED.KeySlug)
 	} else if s.appService.showOnlyInstalled {
 		s.layout.GetSearch().Field().SetLabel("Search (Installed): ")
-		s.layout.GetLegend().SetText(s.getLegendText(IO_FILTER_INSTALLED.KeySlug))
+		s.layout.GetLegend().SetLegend(s.legendEntries, IO_FILTER_INSTALLED.KeySlug)
 	} else {
 		s.layout.GetSearch().Field().SetLabel("Search (All): ")
 	}
@@ -184,7 +176,7 @@ func (s *IOService) handleInstallPackageEvent() {
 				s.layout.GetOutput().Clear()
 				go func() {
 					s.layout.GetNotifier().ShowWarning(fmt.Sprintf("Installing %s...", info.Name))
-					if err := s.appService.CommandService.InstallPackage(info, s.appService.app, s.layout.GetOutput().View()); err != nil {
+					if err := s.commandService.InstallPackage(info, s.appService.app, s.layout.GetOutput().View()); err != nil {
 						s.layout.GetNotifier().ShowError(fmt.Sprintf("Failed to install %s", info.Name))
 						return
 					}
@@ -206,7 +198,7 @@ func (s *IOService) handleRemovePackageEvent() {
 				s.layout.GetOutput().Clear()
 				go func() {
 					s.layout.GetNotifier().ShowWarning(fmt.Sprintf("Removing %s...", info.Name))
-					if err := s.appService.CommandService.RemovePackage(info, s.appService.app, s.layout.GetOutput().View()); err != nil {
+					if err := s.commandService.RemovePackage(info, s.appService.app, s.layout.GetOutput().View()); err != nil {
 						s.layout.GetNotifier().ShowError(fmt.Sprintf("Failed to remove %s", info.Name))
 						return
 					}
@@ -228,7 +220,7 @@ func (s *IOService) handleUpdatePackageEvent() {
 				s.layout.GetOutput().Clear()
 				go func() {
 					s.layout.GetNotifier().ShowWarning(fmt.Sprintf("Updating %s...", info.Name))
-					if err := s.appService.CommandService.UpdatePackage(info, s.appService.app, s.layout.GetOutput().View()); err != nil {
+					if err := s.commandService.UpdatePackage(info, s.appService.app, s.layout.GetOutput().View()); err != nil {
 						s.layout.GetNotifier().ShowError(fmt.Sprintf("Failed to update %s", info.Name))
 						return
 					}
@@ -245,7 +237,7 @@ func (s *IOService) handleUpdateAllPackagesEvent() {
 		s.layout.GetOutput().Clear()
 		go func() {
 			s.layout.GetNotifier().ShowWarning("Updating all Packages...")
-			if err := s.appService.CommandService.UpdateAllPackages(s.appService.app, s.layout.GetOutput().View()); err != nil {
+			if err := s.commandService.UpdateAllPackages(s.appService.app, s.layout.GetOutput().View()); err != nil {
 				s.layout.GetNotifier().ShowError("Failed to update all Packages")
 				return
 			}

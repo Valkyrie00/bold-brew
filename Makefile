@@ -33,8 +33,8 @@ run: build
 ##############################
 # QUALITY
 ##############################
-.PHONY: lint
-lint:
+.PHONY: quality
+quality:
 	@golangci-lint run
 
 ##############################

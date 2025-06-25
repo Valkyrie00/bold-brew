@@ -5,6 +5,7 @@ builds:
     main: ./cmd/bbrew
     goos:
       - darwin
+      - linux
     goarch:
       - amd64
       - arm64

@@ -4,6 +4,7 @@ import (
 	"bbrew/internal/ui/theme"
 	"fmt"
 	"github.com/rivo/tview"
+	"strings"
 )
 
 type Legend struct {
@@ -36,20 +37,16 @@ func (l *Legend) GetFormattedLabel(keySlug, label string, active bool) string {
 }
 
 func (l *Legend) SetLegend(legend []struct{ KeySlug, Name string }, activeKey string) {
-	var formattedLegend string
+	var builder strings.Builder
 	for i, item := range legend {
-		active := false
-		if item.KeySlug == activeKey {
-			active = true
-		}
-
-		formattedLegend += l.GetFormattedLabel(item.KeySlug, item.Name, active)
+		active := item.KeySlug == activeKey
+		builder.WriteString(l.GetFormattedLabel(item.KeySlug, item.Name, active))
 		if i < len(legend)-1 {
-			formattedLegend += " | "
+			builder.WriteString(" | ")
 		}
 	}
 
-	l.SetText(formattedLegend)
+	l.SetText(builder.String())
 }
 
 func (l *Legend) SetText(text string) {

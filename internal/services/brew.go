@@ -62,14 +62,14 @@ func (s *BrewService) GetPrefixPath() (path string) {
 func (s *BrewService) GetFormulae() (formulae *[]models.Formula) {
 	packageMap := make(map[string]models.Formula)
 
-	// Add remote Packages to the map if they don't already exist
+	// Add remote packages to the map if they don't already exist
 	for _, formula := range *s.remote {
 		if _, exists := packageMap[formula.Name]; !exists {
 			packageMap[formula.Name] = formula
 		}
 	}
 
-	// Add installed Packages to the map
+	// Add installed packages to the map
 	for _, formula := range *s.installed {
 		packageMap[formula.Name] = formula
 	}

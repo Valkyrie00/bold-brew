@@ -37,12 +37,12 @@ type AppService struct {
 	showOnlyOutdated  bool
 	brewVersion       string
 
-	BrewService       BrewServiceInterface
-	SelfUpdateService SelfUpdateServiceInterface
-	IOService         IOServiceInterface
+	brewService       BrewServiceInterface
+	selfUpdateService SelfUpdateServiceInterface
+	ioService         IOServiceInterface
 }
 
-func NewAppService() AppServiceInterface {
+var NewAppService = func() AppServiceInterface {
 	app := tview.NewApplication()
 	themeService := theme.NewTheme()
 	layout := ui.NewLayout(themeService)
@@ -60,9 +60,9 @@ func NewAppService() AppServiceInterface {
 	}
 
 	// Initialize services
-	s.IOService = NewIOService(s)
-	s.BrewService = NewBrewService()
-	s.SelfUpdateService = NewSelfUpdateService()
+	s.ioService = NewIOService(s)
+	s.brewService = NewBrewService()
+	s.selfUpdateService = NewSelfUpdateService()
 
 	return s
 }
@@ -70,26 +70,28 @@ func NewAppService() AppServiceInterface {
 func (s *AppService) GetApp() *tview.Application    { return s.app }
 func (s *AppService) GetLayout() ui.LayoutInterface { return s.layout }
 
+// Boot initializes the application by setting up Homebrew and loading formulae data.
 func (s *AppService) Boot() (err error) {
-	if s.brewVersion, err = s.BrewService.GetBrewVersion(); err != nil {
+	if s.brewVersion, err = s.brewService.GetBrewVersion(); err != nil {
 		// This error is critical, as we need Homebrew to function
 		return fmt.Errorf("failed to get Homebrew version: %v", err)
 	}
 
 	// Download and parse Homebrew formulae data
-	if err = s.BrewService.SetupData(false); err != nil {
+	if err = s.brewService.SetupData(false); err != nil {
 		return fmt.Errorf("failed to load Homebrew formulae: %v", err)
 	}
 
-	s.packages = s.BrewService.GetFormulae()
+	// Initialize packages and filteredPackages
+	s.packages = s.brewService.GetFormulae()
 	*s.filteredPackages = *s.packages
-
 	return nil
 }
 
+// updateHomeBrew updates the Homebrew formulae and refreshes the results in the UI.
 func (s *AppService) updateHomeBrew() {
 	s.layout.GetNotifier().ShowWarning("Updating Homebrew formulae...")
-	if err := s.BrewService.UpdateHomebrew(); err != nil {
+	if err := s.brewService.UpdateHomebrew(); err != nil {
 		s.layout.GetNotifier().ShowError("Could not update Homebrew formulae")
 		return
 	}
@@ -98,6 +100,7 @@ func (s *AppService) updateHomeBrew() {
 	s.forceRefreshResults()
 }
 
+// search filters the packages based on the search text and the current filter state.
 func (s *AppService) search(searchText string, scrollToTop bool) {
 	var filteredList []models.Formula
 	uniquePackages := make(map[string]bool)
@@ -154,18 +157,10 @@ func (s *AppService) search(searchText string, scrollToTop bool) {
 	s.setResults(s.filteredPackages, scrollToTop)
 }
 
-func (s *AppService) setDetails(info *models.Formula) {
-	if info == nil {
-		s.layout.GetDetails().SetContent(nil)
-		return
-	}
-
-	s.layout.GetDetails().SetContent(info)
-}
-
+// forceRefreshResults forces a refresh of the Homebrew formulae data and updates the results in the UI.
 func (s *AppService) forceRefreshResults() {
-	_ = s.BrewService.SetupData(true)
-	s.packages = s.BrewService.GetFormulae()
+	_ = s.brewService.SetupData(true)
+	s.packages = s.brewService.GetFormulae()
 	*s.filteredPackages = *s.packages
 
 	s.app.QueueUpdateDraw(func() {
@@ -173,6 +168,7 @@ func (s *AppService) forceRefreshResults() {
 	})
 }
 
+// setResults updates the results table with the provided data and optionally scrolls to the top.
 func (s *AppService) setResults(data *[]models.Formula, scrollToTop bool) {
 	s.layout.GetTable().Clear()
 	s.layout.GetTable().SetTableHeaders("Name", "Version", "Description", "↓ (90d)")
@@ -211,7 +207,7 @@ func (s *AppService) setResults(data *[]models.Formula, scrollToTop bool) {
 		if scrollToTop {
 			s.layout.GetTable().View().Select(1, 0)
 			s.layout.GetTable().View().ScrollToBeginning()
-			s.setDetails(&(*data)[0])
+			s.layout.GetDetails().SetContent(&(*data)[0])
 		}
 
 		// Update the filter counter
@@ -219,20 +215,24 @@ func (s *AppService) setResults(data *[]models.Formula, scrollToTop bool) {
 		return
 	}
 
-	s.setDetails(nil)
+	s.layout.GetDetails().SetContent(nil) // Clear details if no results
 }
 
+// BuildApp builds the application layout, sets up event handlers, and initializes the UI components.
 func (s *AppService) BuildApp() {
 	// Build the layout
 	s.layout.Setup()
 	s.layout.GetHeader().Update(AppName, AppVersion, s.brewVersion)
 
 	// Evaluate if there is a new version available
+	// This is done in a goroutine to avoid blocking the UI during startup
+	// In the future, this could be replaced with a more sophisticated update check, and update
+	// the user if a new version is available instantly instead of waiting for the next app start
 	go func() {
 		ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 		defer cancel()
 
-		if latestVersion, err := s.SelfUpdateService.CheckForUpdates(ctx); err == nil && latestVersion != AppVersion {
+		if latestVersion, err := s.selfUpdateService.CheckForUpdates(ctx); err == nil && latestVersion != AppVersion {
 			s.app.QueueUpdateDraw(func() {
 				AppVersion = fmt.Sprintf("%s ([orange]New Version Available: %s[-])", AppVersion, latestVersion)
 				s.layout.GetHeader().Update(AppName, AppVersion, s.brewVersion)
@@ -240,27 +240,29 @@ func (s *AppService) BuildApp() {
 		}
 	}()
 
-	// Result table section
+	// Table handler to update the details view when a table row is selected
 	tableSelectionChangedFunc := func(row, _ int) {
 		if row > 0 && row-1 < len(*s.filteredPackages) {
-			s.setDetails(&(*s.filteredPackages)[row-1])
+			s.layout.GetDetails().SetContent(&(*s.filteredPackages)[row-1])
 		}
 	}
 	s.layout.GetTable().View().SetSelectionChangedFunc(tableSelectionChangedFunc)
 
-	// Search field section
+	// Search input handlers
 	inputDoneFunc := func(key tcell.Key) {
 		if key == tcell.KeyEnter || key == tcell.KeyEscape {
-			s.app.SetFocus(s.layout.GetTable().View())
+			s.app.SetFocus(s.layout.GetTable().View()) // Set focus back to the table on Enter or Escape
 		}
 	}
-	changedFunc := func(text string) {
-		s.search(text, true)
+	changedFunc := func(text string) { // Each time the search input changes
+		s.search(text, true) // Perform search and scroll to top
 	}
 	s.layout.GetSearch().SetHandlers(inputDoneFunc, changedFunc)
 
-	// Add key event handler and set the root view
-	s.app.SetInputCapture(s.IOService.HandleKeyEventInput)
+	// Add key event handler
+	s.app.SetInputCapture(s.ioService.HandleKeyEventInput)
+
+	// Set the root of the application to the layout's root and focus on the table view
 	s.app.SetRoot(s.layout.Root(), true)
 	s.app.SetFocus(s.layout.GetTable().View())
 

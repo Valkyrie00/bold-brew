@@ -43,6 +43,7 @@ var NewBrewService = func() BrewServiceInterface {
 	}
 }
 
+// GetPrefixPath retrieves the Homebrew prefix path, caching it for future calls.
 func (s *BrewService) GetPrefixPath() (path string) {
 	if s.prefixPath != "" {
 		return s.prefixPath
@@ -59,17 +60,18 @@ func (s *BrewService) GetPrefixPath() (path string) {
 	return s.prefixPath
 }
 
+// GetFormulae retrieves all formulae, merging remote and installed packages,
 func (s *BrewService) GetFormulae() (formulae *[]models.Formula) {
 	packageMap := make(map[string]models.Formula)
 
-	// Add remote packages to the map if they don't already exist
+	// Add REMOTE packages to the map if they don't already exist
 	for _, formula := range *s.remote {
 		if _, exists := packageMap[formula.Name]; !exists {
 			packageMap[formula.Name] = formula
 		}
 	}
 
-	// Add installed packages to the map
+	// Add INSTALLED packages to the map
 	for _, formula := range *s.installed {
 		packageMap[formula.Name] = formula
 	}
@@ -94,6 +96,7 @@ func (s *BrewService) GetFormulae() (formulae *[]models.Formula) {
 	return s.all
 }
 
+// SetupData initializes the BrewService by loading installed packages, remote formulae, and analytics data.
 func (s *BrewService) SetupData(forceDownload bool) (err error) {
 	if err = s.loadInstalled(); err != nil {
 		return err
@@ -110,6 +113,7 @@ func (s *BrewService) SetupData(forceDownload bool) (err error) {
 	return nil
 }
 
+// loadInstalled retrieves the list of installed Homebrew formulae and updates their local paths.
 func (s *BrewService) loadInstalled() (err error) {
 	cmd := exec.Command("brew", "info", "--json=v1", "--installed")
 	output, err := cmd.Output()
@@ -133,6 +137,7 @@ func (s *BrewService) loadInstalled() (err error) {
 	return nil
 }
 
+// loadRemote retrieves the list of remote Homebrew formulae from the API and caches them locally.
 func (s *BrewService) loadRemote(forceDownload bool) (err error) {
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
@@ -182,6 +187,7 @@ func (s *BrewService) loadRemote(forceDownload bool) (err error) {
 	return nil
 }
 
+// loadAnalytics retrieves the analytics data for Homebrew formulae from the API.
 func (s *BrewService) loadAnalytics() (err error) {
 	resp, err := http.Get(AnalyticsAPIURL)
 	if err != nil {
@@ -204,6 +210,7 @@ func (s *BrewService) loadAnalytics() (err error) {
 	return nil
 }
 
+// GetBrewVersion retrieves the version of Homebrew installed on the system, caching it for future calls.
 func (s *BrewService) GetBrewVersion() (version string, err error) {
 	if s.brewVersion != "" {
 		return s.brewVersion, nil
@@ -219,6 +226,7 @@ func (s *BrewService) GetBrewVersion() (version string, err error) {
 	return s.brewVersion, nil
 }
 
+// UpdateHomebrew updates the Homebrew package manager by running the `brew update` command.
 func (s *BrewService) UpdateHomebrew() error {
 	cmd := exec.Command("brew", "update")
 	if err := cmd.Run(); err != nil {

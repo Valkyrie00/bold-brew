@@ -23,6 +23,7 @@ var NewSelfUpdateService = func() SelfUpdateServiceInterface {
 	return &SelfUpdateService{}
 }
 
+// CheckForUpdates checks for the latest version of the Bold Brew package using Homebrew.
 func (s *SelfUpdateService) CheckForUpdates(ctx context.Context) (string, error) {
 	cmd := exec.CommandContext(ctx, "brew", "info", "--json=v1", "valkyrie00/bbrew/bbrew")
 	output, err := cmd.CombinedOutput()

@@ -60,7 +60,7 @@ func (s *CommandService) executeCommand(
 	var wg sync.WaitGroup
 	wg.Add(3)
 
-	// Wait for the command to finish
+	// Goroutine to wait for the command to finish
 	go func() {
 		defer wg.Done()
 		defer stdoutWriter.Close()

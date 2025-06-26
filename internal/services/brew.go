@@ -3,6 +3,8 @@ package services
 import (
 	"bbrew/internal/models"
 	"encoding/json"
+	"fmt"
+	"github.com/rivo/tview"
 	"io"
 	"net/http"
 	"os"
@@ -11,6 +13,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 )
 
 const FormulaeAPIURL = "https://formulae.brew.sh/api/formula.json"
@@ -21,9 +24,16 @@ type BrewServiceInterface interface {
 	GetFormulae() (formulae *[]models.Formula)
 	SetupData(forceDownload bool) (err error)
 	GetBrewVersion() (version string, err error)
+
 	UpdateHomebrew() error
+	UpdateAllPackages(app *tview.Application, outputView *tview.TextView) error
+	UpdatePackage(info models.Formula, app *tview.Application, outputView *tview.TextView) error
+	RemovePackage(info models.Formula, app *tview.Application, outputView *tview.TextView) error
+	InstallPackage(info models.Formula, app *tview.Application, outputView *tview.TextView) error
 }
 
+// BrewService provides methods to interact with Homebrew, including
+// retrieving formulae, managing packages, and handling analytics.
 type BrewService struct {
 	// Package lists
 	all       *[]models.Formula
@@ -35,6 +45,7 @@ type BrewService struct {
 	prefixPath  string
 }
 
+// NewBrewService creates a new instance of BrewService with initialized package lists.
 var NewBrewService = func() BrewServiceInterface {
 	return &BrewService{
 		all:       new([]models.Formula),
@@ -232,5 +243,108 @@ func (s *BrewService) UpdateHomebrew() error {
 	if err := cmd.Run(); err != nil {
 		return err
 	}
+	return nil
+}
+
+func (s *BrewService) UpdateAllPackages(app *tview.Application, outputView *tview.TextView) error {
+	cmd := exec.Command("brew", "upgrade") // #nosec G204
+	return s.executeCommand(app, cmd, outputView)
+}
+
+func (s *BrewService) UpdatePackage(info models.Formula, app *tview.Application, outputView *tview.TextView) error {
+	cmd := exec.Command("brew", "upgrade", info.Name) // #nosec G204
+	return s.executeCommand(app, cmd, outputView)
+}
+
+func (s *BrewService) RemovePackage(info models.Formula, app *tview.Application, outputView *tview.TextView) error {
+	cmd := exec.Command("brew", "remove", info.Name) // #nosec G204
+	return s.executeCommand(app, cmd, outputView)
+}
+
+func (s *BrewService) InstallPackage(info models.Formula, app *tview.Application, outputView *tview.TextView) error {
+	cmd := exec.Command("brew", "install", info.Name) // #nosec G204
+	return s.executeCommand(app, cmd, outputView)
+}
+
+// executeCommand runs a command and captures its output, updating the provided TextView in the application.
+func (s *BrewService) executeCommand(
+	app *tview.Application,
+	cmd *exec.Cmd,
+	outputView *tview.TextView,
+) error {
+	stdoutPipe, stdoutWriter := io.Pipe()
+	stderrPipe, stderrWriter := io.Pipe()
+	cmd.Stdout = stdoutWriter
+	cmd.Stderr = stderrWriter
+
+	if err := cmd.Start(); err != nil {
+		return err
+	}
+
+	// Add a WaitGroup to wait for all goroutines to finish
+	var wg sync.WaitGroup
+	wg.Add(3)
+
+	// Goroutine to wait for the command to finish
+	go func() {
+		defer wg.Done()
+		defer stdoutWriter.Close()
+		defer stderrWriter.Close()
+		cmd.Wait()
+	}()
+
+	// Stdout handler
+	go func() {
+		defer wg.Done()
+		defer stdoutPipe.Close()
+		buf := make([]byte, 1024)
+		for {
+			n, err := stdoutPipe.Read(buf)
+			if n > 0 {
+				output := make([]byte, n)
+				copy(output, buf[:n])
+				app.QueueUpdateDraw(func() {
+					outputView.Write(output)
+					outputView.ScrollToEnd()
+				})
+			}
+			if err != nil {
+				if err != io.EOF {
+					app.QueueUpdateDraw(func() {
+						fmt.Fprintf(outputView, "\nError: %v\n", err)
+					})
+				}
+				break
+			}
+		}
+	}()
+
+	// Stderr handler
+	go func() {
+		defer wg.Done()
+		defer stderrPipe.Close()
+		buf := make([]byte, 1024)
+		for {
+			n, err := stderrPipe.Read(buf)
+			if n > 0 {
+				output := make([]byte, n)
+				copy(output, buf[:n])
+				app.QueueUpdateDraw(func() {
+					outputView.Write(output)
+					outputView.ScrollToEnd()
+				})
+			}
+			if err != nil {
+				if err != io.EOF {
+					app.QueueUpdateDraw(func() {
+						fmt.Fprintf(outputView, "\nError: %v\n", err)
+					})
+				}
+				break
+			}
+		}
+	}()
+
+	wg.Wait()
 	return nil
 }

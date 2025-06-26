@@ -26,6 +26,7 @@ type AppServiceInterface interface {
 	BuildApp()
 }
 
+// AppService manages the application state, Homebrew integration, and UI components.
 type AppService struct {
 	app    *tview.Application
 	theme  *theme.Theme
@@ -42,6 +43,7 @@ type AppService struct {
 	ioService         IOServiceInterface
 }
 
+// NewAppService creates a new instance of AppService with initialized components.
 var NewAppService = func() AppServiceInterface {
 	app := tview.NewApplication()
 	themeService := theme.NewTheme()

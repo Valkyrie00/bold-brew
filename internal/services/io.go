@@ -33,11 +33,11 @@ type IOServiceInterface interface {
 
 // IOService implements the IOServiceInterface and handles key events for the application.
 type IOService struct {
-	appService     *AppService
-	layout         ui.LayoutInterface
-	commandService CommandServiceInterface
-	keyActions     []*IOAction
-	legendEntries  []struct{ KeySlug, Name string }
+	appService    *AppService
+	layout        ui.LayoutInterface
+	brewService   BrewServiceInterface
+	keyActions    []*IOAction
+	legendEntries []struct{ KeySlug, Name string }
 
 	// Actions for each key input
 	ActionSearch          *IOAction
@@ -53,9 +53,9 @@ type IOService struct {
 
 var NewIOService = func(appService *AppService) IOServiceInterface {
 	s := &IOService{
-		appService:     appService,
-		layout:         appService.GetLayout(),
-		commandService: NewCommandService(),
+		appService:  appService,
+		layout:      appService.GetLayout(),
+		brewService: NewBrewService(),
 	}
 
 	// Initialize key actions with their respective keys, runes, and names.
@@ -213,7 +213,7 @@ func (s *IOService) handleInstallPackageEvent() {
 				s.layout.GetOutput().Clear()
 				go func() {
 					s.layout.GetNotifier().ShowWarning(fmt.Sprintf("Installing %s...", info.Name))
-					if err := s.commandService.InstallPackage(info, s.appService.app, s.layout.GetOutput().View()); err != nil {
+					if err := s.brewService.InstallPackage(info, s.appService.app, s.layout.GetOutput().View()); err != nil {
 						s.layout.GetNotifier().ShowError(fmt.Sprintf("Failed to install %s", info.Name))
 						return
 					}
@@ -236,7 +236,7 @@ func (s *IOService) handleRemovePackageEvent() {
 				s.layout.GetOutput().Clear()
 				go func() {
 					s.layout.GetNotifier().ShowWarning(fmt.Sprintf("Removing %s...", info.Name))
-					if err := s.commandService.RemovePackage(info, s.appService.app, s.layout.GetOutput().View()); err != nil {
+					if err := s.brewService.RemovePackage(info, s.appService.app, s.layout.GetOutput().View()); err != nil {
 						s.layout.GetNotifier().ShowError(fmt.Sprintf("Failed to remove %s", info.Name))
 						return
 					}
@@ -259,7 +259,7 @@ func (s *IOService) handleUpdatePackageEvent() {
 				s.layout.GetOutput().Clear()
 				go func() {
 					s.layout.GetNotifier().ShowWarning(fmt.Sprintf("Updating %s...", info.Name))
-					if err := s.commandService.UpdatePackage(info, s.appService.app, s.layout.GetOutput().View()); err != nil {
+					if err := s.brewService.UpdatePackage(info, s.appService.app, s.layout.GetOutput().View()); err != nil {
 						s.layout.GetNotifier().ShowError(fmt.Sprintf("Failed to update %s", info.Name))
 						return
 					}
@@ -277,7 +277,7 @@ func (s *IOService) handleUpdateAllPackagesEvent() {
 		s.layout.GetOutput().Clear()
 		go func() {
 			s.layout.GetNotifier().ShowWarning("Updating all Packages...")
-			if err := s.commandService.UpdateAllPackages(s.appService.app, s.layout.GetOutput().View()); err != nil {
+			if err := s.brewService.UpdateAllPackages(s.appService.app, s.layout.GetOutput().View()); err != nil {
 				s.layout.GetNotifier().ShowError("Failed to update all Packages")
 				return
 			}

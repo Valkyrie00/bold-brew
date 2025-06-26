@@ -8,34 +8,44 @@ endif
 %:@
 
 ##############################
+# DOCKER
+##############################
+.PHONY: docker-build-image
+docker-build-image:
+	@docker build -t $(DOCKER_IMAGE_NAME) .
+
+docker-build-force-recreate:
+	@docker build --no-cache -t $(DOCKER_IMAGE_NAME) .
+
+##############################
 # RELEASE
 ##############################
 .PHONY: release-snapshot
-release-snapshot:
-	goreleaser release --snapshot --clean
+release-snapshot: docker-build-image # Builds the project in snapshot mode and releases it [This is used for testing releases]
+	@docker run --rm -v $(PWD):/app $(DOCKER_IMAGE_NAME) goreleaser release --snapshot --clean
 
-.PHONY: build-snapshot
-build-snapshot:
-	goreleaser build --snapshot --clean
+.PHONY: build-snapshot # Builds the project in snapshot mode [This is used for testing releases]
+build-snapshot: docker-build-image
+	@docker run --rm -v $(PWD):/app $(DOCKER_IMAGE_NAME) goreleaser build --snapshot --clean
 
 ##############################
 # BUILD
 ##############################
 .PHONY: build
-build:
-	 @docker run --rm -v $(PWD):/app -w /app golang:$(BUILD_GOVERSION) \
-	  env GOOS=$(BUILD_GOOS) GOARCH=$(BUILD_GOARCH) go build -o $(APP_NAME) ./cmd/$(APP_NAME)
+build: docker-build-image
+	@docker run --rm -v $(PWD):/app $(DOCKER_IMAGE_NAME) \
+	 env GOOS=$(BUILD_GOOS) GOARCH=$(BUILD_GOARCH) go build -o $(APP_NAME) ./cmd/$(APP_NAME)
 
 .PHONY: run
 run: build
 	./$(APP_NAME)
 
 ##############################
-# QUALITY
+# HELPER
 ##############################
 .PHONY: quality
-quality:
-	@golangci-lint run
+quality: docker-build-image
+	@docker run --rm -v $(PWD):/app $(DOCKER_IMAGE_NAME) golangci-lint run
 
 ##############################
 # WEBSITE

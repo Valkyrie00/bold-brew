@@ -6,18 +6,14 @@ import (
 	"github.com/gdamore/tcell/v2"
 )
 
-var (
-	IoSearch          = IOAction{Key: tcell.KeyRune, Rune: '/', KeySlug: "/", Name: "Search"}
-	IoFilterInstalled = IOAction{Key: tcell.KeyRune, Rune: 'f', KeySlug: "f", Name: "Filter Installed"}
-	IoFilterOutdated  = IOAction{Key: tcell.KeyRune, Rune: 'o', KeySlug: "o", Name: "Filter Outdated"}
-	IoInstall         = IOAction{Key: tcell.KeyRune, Rune: 'i', KeySlug: "i", Name: "Install"}
-	IoUpdate          = IOAction{Key: tcell.KeyRune, Rune: 'u', KeySlug: "u", Name: "Update"}
-	IoRemove          = IOAction{Key: tcell.KeyRune, Rune: 'r', KeySlug: "r", Name: "Remove"}
-	IoUpdateAll       = IOAction{Key: tcell.KeyCtrlU, Rune: 0, KeySlug: "ctrl+u", Name: "Update All"}
-	IoBack            = IOAction{Key: tcell.KeyEsc, Rune: 0, KeySlug: "esc", Name: "Back to Table"}
-	IoQuit            = IOAction{Key: tcell.KeyRune, Rune: 'q', KeySlug: "q", Name: "Quit"}
+type FilterType int
+
+const (
+	FilterInstalled FilterType = iota
+	FilterOutdated
 )
 
+// IOAction represents an input/output action that can be triggered by a key event.
 type IOAction struct {
 	Key     tcell.Key
 	Rune    rune
@@ -30,48 +26,85 @@ func (k *IOAction) SetAction(action func()) {
 	k.Action = action
 }
 
+// IOServiceInterface defines the interface for handling input/output actions in the application.
 type IOServiceInterface interface {
 	HandleKeyEventInput(event *tcell.EventKey) *tcell.EventKey
 }
 
+// IOService implements the IOServiceInterface and handles key events for the application.
 type IOService struct {
-	appService     *AppService
-	layout         ui.LayoutInterface
-	commandService CommandServiceInterface
-	keyActions     []*IOAction
-	legendEntries  []struct{ KeySlug, Name string }
+	appService    *AppService
+	layout        ui.LayoutInterface
+	brewService   BrewServiceInterface
+	keyActions    []*IOAction
+	legendEntries []struct{ KeySlug, Name string }
+
+	// Actions for each key input
+	ActionSearch          *IOAction
+	ActionFilterInstalled *IOAction
+	ActionFilterOutdated  *IOAction
+	ActionInstall         *IOAction
+	ActionUpdate          *IOAction
+	ActionRemove          *IOAction
+	ActionUpdateAll       *IOAction
+	ActionBack            *IOAction
+	ActionQuit            *IOAction
 }
 
 var NewIOService = func(appService *AppService) IOServiceInterface {
 	s := &IOService{
-		appService:     appService,
-		layout:         appService.GetLayout(),
-		commandService: NewCommandService(),
+		appService:  appService,
+		layout:      appService.GetLayout(),
+		brewService: NewBrewService(),
 	}
 
-	// Define actions for each key input
-	s.keyActions = []*IOAction{&IoSearch, &IoFilterInstalled, &IoFilterOutdated, &IoInstall, &IoUpdate, &IoUpdateAll, &IoRemove, &IoBack, &IoQuit}
-	IoQuit.SetAction(s.handleQuitEvent)
-	IoUpdate.SetAction(s.handleUpdatePackageEvent)
-	IoUpdateAll.SetAction(s.handleUpdateAllPackagesEvent)
-	IoRemove.SetAction(s.handleRemovePackageEvent)
-	IoInstall.SetAction(s.handleInstallPackageEvent)
-	IoSearch.SetAction(s.handleSearchFieldEvent)
-	IoFilterInstalled.SetAction(s.handleFilterPackagesEvent)
-	IoFilterOutdated.SetAction(s.handleFilterOutdatedPackagesEvent)
-	IoBack.SetAction(s.handleBack)
+	// Initialize key actions with their respective keys, runes, and names.
+	s.ActionSearch = &IOAction{Key: tcell.KeyRune, Rune: '/', KeySlug: "/", Name: "Search"}
+	s.ActionFilterInstalled = &IOAction{Key: tcell.KeyRune, Rune: 'f', KeySlug: "f", Name: "Filter Installed"}
+	s.ActionFilterOutdated = &IOAction{Key: tcell.KeyRune, Rune: 'o', KeySlug: "o", Name: "Filter Outdated"}
+	s.ActionInstall = &IOAction{Key: tcell.KeyRune, Rune: 'i', KeySlug: "i", Name: "Install"}
+	s.ActionUpdate = &IOAction{Key: tcell.KeyRune, Rune: 'u', KeySlug: "u", Name: "Update"}
+	s.ActionRemove = &IOAction{Key: tcell.KeyRune, Rune: 'r', KeySlug: "r", Name: "Remove"}
+	s.ActionUpdateAll = &IOAction{Key: tcell.KeyCtrlU, Rune: 0, KeySlug: "ctrl+u", Name: "Update All"}
+	s.ActionBack = &IOAction{Key: tcell.KeyEsc, Rune: 0, KeySlug: "esc", Name: "Back to Table"}
+	s.ActionQuit = &IOAction{Key: tcell.KeyRune, Rune: 'q', KeySlug: "q", Name: "Quit"}
 
-	// Convert IOMap to a map for easier access
+	// Define actions for each key input,
+	s.ActionSearch.SetAction(s.handleSearchFieldEvent)
+	s.ActionFilterInstalled.SetAction(s.handleFilterPackagesEvent)
+	s.ActionFilterOutdated.SetAction(s.handleFilterOutdatedPackagesEvent)
+	s.ActionInstall.SetAction(s.handleInstallPackageEvent)
+	s.ActionUpdate.SetAction(s.handleUpdatePackageEvent)
+	s.ActionRemove.SetAction(s.handleRemovePackageEvent)
+	s.ActionUpdateAll.SetAction(s.handleUpdateAllPackagesEvent)
+	s.ActionBack.SetAction(s.handleBack)
+	s.ActionQuit.SetAction(s.handleQuitEvent)
+
+	// Add all actions to the keyActions slice
+	s.keyActions = []*IOAction{
+		s.ActionSearch,
+		s.ActionFilterInstalled,
+		s.ActionFilterOutdated,
+		s.ActionInstall,
+		s.ActionUpdate,
+		s.ActionRemove,
+		s.ActionUpdateAll,
+		s.ActionBack,
+		s.ActionQuit,
+	}
+
+	// Convert keyActions to legend entries
 	s.legendEntries = make([]struct{ KeySlug, Name string }, len(s.keyActions))
 	for i, input := range s.keyActions {
 		s.legendEntries[i] = struct{ KeySlug, Name string }{KeySlug: input.KeySlug, Name: input.Name}
 	}
 
-	// Initialize the legend text
+	// Initialize the legend text, literally the UI component that displays the key bindings
 	s.layout.GetLegend().SetLegend(s.legendEntries, "")
 	return s
 }
 
+// HandleKeyEventInput processes key events and triggers the corresponding actions.
 func (s *IOService) HandleKeyEventInput(event *tcell.EventKey) *tcell.EventKey {
 	if s.layout.GetSearch().Field().HasFocus() {
 		return event
@@ -94,77 +127,81 @@ func (s *IOService) HandleKeyEventInput(event *tcell.EventKey) *tcell.EventKey {
 	return event
 }
 
+// handleBack is called when the user presses the back key (Esc).
 func (s *IOService) handleBack() {
 	s.appService.GetApp().SetRoot(s.layout.Root(), true)
 	s.appService.GetApp().SetFocus(s.layout.GetTable().View())
 }
 
+// handleSearchFieldEvent is called when the user presses the search key (/).
 func (s *IOService) handleSearchFieldEvent() {
 	s.appService.GetApp().SetFocus(s.layout.GetSearch().Field())
 }
 
+// handleQuitEvent is called when the user presses the quit key (q).
 func (s *IOService) handleQuitEvent() {
 	s.appService.GetApp().Stop()
 }
 
+// handleFilterEvent toggles the filter for installed or outdated packages based on the provided filter type.
+func (s *IOService) handleFilterEvent(filterType FilterType) {
+	s.layout.GetLegend().SetLegend(s.legendEntries, "")
+
+	switch filterType {
+	case FilterInstalled:
+		if s.appService.showOnlyOutdated {
+			s.appService.showOnlyOutdated = false
+			s.appService.showOnlyInstalled = true
+		} else {
+			s.appService.showOnlyInstalled = !s.appService.showOnlyInstalled
+		}
+	case FilterOutdated:
+		if s.appService.showOnlyInstalled {
+			s.appService.showOnlyInstalled = false
+			s.appService.showOnlyOutdated = true
+		} else {
+			s.appService.showOnlyOutdated = !s.appService.showOnlyOutdated
+		}
+	}
+
+	// Update the search field label and legend based on the current filter state
+	if s.appService.showOnlyOutdated {
+		s.layout.GetSearch().Field().SetLabel("Search (Outdated): ")
+		s.layout.GetLegend().SetLegend(s.legendEntries, s.ActionFilterOutdated.KeySlug)
+	} else if s.appService.showOnlyInstalled {
+		s.layout.GetSearch().Field().SetLabel("Search (Installed): ")
+		s.layout.GetLegend().SetLegend(s.legendEntries, s.ActionFilterInstalled.KeySlug)
+	} else {
+		s.layout.GetSearch().Field().SetLabel("Search (All): ")
+	}
+
+	s.appService.search(s.layout.GetSearch().Field().GetText(), true)
+}
+
+// handleFilterPackagesEvent toggles the filter for installed packages
 func (s *IOService) handleFilterPackagesEvent() {
-	s.layout.GetLegend().SetLegend(s.legendEntries, "")
-
-	if s.appService.showOnlyOutdated {
-		s.appService.showOnlyOutdated = false
-		s.appService.showOnlyInstalled = true
-	} else {
-		s.appService.showOnlyInstalled = !s.appService.showOnlyInstalled
-	}
-
-	// Update the search field label
-	if s.appService.showOnlyOutdated {
-		s.layout.GetSearch().Field().SetLabel("Search (Outdated): ")
-		s.layout.GetLegend().SetLegend(s.legendEntries, IoFilterOutdated.KeySlug)
-	} else if s.appService.showOnlyInstalled {
-		s.layout.GetSearch().Field().SetLabel("Search (Installed): ")
-		s.layout.GetLegend().SetLegend(s.legendEntries, IoFilterInstalled.KeySlug)
-	} else {
-		s.layout.GetSearch().Field().SetLabel("Search (All): ")
-	}
-
-	s.appService.search(s.layout.GetSearch().Field().GetText(), true)
+	s.handleFilterEvent(FilterInstalled)
 }
 
+// handleFilterOutdatedPackagesEvent toggles the filter for outdated packages
 func (s *IOService) handleFilterOutdatedPackagesEvent() {
-	s.layout.GetLegend().SetLegend(s.legendEntries, "")
-
-	if s.appService.showOnlyInstalled {
-		s.appService.showOnlyInstalled = false
-		s.appService.showOnlyOutdated = true
-	} else {
-		s.appService.showOnlyOutdated = !s.appService.showOnlyOutdated
-	}
-
-	// Update the search field label
-	if s.appService.showOnlyOutdated {
-		s.layout.GetSearch().Field().SetLabel("Search (Outdated): ")
-		s.layout.GetLegend().SetLegend(s.legendEntries, IoFilterOutdated.KeySlug)
-	} else if s.appService.showOnlyInstalled {
-		s.layout.GetSearch().Field().SetLabel("Search (Installed): ")
-		s.layout.GetLegend().SetLegend(s.legendEntries, IoFilterInstalled.KeySlug)
-	} else {
-		s.layout.GetSearch().Field().SetLabel("Search (All): ")
-	}
-
-	s.appService.search(s.layout.GetSearch().Field().GetText(), true)
+	s.handleFilterEvent(FilterOutdated)
 }
 
+// showModal displays a modal dialog with the specified text and confirmation/cancellation actions.
+// This is used for actions like installing, removing, or updating packages, invoking user confirmation.
 func (s *IOService) showModal(text string, confirmFunc func(), cancelFunc func()) {
 	modal := s.layout.GetModal().Build(text, confirmFunc, cancelFunc)
 	s.appService.app.SetRoot(modal, true)
 }
 
+// closeModal closes the currently displayed modal dialog and returns focus to the main table view.
 func (s *IOService) closeModal() {
 	s.appService.app.SetRoot(s.layout.Root(), true)
 	s.appService.app.SetFocus(s.layout.GetTable().View())
 }
 
+// handleInstallPackageEvent is called when the user presses the installation key (i).
 func (s *IOService) handleInstallPackageEvent() {
 	row, _ := s.layout.GetTable().View().GetSelection()
 	if row > 0 {
@@ -176,7 +213,7 @@ func (s *IOService) handleInstallPackageEvent() {
 				s.layout.GetOutput().Clear()
 				go func() {
 					s.layout.GetNotifier().ShowWarning(fmt.Sprintf("Installing %s...", info.Name))
-					if err := s.commandService.InstallPackage(info, s.appService.app, s.layout.GetOutput().View()); err != nil {
+					if err := s.brewService.InstallPackage(info, s.appService.app, s.layout.GetOutput().View()); err != nil {
 						s.layout.GetNotifier().ShowError(fmt.Sprintf("Failed to install %s", info.Name))
 						return
 					}
@@ -187,6 +224,7 @@ func (s *IOService) handleInstallPackageEvent() {
 	}
 }
 
+// handleRemovePackageEvent is called when the user presses the removal key (r).
 func (s *IOService) handleRemovePackageEvent() {
 	row, _ := s.layout.GetTable().View().GetSelection()
 	if row > 0 {
@@ -198,7 +236,7 @@ func (s *IOService) handleRemovePackageEvent() {
 				s.layout.GetOutput().Clear()
 				go func() {
 					s.layout.GetNotifier().ShowWarning(fmt.Sprintf("Removing %s...", info.Name))
-					if err := s.commandService.RemovePackage(info, s.appService.app, s.layout.GetOutput().View()); err != nil {
+					if err := s.brewService.RemovePackage(info, s.appService.app, s.layout.GetOutput().View()); err != nil {
 						s.layout.GetNotifier().ShowError(fmt.Sprintf("Failed to remove %s", info.Name))
 						return
 					}
@@ -209,6 +247,7 @@ func (s *IOService) handleRemovePackageEvent() {
 	}
 }
 
+// handleUpdatePackageEvent is called when the user presses the update key (u).
 func (s *IOService) handleUpdatePackageEvent() {
 	row, _ := s.layout.GetTable().View().GetSelection()
 	if row > 0 {
@@ -220,7 +259,7 @@ func (s *IOService) handleUpdatePackageEvent() {
 				s.layout.GetOutput().Clear()
 				go func() {
 					s.layout.GetNotifier().ShowWarning(fmt.Sprintf("Updating %s...", info.Name))
-					if err := s.commandService.UpdatePackage(info, s.appService.app, s.layout.GetOutput().View()); err != nil {
+					if err := s.brewService.UpdatePackage(info, s.appService.app, s.layout.GetOutput().View()); err != nil {
 						s.layout.GetNotifier().ShowError(fmt.Sprintf("Failed to update %s", info.Name))
 						return
 					}
@@ -231,13 +270,14 @@ func (s *IOService) handleUpdatePackageEvent() {
 	}
 }
 
+// handleUpdateAllPackagesEvent is called when the user presses the update all key (Ctrl+U).
 func (s *IOService) handleUpdateAllPackagesEvent() {
 	s.showModal("Are you sure you want to update all Packages?", func() {
 		s.closeModal()
 		s.layout.GetOutput().Clear()
 		go func() {
 			s.layout.GetNotifier().ShowWarning("Updating all Packages...")
-			if err := s.commandService.UpdateAllPackages(s.appService.app, s.layout.GetOutput().View()); err != nil {
+			if err := s.brewService.UpdateAllPackages(s.appService.app, s.layout.GetOutput().View()); err != nil {
 				s.layout.GetNotifier().ShowError("Failed to update all Packages")
 				return
 			}

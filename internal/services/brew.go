@@ -3,6 +3,8 @@ package services
 import (
 	"bbrew/internal/models"
 	"encoding/json"
+	"fmt"
+	"github.com/rivo/tview"
 	"io"
 	"net/http"
 	"os"
@@ -11,6 +13,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 )
 
 const FormulaeAPIURL = "https://formulae.brew.sh/api/formula.json"
@@ -21,9 +24,16 @@ type BrewServiceInterface interface {
 	GetFormulae() (formulae *[]models.Formula)
 	SetupData(forceDownload bool) (err error)
 	GetBrewVersion() (version string, err error)
+
 	UpdateHomebrew() error
+	UpdateAllPackages(app *tview.Application, outputView *tview.TextView) error
+	UpdatePackage(info models.Formula, app *tview.Application, outputView *tview.TextView) error
+	RemovePackage(info models.Formula, app *tview.Application, outputView *tview.TextView) error
+	InstallPackage(info models.Formula, app *tview.Application, outputView *tview.TextView) error
 }
 
+// BrewService provides methods to interact with Homebrew, including
+// retrieving formulae, managing packages, and handling analytics.
 type BrewService struct {
 	// Package lists
 	all       *[]models.Formula
@@ -35,6 +45,7 @@ type BrewService struct {
 	prefixPath  string
 }
 
+// NewBrewService creates a new instance of BrewService with initialized package lists.
 var NewBrewService = func() BrewServiceInterface {
 	return &BrewService{
 		all:       new([]models.Formula),
@@ -43,6 +54,7 @@ var NewBrewService = func() BrewServiceInterface {
 	}
 }
 
+// GetPrefixPath retrieves the Homebrew prefix path, caching it for future calls.
 func (s *BrewService) GetPrefixPath() (path string) {
 	if s.prefixPath != "" {
 		return s.prefixPath
@@ -59,17 +71,18 @@ func (s *BrewService) GetPrefixPath() (path string) {
 	return s.prefixPath
 }
 
+// GetFormulae retrieves all formulae, merging remote and installed packages,
 func (s *BrewService) GetFormulae() (formulae *[]models.Formula) {
 	packageMap := make(map[string]models.Formula)
 
-	// Add remote packages to the map if they don't already exist
+	// Add REMOTE packages to the map if they don't already exist
 	for _, formula := range *s.remote {
 		if _, exists := packageMap[formula.Name]; !exists {
 			packageMap[formula.Name] = formula
 		}
 	}
 
-	// Add installed packages to the map
+	// Add INSTALLED packages to the map
 	for _, formula := range *s.installed {
 		packageMap[formula.Name] = formula
 	}
@@ -94,6 +107,7 @@ func (s *BrewService) GetFormulae() (formulae *[]models.Formula) {
 	return s.all
 }
 
+// SetupData initializes the BrewService by loading installed packages, remote formulae, and analytics data.
 func (s *BrewService) SetupData(forceDownload bool) (err error) {
 	if err = s.loadInstalled(); err != nil {
 		return err
@@ -110,6 +124,7 @@ func (s *BrewService) SetupData(forceDownload bool) (err error) {
 	return nil
 }
 
+// loadInstalled retrieves the list of installed Homebrew formulae and updates their local paths.
 func (s *BrewService) loadInstalled() (err error) {
 	cmd := exec.Command("brew", "info", "--json=v1", "--installed")
 	output, err := cmd.Output()
@@ -133,6 +148,7 @@ func (s *BrewService) loadInstalled() (err error) {
 	return nil
 }
 
+// loadRemote retrieves the list of remote Homebrew formulae from the API and caches them locally.
 func (s *BrewService) loadRemote(forceDownload bool) (err error) {
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
@@ -182,6 +198,7 @@ func (s *BrewService) loadRemote(forceDownload bool) (err error) {
 	return nil
 }
 
+// loadAnalytics retrieves the analytics data for Homebrew formulae from the API.
 func (s *BrewService) loadAnalytics() (err error) {
 	resp, err := http.Get(AnalyticsAPIURL)
 	if err != nil {
@@ -204,6 +221,7 @@ func (s *BrewService) loadAnalytics() (err error) {
 	return nil
 }
 
+// GetBrewVersion retrieves the version of Homebrew installed on the system, caching it for future calls.
 func (s *BrewService) GetBrewVersion() (version string, err error) {
 	if s.brewVersion != "" {
 		return s.brewVersion, nil
@@ -219,10 +237,114 @@ func (s *BrewService) GetBrewVersion() (version string, err error) {
 	return s.brewVersion, nil
 }
 
+// UpdateHomebrew updates the Homebrew package manager by running the `brew update` command.
 func (s *BrewService) UpdateHomebrew() error {
 	cmd := exec.Command("brew", "update")
 	if err := cmd.Run(); err != nil {
 		return err
 	}
+	return nil
+}
+
+func (s *BrewService) UpdateAllPackages(app *tview.Application, outputView *tview.TextView) error {
+	cmd := exec.Command("brew", "upgrade") // #nosec G204
+	return s.executeCommand(app, cmd, outputView)
+}
+
+func (s *BrewService) UpdatePackage(info models.Formula, app *tview.Application, outputView *tview.TextView) error {
+	cmd := exec.Command("brew", "upgrade", info.Name) // #nosec G204
+	return s.executeCommand(app, cmd, outputView)
+}
+
+func (s *BrewService) RemovePackage(info models.Formula, app *tview.Application, outputView *tview.TextView) error {
+	cmd := exec.Command("brew", "remove", info.Name) // #nosec G204
+	return s.executeCommand(app, cmd, outputView)
+}
+
+func (s *BrewService) InstallPackage(info models.Formula, app *tview.Application, outputView *tview.TextView) error {
+	cmd := exec.Command("brew", "install", info.Name) // #nosec G204
+	return s.executeCommand(app, cmd, outputView)
+}
+
+// executeCommand runs a command and captures its output, updating the provided TextView in the application.
+func (s *BrewService) executeCommand(
+	app *tview.Application,
+	cmd *exec.Cmd,
+	outputView *tview.TextView,
+) error {
+	stdoutPipe, stdoutWriter := io.Pipe()
+	stderrPipe, stderrWriter := io.Pipe()
+	cmd.Stdout = stdoutWriter
+	cmd.Stderr = stderrWriter
+
+	if err := cmd.Start(); err != nil {
+		return err
+	}
+
+	// Add a WaitGroup to wait for all goroutines to finish
+	var wg sync.WaitGroup
+	wg.Add(3)
+
+	// Goroutine to wait for the command to finish
+	go func() {
+		defer wg.Done()
+		defer stdoutWriter.Close()
+		defer stderrWriter.Close()
+		cmd.Wait()
+	}()
+
+	// Stdout handler
+	go func() {
+		defer wg.Done()
+		defer stdoutPipe.Close()
+		buf := make([]byte, 1024)
+		for {
+			n, err := stdoutPipe.Read(buf)
+			if n > 0 {
+				output := make([]byte, n)
+				copy(output, buf[:n])
+				app.QueueUpdateDraw(func() {
+					outputView.Write(output)
+					outputView.ScrollToEnd()
+				})
+			}
+			if err != nil {
+				if err != io.EOF {
+					app.QueueUpdateDraw(func() {
+						fmt.Fprintf(outputView, "\nError: %v\n", err)
+					})
+				}
+				break
+			}
+		}
+	}()
+
+	// Stderr handler
+	go func() {
+		defer wg.Done()
+		defer stderrPipe.Close()
+		buf := make([]byte, 1024)
+		for {
+			n, err := stderrPipe.Read(buf)
+			if n > 0 {
+				output := make([]byte, n)
+				copy(output, buf[:n])
+				app.QueueUpdateDraw(func() {
+					outputView.Write(output)
+					outputView.ScrollToEnd()
+				})
+			}
+			if err != nil {
+				if err != io.EOF {
+					app.QueueUpdateDraw(func() {
+						fmt.Fprintf(outputView, "\nError: %v\n", err)
+					})
+				}
+				break
+			}
+		}
+	}()
+
+	wg.Wait()
 	return nil
 }

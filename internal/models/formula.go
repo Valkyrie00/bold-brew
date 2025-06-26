@@ -52,8 +52,8 @@ type Formula struct {
 	RubySourceChecksum     RubySourceChecksum `json:"ruby_source_checksum"`
 	Analytics90dRank       int
 	Analytics90dDownloads  int
-	LocallyInstalled       bool   `json:"-"`
-	LocalPath              string `json:"-"` // Local installation path
+	LocallyInstalled       bool   `json:"-"` // Internal flag to indicate if the formula is installed locally [internal use]
+	LocalPath              string `json:"-"` // Internal path to the formula in the local Homebrew Cellar [internal use]
 }
 
 type Analytics struct {

@@ -8,32 +8,33 @@ endif
 %:@
 
 ##############################
-# DOCKER
+# CONTAINER
 ##############################
-.PHONY: docker-build-image
-docker-build-image:
-	@docker build -t $(DOCKER_IMAGE_NAME) .
+.PHONY: container-build-image
+container-build-image:
+	@podman build -f Containerfile -t $(DOCKER_IMAGE_NAME) .
 
-docker-build-force-recreate:
-	@docker build --no-cache -t $(DOCKER_IMAGE_NAME) .
+.PHONY: container-build-force-recreate
+container-build-force-recreate:
+	@podman build --no-cache -f Containerfile -t $(DOCKER_IMAGE_NAME) .
 
 ##############################
 # RELEASE
 ##############################
 .PHONY: release-snapshot
-release-snapshot: docker-build-image # Builds the project in snapshot mode and releases it [This is used for testing releases]
-	@docker run --rm -v $(PWD):/app $(DOCKER_IMAGE_NAME) goreleaser release --snapshot --clean
+release-snapshot: container-build-image # Builds the project in snapshot mode and releases it [This is used for testing releases]
+	@podman run --rm -v $(PWD):/app $(DOCKER_IMAGE_NAME) goreleaser release --snapshot --clean
 
 .PHONY: build-snapshot # Builds the project in snapshot mode [This is used for testing releases]
-build-snapshot: docker-build-image
-	@docker run --rm -v $(PWD):/app $(DOCKER_IMAGE_NAME) goreleaser build --snapshot --clean
+build-snapshot: container-build-image
+	@podman run --rm -v $(PWD):/app $(DOCKER_IMAGE_NAME) goreleaser build --snapshot --clean
 
 ##############################
 # BUILD
 ##############################
 .PHONY: build
-build: docker-build-image
-	@docker run --rm -v $(PWD):/app $(DOCKER_IMAGE_NAME) \
+build: container-build-image
+	@podman run --rm -v $(PWD):/app $(DOCKER_IMAGE_NAME) \
 	 env GOOS=$(BUILD_GOOS) GOARCH=$(BUILD_GOARCH) go build -o $(APP_NAME) ./cmd/$(APP_NAME)
 
 .PHONY: run
@@ -44,8 +45,8 @@ run: build
 # HELPER
 ##############################
 .PHONY: quality
-quality: docker-build-image
-	@docker run --rm -v $(PWD):/app $(DOCKER_IMAGE_NAME) golangci-lint run
+quality: container-build-image
+	@podman run --rm -v $(PWD):/app $(DOCKER_IMAGE_NAME) golangci-lint run
 
 ##############################
 # WEBSITE

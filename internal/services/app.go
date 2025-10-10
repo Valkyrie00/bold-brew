@@ -36,6 +36,7 @@ type AppService struct {
 	filteredPackages  *[]models.Formula
 	showOnlyInstalled bool
 	showOnlyOutdated  bool
+	showOnlyLeaves    bool
 	brewVersion       string
 
 	brewService       BrewServiceInterface
@@ -58,6 +59,7 @@ var NewAppService = func() AppServiceInterface {
 		filteredPackages:  new([]models.Formula),
 		showOnlyInstalled: false,
 		showOnlyOutdated:  false,
+		showOnlyLeaves:    false,
 		brewVersion:       "-",
 	}
 
@@ -122,6 +124,15 @@ func (s *AppService) search(searchText string, scrollToTop bool) {
 		sourceList = &[]models.Formula{}
 		for _, info := range *s.packages {
 			if info.LocallyInstalled && info.Outdated {
+				*sourceList = append(*sourceList, info)
+			}
+		}
+	}
+
+	if s.showOnlyLeaves {
+		sourceList = &[]models.Formula{}
+		for _, info := range *s.packages {
+			if info.LocallyInstalled && len(info.Installed) > 0 && info.Installed[0].InstalledOnRequest {
 				*sourceList = append(*sourceList, info)
 			}
 		}

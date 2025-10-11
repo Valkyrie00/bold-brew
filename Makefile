@@ -95,6 +95,28 @@ test-coverage: ## Run tests with coverage
 	@go tool cover -html=coverage.out -o coverage.html
 
 ##############################
+# SECURITY
+##############################
+.PHONY: security
+security: security-vuln security-scan ## Run all security checks
+
+.PHONY: security-vuln
+security-vuln: container-build-image ## Check for known vulnerabilities
+	@$(CONTAINER_RUN) govulncheck ./...
+
+.PHONY: security-vuln-local
+security-vuln-local: ## Check vulnerabilities locally (requires govulncheck)
+	@govulncheck ./...
+
+.PHONY: security-scan
+security-scan: container-build-image ## Run security scanner
+	@$(CONTAINER_RUN) gosec ./...
+
+.PHONY: security-scan-local
+security-scan-local: ## Run security scanner locally (requires gosec)
+	@gosec ./...
+
+##############################
 # WEBSITE
 ##############################
 .PHONY: build-site

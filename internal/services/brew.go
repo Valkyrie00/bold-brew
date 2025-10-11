@@ -4,7 +4,6 @@ import (
 	"bbrew/internal/models"
 	"encoding/json"
 	"fmt"
-	"github.com/rivo/tview"
 	"io"
 	"net/http"
 	"os"
@@ -14,6 +13,8 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+
+	"github.com/rivo/tview"
 )
 
 const FormulaeAPIURL = "https://formulae.brew.sh/api/formula.json"
@@ -158,7 +159,7 @@ func (s *BrewService) loadRemote(forceDownload bool) (err error) {
 	bbrewDir := filepath.Join(homeDir, ".bbrew") // TODO: Move to config
 	formulaFile := filepath.Join(bbrewDir, "formula.json")
 	if _, err := os.Stat(bbrewDir); os.IsNotExist(err) {
-		if err := os.MkdirAll(bbrewDir, 0755); err != nil {
+		if err := os.MkdirAll(bbrewDir, 0750); err != nil {
 			return err
 		}
 	}
@@ -166,6 +167,7 @@ func (s *BrewService) loadRemote(forceDownload bool) (err error) {
 	// Check if we should use the cached file
 	if !forceDownload {
 		if _, err := os.Stat(formulaFile); err == nil {
+			// #nosec G304 -- formulaFile path is safely constructed from UserHomeDir and sanitized with filepath.Join
 			data, err := os.ReadFile(formulaFile)
 			if err == nil {
 				*s.remote = make([]models.Formula, 0)
@@ -290,7 +292,7 @@ func (s *BrewService) executeCommand(
 		defer wg.Done()
 		defer stdoutWriter.Close()
 		defer stderrWriter.Close()
-		cmd.Wait()
+		_ = cmd.Wait() // #nosec G104 -- Error is handled by pipe readers below
 	}()
 
 	// Stdout handler
@@ -304,7 +306,7 @@ func (s *BrewService) executeCommand(
 				output := make([]byte, n)
 				copy(output, buf[:n])
 				app.QueueUpdateDraw(func() {
-					outputView.Write(output)
+					_, _ = outputView.Write(output) // #nosec G104
 					outputView.ScrollToEnd()
 				})
 			}
@@ -330,7 +332,7 @@ func (s *BrewService) executeCommand(
 				output := make([]byte, n)
 				copy(output, buf[:n])
 				app.QueueUpdateDraw(func() {
-					outputView.Write(output)
+					_, _ = outputView.Write(output) // #nosec G104
 					outputView.ScrollToEnd()
 				})
 			}

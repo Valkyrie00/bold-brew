@@ -13,6 +13,7 @@ const (
 	FilterInstalled FilterType = iota
 	FilterOutdated
 	FilterLeaves
+	FilterCasks
 )
 
 // IOAction represents an input/output action that can be triggered by a key event.
@@ -46,6 +47,7 @@ type IOService struct {
 	ActionFilterInstalled *IOAction
 	ActionFilterOutdated  *IOAction
 	ActionFilterLeaves    *IOAction
+	ActionFilterCasks     *IOAction
 	ActionInstall         *IOAction
 	ActionUpdate          *IOAction
 	ActionRemove          *IOAction
@@ -66,6 +68,7 @@ var NewIOService = func(appService *AppService) IOServiceInterface {
 	s.ActionFilterInstalled = &IOAction{Key: tcell.KeyRune, Rune: 'f', KeySlug: "f", Name: "Filter Installed"}
 	s.ActionFilterOutdated = &IOAction{Key: tcell.KeyRune, Rune: 'o', KeySlug: "o", Name: "Filter Outdated"}
 	s.ActionFilterLeaves = &IOAction{Key: tcell.KeyRune, Rune: 'l', KeySlug: "l", Name: "Filter Leaves"}
+	s.ActionFilterCasks = &IOAction{Key: tcell.KeyRune, Rune: 'c', KeySlug: "c", Name: "Filter Casks"}
 	s.ActionInstall = &IOAction{Key: tcell.KeyRune, Rune: 'i', KeySlug: "i", Name: "Install"}
 	s.ActionUpdate = &IOAction{Key: tcell.KeyRune, Rune: 'u', KeySlug: "u", Name: "Update"}
 	s.ActionRemove = &IOAction{Key: tcell.KeyRune, Rune: 'r', KeySlug: "r", Name: "Remove"}
@@ -78,6 +81,7 @@ var NewIOService = func(appService *AppService) IOServiceInterface {
 	s.ActionFilterInstalled.SetAction(s.handleFilterPackagesEvent)
 	s.ActionFilterOutdated.SetAction(s.handleFilterOutdatedPackagesEvent)
 	s.ActionFilterLeaves.SetAction(s.handleFilterLeavesEvent)
+	s.ActionFilterCasks.SetAction(s.handleFilterCasksEvent)
 	s.ActionInstall.SetAction(s.handleInstallPackageEvent)
 	s.ActionUpdate.SetAction(s.handleUpdatePackageEvent)
 	s.ActionRemove.SetAction(s.handleRemovePackageEvent)
@@ -91,6 +95,7 @@ var NewIOService = func(appService *AppService) IOServiceInterface {
 		s.ActionFilterInstalled,
 		s.ActionFilterOutdated,
 		s.ActionFilterLeaves,
+		s.ActionFilterCasks,
 		s.ActionInstall,
 		s.ActionUpdate,
 		s.ActionRemove,
@@ -155,28 +160,40 @@ func (s *IOService) handleFilterEvent(filterType FilterType) {
 
 	switch filterType {
 	case FilterInstalled:
-		if s.appService.showOnlyOutdated || s.appService.showOnlyLeaves {
+		if s.appService.showOnlyOutdated || s.appService.showOnlyLeaves || s.appService.showOnlyCasks {
 			s.appService.showOnlyOutdated = false
 			s.appService.showOnlyLeaves = false
+			s.appService.showOnlyCasks = false
 			s.appService.showOnlyInstalled = true
 		} else {
 			s.appService.showOnlyInstalled = !s.appService.showOnlyInstalled
 		}
 	case FilterOutdated:
-		if s.appService.showOnlyInstalled || s.appService.showOnlyLeaves {
+		if s.appService.showOnlyInstalled || s.appService.showOnlyLeaves || s.appService.showOnlyCasks {
 			s.appService.showOnlyInstalled = false
 			s.appService.showOnlyLeaves = false
+			s.appService.showOnlyCasks = false
 			s.appService.showOnlyOutdated = true
 		} else {
 			s.appService.showOnlyOutdated = !s.appService.showOnlyOutdated
 		}
 	case FilterLeaves:
-		if s.appService.showOnlyInstalled || s.appService.showOnlyOutdated {
+		if s.appService.showOnlyInstalled || s.appService.showOnlyOutdated || s.appService.showOnlyCasks {
 			s.appService.showOnlyInstalled = false
 			s.appService.showOnlyOutdated = false
+			s.appService.showOnlyCasks = false
 			s.appService.showOnlyLeaves = true
 		} else {
 			s.appService.showOnlyLeaves = !s.appService.showOnlyLeaves
+		}
+	case FilterCasks:
+		if s.appService.showOnlyInstalled || s.appService.showOnlyOutdated || s.appService.showOnlyLeaves {
+			s.appService.showOnlyInstalled = false
+			s.appService.showOnlyOutdated = false
+			s.appService.showOnlyLeaves = false
+			s.appService.showOnlyCasks = true
+		} else {
+			s.appService.showOnlyCasks = !s.appService.showOnlyCasks
 		}
 	}
 
@@ -190,6 +207,9 @@ func (s *IOService) handleFilterEvent(filterType FilterType) {
 	} else if s.appService.showOnlyLeaves {
 		s.layout.GetSearch().Field().SetLabel("Search (Leaves): ")
 		s.layout.GetLegend().SetLegend(s.legendEntries, s.ActionFilterLeaves.KeySlug)
+	} else if s.appService.showOnlyCasks {
+		s.layout.GetSearch().Field().SetLabel("Search (Casks): ")
+		s.layout.GetLegend().SetLegend(s.legendEntries, s.ActionFilterCasks.KeySlug)
 	} else {
 		s.layout.GetSearch().Field().SetLabel("Search (All): ")
 	}
@@ -210,6 +230,11 @@ func (s *IOService) handleFilterOutdatedPackagesEvent() {
 // handleFilterLeavesEvent toggles the filter for leaf packages (installed on request)
 func (s *IOService) handleFilterLeavesEvent() {
 	s.handleFilterEvent(FilterLeaves)
+}
+
+// handleFilterCasksEvent toggles the filter for cask packages only
+func (s *IOService) handleFilterCasksEvent() {
+	s.handleFilterEvent(FilterCasks)
 }
 
 // showModal displays a modal dialog with the specified text and confirmation/cancellation actions.

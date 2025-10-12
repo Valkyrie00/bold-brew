@@ -32,8 +32,8 @@ func NewDetails(theme *theme.Theme) *Details {
 	return details
 }
 
-func (d *Details) SetContent(info *models.Formula) {
-	if info == nil {
+func (d *Details) SetContent(pkg *models.Package) {
+	if pkg == nil {
 		d.view.SetText("")
 		return
 	}
@@ -41,97 +41,112 @@ func (d *Details) SetContent(info *models.Formula) {
 	// Installation status with colors
 	installedStatus := "[red]Not installed[-]"
 	installedIcon := "✗"
-	if len(info.Installed) > 0 {
+	if pkg.LocallyInstalled {
 		installedStatus = "[green]Installed[-]"
 		installedIcon = "✓"
 
-		if info.Outdated {
+		if pkg.Outdated {
 			installedStatus = "[orange]Update available[-]"
 			installedIcon = "⟳"
 		}
 	}
 
-	// Basic information with icons
+	// Type tag with escaped brackets
+	typeTag := tview.Escape("[F]") // Formula
+	typeLabel := "Formula"
+	if pkg.Type == models.PackageTypeCask {
+		typeTag = tview.Escape("[C]") // Cask
+		typeLabel = "Cask"
+	}
+
+	// Basic information with status
 	basicInfo := fmt.Sprintf(
 		"[yellow::b]%s %s[-]\n\n"+
+			"[blue]• Type:[-] %s %s\n"+
 			"[blue]• Name:[-] %s\n"+
+			"[blue]• Display Name:[-] %s\n"+
 			"[blue]• Version:[-] %s\n"+
-			"[blue]• Status:[-] %s %s\n"+
-			"[blue]• Tap:[-] %s\n"+
-			"[blue]• License:[-] %s\n\n"+
+			"[blue]• Status:[-] %s\n\n"+
 			"[yellow::b]Description[-]\n%s\n\n"+
 			"[blue]• Homepage:[-] %s",
-		info.Name, installedIcon,
-		info.FullName,
-		info.Versions.Stable,
-		installedStatus, d.getPackageVersionInfo(info),
-		info.Tap,
-		info.License,
-		info.Description,
-		info.Homepage,
+		pkg.Name, installedIcon,
+		typeTag, typeLabel,
+		pkg.Name,
+		pkg.DisplayName,
+		pkg.Version,
+		installedStatus,
+		pkg.Description,
+		pkg.Homepage,
 	)
 
 	// Installation details
-	installDetails := d.getPackageInstallationDetails(info)
+	installDetails := d.getPackageInstallationDetails(pkg)
 
-	// Dependencies with improved formatting
-	dependenciesInfo := d.getDependenciesInfo(info)
-
-	analyticsInfo := d.getAnalyticsInfo(info)
-
-	d.view.SetText(strings.Join([]string{basicInfo, installDetails, dependenciesInfo, analyticsInfo}, "\n\n"))
-}
-
-func (d *Details) getPackageVersionInfo(info *models.Formula) string {
-	if len(info.Installed) == 0 {
-		return ""
+	// Dependencies (only for formulae)
+	dependenciesInfo := ""
+	if pkg.Type == models.PackageTypeFormula && pkg.Formula != nil {
+		dependenciesInfo = d.getDependenciesInfo(pkg.Formula)
 	}
 
-	installedVersion := info.Installed[0].Version
-	stableVersion := info.Versions.Stable
+	analyticsInfo := d.getAnalyticsInfo(pkg)
 
-	// Revision version
-	if strings.HasPrefix(installedVersion, stableVersion+"_") {
-		return fmt.Sprintf("([green]%s[-])", installedVersion)
-	} else if installedVersion == stableVersion {
-		return fmt.Sprintf("([green]%s[-])", installedVersion)
-	} else if installedVersion < stableVersion || info.Outdated {
-		return fmt.Sprintf("([orange]%s[-] → [green]%s[-])",
-			installedVersion, stableVersion)
+	parts := []string{basicInfo, installDetails}
+	if dependenciesInfo != "" {
+		parts = append(parts, dependenciesInfo)
 	}
+	parts = append(parts, analyticsInfo)
 
-	// Other cases
-	return fmt.Sprintf("([green]%s[-])", installedVersion)
+	d.view.SetText(strings.Join(parts, "\n\n"))
 }
 
-func (d *Details) getPackageInstallationDetails(info *models.Formula) string {
-	if len(info.Installed) == 0 {
+func (d *Details) getPackageInstallationDetails(pkg *models.Package) string {
+	if !pkg.LocallyInstalled {
 		return "[yellow::b]Installation[-]\nNot installed"
 	}
 
-	packagePrefix := info.LocalPath
+	// For formulae, show detailed installation info
+	if pkg.Type == models.PackageTypeFormula && pkg.Formula != nil && len(pkg.Formula.Installed) > 0 {
+		packagePrefix := pkg.Formula.LocalPath
 
-	installedOnRequest := "No"
-	if info.Installed[0].InstalledOnRequest {
-		installedOnRequest = "Yes"
+		installedOnRequest := "No"
+		if pkg.Formula.Installed[0].InstalledOnRequest {
+			installedOnRequest = "Yes"
+		}
+
+		installedAsDependency := "No"
+		if pkg.Formula.Installed[0].InstalledAsDependency {
+			installedAsDependency = "Yes"
+		}
+
+		return fmt.Sprintf(
+			"[yellow::b]Installation Details[-]\n"+
+				"[blue]• Path:[-] %s\n"+
+				"[blue]• Installed on request:[-] %s\n"+
+				"[blue]• Installed as dependency:[-] %s\n"+
+				"[blue]• Installed version:[-] %s",
+			packagePrefix,
+			installedOnRequest,
+			installedAsDependency,
+			pkg.Formula.Installed[0].Version,
+		)
 	}
 
-	installedAsDependency := "No"
-	if info.Installed[0].InstalledAsDependency {
-		installedAsDependency = "Yes"
+	// For casks, show simpler installation info
+	if pkg.Type == models.PackageTypeCask && pkg.Cask != nil {
+		installedVersion := "Unknown"
+		if pkg.Cask.Installed != nil {
+			installedVersion = *pkg.Cask.Installed
+		}
+
+		return fmt.Sprintf(
+			"[yellow::b]Installation Details[-]\n"+
+				"[blue]• Type:[-] macOS Application\n"+
+				"[blue]• Installed version:[-] %s",
+			installedVersion,
+		)
 	}
 
-	return fmt.Sprintf(
-		"[yellow::b]Installation Details[-]\n"+
-			"[blue]• Path:[-] %s\n"+
-			"[blue]• Installed on request:[-] %s\n"+
-			"[blue]• Installed as dependency:[-] %s\n"+
-			"[blue]• Installed version:[-] %s",
-		packagePrefix,
-		installedOnRequest,
-		installedAsDependency,
-		info.Installed[0].Version,
-	)
+	return "[yellow::b]Installation[-]\nInstalled"
 }
 
 func (d *Details) getDependenciesInfo(info *models.Formula) string {
@@ -157,13 +172,13 @@ func (d *Details) getDependenciesInfo(info *models.Formula) string {
 	return title + deps
 }
 
-func (d *Details) getAnalyticsInfo(info *models.Formula) string {
+func (d *Details) getAnalyticsInfo(pkg *models.Package) string {
 	title := "[yellow::b]Analytics[-]\n"
 
 	p := message.NewPrinter(language.English)
 
-	title += fmt.Sprintf("[blue]• 90d Global Rank:[-] %s\n", p.Sprintf("%d", info.Analytics90dRank))
-	title += fmt.Sprintf("[blue]• 90d   Downloads:[-] %s\n", p.Sprintf("%d", info.Analytics90dDownloads))
+	title += fmt.Sprintf("[blue]• 90d Global Rank:[-] %s\n", p.Sprintf("%d", pkg.Analytics90dRank))
+	title += fmt.Sprintf("[blue]• 90d   Downloads:[-] %s\n", p.Sprintf("%d", pkg.Analytics90dDownloads))
 
 	return title
 }

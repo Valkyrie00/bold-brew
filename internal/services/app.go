@@ -32,11 +32,12 @@ type AppService struct {
 	theme  *theme.Theme
 	layout ui.LayoutInterface
 
-	packages          *[]models.Formula
-	filteredPackages  *[]models.Formula
+	packages          *[]models.Package
+	filteredPackages  *[]models.Package
 	showOnlyInstalled bool
 	showOnlyOutdated  bool
 	showOnlyLeaves    bool
+	showOnlyCasks     bool
 	brewVersion       string
 
 	brewService       BrewServiceInterface
@@ -55,11 +56,12 @@ var NewAppService = func() AppServiceInterface {
 		theme:  themeService,
 		layout: layout,
 
-		packages:          new([]models.Formula),
-		filteredPackages:  new([]models.Formula),
+		packages:          new([]models.Package),
+		filteredPackages:  new([]models.Package),
 		showOnlyInstalled: false,
 		showOnlyOutdated:  false,
 		showOnlyLeaves:    false,
+		showOnlyCasks:     false,
 		brewVersion:       "-",
 	}
 
@@ -87,7 +89,7 @@ func (s *AppService) Boot() (err error) {
 	}
 
 	// Initialize packages and filteredPackages
-	s.packages = s.brewService.GetFormulae()
+	s.packages = s.brewService.GetPackages()
 	*s.filteredPackages = *s.packages
 	return nil
 }
@@ -106,13 +108,13 @@ func (s *AppService) updateHomeBrew() {
 
 // search filters the packages based on the search text and the current filter state.
 func (s *AppService) search(searchText string, scrollToTop bool) {
-	var filteredList []models.Formula
+	var filteredList []models.Package
 	uniquePackages := make(map[string]bool)
 
 	// Determine the source list based on the current filter state
 	sourceList := s.packages
 	if s.showOnlyInstalled && !s.showOnlyOutdated {
-		sourceList = &[]models.Formula{}
+		sourceList = &[]models.Package{}
 		for _, info := range *s.packages {
 			if info.LocallyInstalled {
 				*sourceList = append(*sourceList, info)
@@ -121,7 +123,7 @@ func (s *AppService) search(searchText string, scrollToTop bool) {
 	}
 
 	if s.showOnlyOutdated {
-		sourceList = &[]models.Formula{}
+		sourceList = &[]models.Package{}
 		for _, info := range *s.packages {
 			if info.LocallyInstalled && info.Outdated {
 				*sourceList = append(*sourceList, info)
@@ -130,9 +132,18 @@ func (s *AppService) search(searchText string, scrollToTop bool) {
 	}
 
 	if s.showOnlyLeaves {
-		sourceList = &[]models.Formula{}
+		sourceList = &[]models.Package{}
 		for _, info := range *s.packages {
-			if info.LocallyInstalled && len(info.Installed) > 0 && info.Installed[0].InstalledOnRequest {
+			if info.LocallyInstalled && info.InstalledOnRequest {
+				*sourceList = append(*sourceList, info)
+			}
+		}
+	}
+
+	if s.showOnlyCasks {
+		sourceList = &[]models.Package{}
+		for _, info := range *s.packages {
+			if info.Type == models.PackageTypeCask {
 				*sourceList = append(*sourceList, info)
 			}
 		}
@@ -170,10 +181,10 @@ func (s *AppService) search(searchText string, scrollToTop bool) {
 	s.setResults(s.filteredPackages, scrollToTop)
 }
 
-// forceRefreshResults forces a refresh of the Homebrew formulae data and updates the results in the UI.
+// forceRefreshResults forces a refresh of the Homebrew formulae and cask data and updates the results in the UI.
 func (s *AppService) forceRefreshResults() {
 	_ = s.brewService.SetupData(true)
-	s.packages = s.brewService.GetFormulae()
+	s.packages = s.brewService.GetPackages()
 	*s.filteredPackages = *s.packages
 
 	s.app.QueueUpdateDraw(func() {
@@ -182,37 +193,42 @@ func (s *AppService) forceRefreshResults() {
 }
 
 // setResults updates the results table with the provided data and optionally scrolls to the top.
-func (s *AppService) setResults(data *[]models.Formula, scrollToTop bool) {
+func (s *AppService) setResults(data *[]models.Package, scrollToTop bool) {
 	s.layout.GetTable().Clear()
-	s.layout.GetTable().SetTableHeaders("Name", "Version", "Description", "↓ (90d)")
+	s.layout.GetTable().SetTableHeaders("Type", "Name", "Version", "Description", "↓ (90d)")
 
 	for i, info := range *data {
-		version := info.Versions.Stable
-		if len(info.Installed) > 0 {
-			// Check if the installed version is the same as the stable version (handle revisions)
-			if strings.HasPrefix(info.Installed[0].Version, info.Versions.Stable) {
-				version = info.Installed[0].Version
-			} else if info.Installed[0].Version != info.Versions.Stable {
-				version = fmt.Sprintf("%s → %s", info.Installed[0].Version, info.Versions.Stable)
-			}
+		// Type cell with escaped brackets
+		typeTag := tview.Escape("[F]") // Formula
+		if info.Type == models.PackageTypeCask {
+			typeTag = tview.Escape("[C]") // Cask
 		}
+		typeCell := tview.NewTableCell(typeTag).SetSelectable(true).SetAlign(tview.AlignLeft)
 
+		// Version handling
+		version := info.Version
+
+		// Name cell
 		nameCell := tview.NewTableCell(info.Name).SetSelectable(true)
 		if info.LocallyInstalled {
 			nameCell.SetTextColor(tcell.ColorGreen)
 		}
 
+		// Version cell
 		versionCell := tview.NewTableCell(version).SetSelectable(true)
 		if info.LocallyInstalled && info.Outdated {
 			versionCell.SetTextColor(tcell.ColorOrange)
 		}
 
+		// Downloads cell
 		downloadsCell := tview.NewTableCell(fmt.Sprintf("%d", info.Analytics90dDownloads)).SetSelectable(true).SetAlign(tview.AlignRight)
 
-		s.layout.GetTable().View().SetCell(i+1, 0, nameCell.SetExpansion(0))
-		s.layout.GetTable().View().SetCell(i+1, 1, versionCell.SetExpansion(0))
-		s.layout.GetTable().View().SetCell(i+1, 2, tview.NewTableCell(info.Description).SetSelectable(true).SetExpansion(1))
-		s.layout.GetTable().View().SetCell(i+1, 3, downloadsCell.SetExpansion(0))
+		// Set cells with new column order: Type, Name, Version, Description, Downloads
+		s.layout.GetTable().View().SetCell(i+1, 0, typeCell.SetExpansion(0))
+		s.layout.GetTable().View().SetCell(i+1, 1, nameCell.SetExpansion(0))
+		s.layout.GetTable().View().SetCell(i+1, 2, versionCell.SetExpansion(0))
+		s.layout.GetTable().View().SetCell(i+1, 3, tview.NewTableCell(info.Description).SetSelectable(true).SetExpansion(1))
+		s.layout.GetTable().View().SetCell(i+1, 4, downloadsCell.SetExpansion(0))
 	}
 
 	// Update the details view with the first item in the list

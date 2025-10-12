@@ -198,12 +198,12 @@ func (s *AppService) setResults(data *[]models.Package, scrollToTop bool) {
 	s.layout.GetTable().SetTableHeaders("Type", "Name", "Version", "Description", "↓ (90d)")
 
 	for i, info := range *data {
-		// Type cell with icon
-		typeIcon := "📦" // Formula
+		// Type cell with escaped brackets
+		typeTag := tview.Escape("[F]") // Formula
 		if info.Type == models.PackageTypeCask {
-			typeIcon = "🖥️" // Cask
+			typeTag = tview.Escape("[C]") // Cask
 		}
-		typeCell := tview.NewTableCell(typeIcon).SetSelectable(true).SetAlign(tview.AlignCenter)
+		typeCell := tview.NewTableCell(typeTag).SetSelectable(true).SetAlign(tview.AlignLeft)
 
 		// Version handling
 		version := info.Version

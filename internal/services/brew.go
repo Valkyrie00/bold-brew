@@ -251,19 +251,42 @@ func (s *BrewService) loadInstalled() (err error) {
 
 // loadInstalledCasks retrieves the list of installed Homebrew casks.
 func (s *BrewService) loadInstalledCasks() (err error) {
-	cmd := exec.Command("brew", "info", "--json=v1", "--cask", "--installed")
-	output, err := cmd.Output()
+	// Get list of installed cask names
+	listCmd := exec.Command("brew", "list", "--cask")
+	listOutput, err := listCmd.Output()
 	if err != nil {
 		// If no casks are installed, brew returns error - ignore it
 		*s.installedCasks = make([]models.Cask, 0)
 		return nil
 	}
 
-	*s.installedCasks = make([]models.Cask, 0)
-	err = json.Unmarshal(output, &s.installedCasks)
+	// Parse cask names (one per line)
+	caskNames := strings.Split(strings.TrimSpace(string(listOutput)), "\n")
+	if len(caskNames) == 0 || (len(caskNames) == 1 && caskNames[0] == "") {
+		*s.installedCasks = make([]models.Cask, 0)
+		return nil
+	}
+
+	// Get info for each installed cask using --json=v2 (v2 required for casks)
+	args := append([]string{"info", "--json=v2", "--cask"}, caskNames...)
+	infoCmd := exec.Command("brew", args...)
+	infoOutput, err := infoCmd.Output()
+	if err != nil {
+		*s.installedCasks = make([]models.Cask, 0)
+		return nil
+	}
+
+	// Parse JSON response (v2 returns object with "formulae" and "casks" keys)
+	// We only need the "casks" array since we specified --cask flag
+	var response struct {
+		Casks []models.Cask `json:"casks"`
+	}
+	err = json.Unmarshal(infoOutput, &response)
 	if err != nil {
 		return err
 	}
+
+	*s.installedCasks = response.Casks
 
 	// Mark all installed casks as locally installed
 	for i := range *s.installedCasks {

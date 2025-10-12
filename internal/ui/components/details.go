@@ -51,26 +51,26 @@ func (d *Details) SetContent(pkg *models.Package) {
 		}
 	}
 
-	// Type icon
-	typeIcon := "📦" // Formula
+	// Type tag with escaped brackets
+	typeTag := tview.Escape("[F]") // Formula
 	typeLabel := "Formula"
 	if pkg.Type == models.PackageTypeCask {
-		typeIcon = "🖥️" // Cask
+		typeTag = tview.Escape("[C]") // Cask
 		typeLabel = "Cask"
 	}
 
-	// Basic information with icons
+	// Basic information with status
 	basicInfo := fmt.Sprintf(
-		"[yellow::b]%s %s %s[-]\n\n"+
-			"[blue]• Type:[-] %s\n"+
+		"[yellow::b]%s %s[-]\n\n"+
+			"[blue]• Type:[-] %s %s\n"+
 			"[blue]• Name:[-] %s\n"+
 			"[blue]• Display Name:[-] %s\n"+
 			"[blue]• Version:[-] %s\n"+
 			"[blue]• Status:[-] %s\n\n"+
 			"[yellow::b]Description[-]\n%s\n\n"+
 			"[blue]• Homepage:[-] %s",
-		pkg.Name, typeIcon, installedIcon,
-		typeLabel,
+		pkg.Name, installedIcon,
+		typeTag, typeLabel,
 		pkg.Name,
 		pkg.DisplayName,
 		pkg.Version,

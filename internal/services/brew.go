@@ -20,7 +20,7 @@ import (
 const FormulaeAPIURL = "https://formulae.brew.sh/api/formula.json"
 const CaskAPIURL = "https://formulae.brew.sh/api/cask.json"
 const AnalyticsAPIURL = "https://formulae.brew.sh/api/analytics/install-on-request/90d.json"
-const CaskAnalyticsAPIURL = "https://formulae.brew.sh/api/analytics-cask/install/90d.json"
+const CaskAnalyticsAPIURL = "https://formulae.brew.sh/api/analytics/cask-install/90d.json"
 
 type BrewServiceInterface interface {
 	GetPrefixPath() (path string)
@@ -198,28 +198,28 @@ func (s *BrewService) GetPackages() (packages *[]models.Package) {
 func (s *BrewService) SetupData(forceDownload bool) (err error) {
 	// Load formulae
 	if err = s.loadInstalled(); err != nil {
-		return err
+		return fmt.Errorf("failed to load installed formulae: %w", err)
 	}
 
 	if err = s.loadRemote(forceDownload); err != nil {
-		return err
+		return fmt.Errorf("failed to load remote formulae: %w", err)
 	}
 
 	if err = s.loadAnalytics(); err != nil {
-		return err
+		return fmt.Errorf("failed to load formulae analytics: %w", err)
 	}
 
 	// Load casks
 	if err = s.loadInstalledCasks(); err != nil {
-		return err
+		return fmt.Errorf("failed to load installed casks: %w", err)
 	}
 
 	if err = s.loadRemoteCasks(forceDownload); err != nil {
-		return err
+		return fmt.Errorf("failed to load remote casks: %w", err)
 	}
 
 	if err = s.loadCaskAnalytics(); err != nil {
-		return err
+		return fmt.Errorf("failed to load cask analytics: %w", err)
 	}
 
 	return nil
@@ -415,7 +415,11 @@ func (s *BrewService) loadCaskAnalytics() (err error) {
 
 	analyticsByCask := map[string]models.AnalyticsItem{}
 	for _, c := range analytics.Items {
-		analyticsByCask[c.Formula] = c // Formula field is used for both formulae and casks
+		// Cask analytics use the "cask" field instead of "formula"
+		caskName := c.Cask
+		if caskName != "" {
+			analyticsByCask[caskName] = c
+		}
 	}
 
 	s.caskAnalytics = analyticsByCask

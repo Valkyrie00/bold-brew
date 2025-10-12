@@ -14,6 +14,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/adrg/xdg"
 	"github.com/rivo/tview"
 )
 
@@ -21,6 +22,11 @@ const FormulaeAPIURL = "https://formulae.brew.sh/api/formula.json"
 const CaskAPIURL = "https://formulae.brew.sh/api/cask.json"
 const AnalyticsAPIURL = "https://formulae.brew.sh/api/analytics/install-on-request/90d.json"
 const CaskAnalyticsAPIURL = "https://formulae.brew.sh/api/analytics/cask-install/90d.json"
+
+// getCacheDir - returns the cache directory following XDG Base Directory Specification.
+func getCacheDir() string {
+	return filepath.Join(xdg.CacheHome, "bbrew")
+}
 
 type BrewServiceInterface interface {
 	GetPrefixPath() (path string)
@@ -303,15 +309,10 @@ func (s *BrewService) loadInstalledCasks() (err error) {
 
 // loadRemote retrieves the list of remote Homebrew formulae from the API and caches them locally.
 func (s *BrewService) loadRemote(forceDownload bool) (err error) {
-	homeDir, err := os.UserHomeDir()
-	if err != nil {
-		return err
-	}
-
-	bbrewDir := filepath.Join(homeDir, ".bbrew") // TODO: Move to config
-	formulaFile := filepath.Join(bbrewDir, "formula.json")
-	if _, err := os.Stat(bbrewDir); os.IsNotExist(err) {
-		if err := os.MkdirAll(bbrewDir, 0750); err != nil {
+	cacheDir := getCacheDir()
+	formulaFile := filepath.Join(cacheDir, "formula.json")
+	if _, err := os.Stat(cacheDir); os.IsNotExist(err) {
+		if err := os.MkdirAll(cacheDir, 0750); err != nil {
 			return err
 		}
 	}
@@ -354,15 +355,10 @@ func (s *BrewService) loadRemote(forceDownload bool) (err error) {
 
 // loadRemoteCasks retrieves the list of remote Homebrew casks from the API and caches them locally.
 func (s *BrewService) loadRemoteCasks(forceDownload bool) (err error) {
-	homeDir, err := os.UserHomeDir()
-	if err != nil {
-		return err
-	}
-
-	bbrewDir := filepath.Join(homeDir, ".bbrew")
-	caskFile := filepath.Join(bbrewDir, "cask.json")
-	if _, err := os.Stat(bbrewDir); os.IsNotExist(err) {
-		if err := os.MkdirAll(bbrewDir, 0750); err != nil {
+	cacheDir := getCacheDir()
+	caskFile := filepath.Join(cacheDir, "cask.json")
+	if _, err := os.Stat(cacheDir); os.IsNotExist(err) {
+		if err := os.MkdirAll(cacheDir, 0750); err != nil {
 			return err
 		}
 	}

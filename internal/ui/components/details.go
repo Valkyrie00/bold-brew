@@ -99,28 +99,6 @@ func (d *Details) SetContent(pkg *models.Package) {
 	d.view.SetText(strings.Join(parts, "\n\n"))
 }
 
-func (d *Details) getPackageVersionInfo(info *models.Formula) string {
-	if len(info.Installed) == 0 {
-		return ""
-	}
-
-	installedVersion := info.Installed[0].Version
-	stableVersion := info.Versions.Stable
-
-	// Revision version
-	if strings.HasPrefix(installedVersion, stableVersion+"_") {
-		return fmt.Sprintf("([green]%s[-])", installedVersion)
-	} else if installedVersion == stableVersion {
-		return fmt.Sprintf("([green]%s[-])", installedVersion)
-	} else if installedVersion < stableVersion || info.Outdated {
-		return fmt.Sprintf("([orange]%s[-] → [green]%s[-])",
-			installedVersion, stableVersion)
-	}
-
-	// Other cases
-	return fmt.Sprintf("([green]%s[-])", installedVersion)
-}
-
 func (d *Details) getPackageInstallationDetails(pkg *models.Package) string {
 	if !pkg.LocallyInstalled {
 		return "[yellow::b]Installation[-]\nNot installed"

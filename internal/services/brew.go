@@ -131,7 +131,8 @@ func (s *BrewService) GetPackages() (packages *[]models.Package) {
 	// Add REMOTE formulae
 	for _, formula := range *s.remote {
 		if _, exists := packageMap[formula.Name]; !exists {
-			pkg := models.NewPackageFromFormula(&formula)
+			f := formula // Create a copy to avoid implicit memory aliasing
+			pkg := models.NewPackageFromFormula(&f)
 			// Merge analytics data
 			if a, exists := s.analytics[formula.Name]; exists && a.Number > 0 {
 				downloads, _ := strconv.Atoi(strings.ReplaceAll(a.Count, ",", ""))
@@ -144,7 +145,8 @@ func (s *BrewService) GetPackages() (packages *[]models.Package) {
 
 	// Add INSTALLED formulae (override remote data)
 	for _, formula := range *s.installed {
-		pkg := models.NewPackageFromFormula(&formula)
+		f := formula // Create a copy to avoid implicit memory aliasing
+		pkg := models.NewPackageFromFormula(&f)
 		// Merge analytics data
 		if a, exists := s.analytics[formula.Name]; exists && a.Number > 0 {
 			downloads, _ := strconv.Atoi(strings.ReplaceAll(a.Count, ",", ""))
@@ -157,7 +159,8 @@ func (s *BrewService) GetPackages() (packages *[]models.Package) {
 	// Add REMOTE casks
 	for _, cask := range *s.remoteCasks {
 		if _, exists := packageMap[cask.Token]; !exists {
-			pkg := models.NewPackageFromCask(&cask)
+			c := cask // Create a copy to avoid implicit memory aliasing
+			pkg := models.NewPackageFromCask(&c)
 			// Merge analytics data
 			if a, exists := s.caskAnalytics[cask.Token]; exists && a.Number > 0 {
 				downloads, _ := strconv.Atoi(strings.ReplaceAll(a.Count, ",", ""))
@@ -170,7 +173,8 @@ func (s *BrewService) GetPackages() (packages *[]models.Package) {
 
 	// Add INSTALLED casks (override remote data)
 	for _, cask := range *s.installedCasks {
-		pkg := models.NewPackageFromCask(&cask)
+		c := cask // Create a copy to avoid implicit memory aliasing
+		pkg := models.NewPackageFromCask(&c)
 		// Merge analytics data
 		if a, exists := s.caskAnalytics[cask.Token]; exists && a.Number > 0 {
 			downloads, _ := strconv.Atoi(strings.ReplaceAll(a.Count, ",", ""))

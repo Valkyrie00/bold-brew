@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bold Brew 2.0: Complete Homebrew Management with Cask Support</title>
+    <meta name="description" content="Bold Brew 2.0 brings major new features including full Cask support, Leaves filter, XDG compliance, and enhanced security. Manage both CLI tools and GUI applications seamlessly.">
+    <meta name="keywords" content="Bold Brew 2.0, Homebrew casks, TUI package manager, leaves filter, XDG compliance, Homebrew GUI, terminal UI, package management, macOS apps, Linux apps">
+    <meta name="author" content="Valkyrie00">
+    <meta name="robots" content="index, follow, max-image-preview:large">
+    <meta name="theme-color" content="#1a1a1a">
+
+    <!-- DNS Prefetch & Preconnect for Performance -->
+    <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+    <link rel="dns-prefetch" href="https://www.googletagmanager.com">
+    <link rel="preconnect" href="https://www.googletagmanager.com" crossorigin>
+
+    <!-- OpenGraph Tags -->
+    <meta property="og:title" content="Bold Brew 2.0: Complete Homebrew Management with Cask Support">
+    <meta property="og:description" content="Bold Brew 2.0 brings major new features including full Cask support, Leaves filter, XDG compliance, and enhanced security. Manage both CLI tools and GUI applications seamlessly.">
+    <meta property="og:image" content="https://bold-brew.com/assets/logo/bbrew-logo-rounded.png">
+    <meta property="og:image:width" content="200">
+    <meta property="og:image:height" content="200">
+    <meta property="og:image:alt" content="Bold Brew Logo">
+    <meta property="og:url" content="https://bold-brew.com/blog/bold-brew-2-0-cask-support.html">
+    <meta property="og:type" content="article">
+    <meta property="og:site_name" content="Bold Brew">
+
+    <!-- Twitter Card Tags -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Bold Brew 2.0: Complete Homebrew Management with Cask Support">
+    <meta name="twitter:description" content="Bold Brew 2.0 brings major new features including full Cask support, Leaves filter, XDG compliance, and enhanced security. Manage both CLI tools and GUI applications seamlessly.">
+    <meta name="twitter:image" content="https://bold-brew.com/assets/logo/bbrew-logo-rounded.png">
+    <meta name="twitter:image:alt" content="Bold Brew Logo">
+    <meta name="twitter:creator" content="@Valkyrie00">
+    <meta name="twitter:site" content="@Valkyrie00">
+
+    <!-- Additional SEO Meta Tags -->
+    <meta name="application-name" content="Bold Brew">
+    <meta name="apple-mobile-web-app-title" content="Bold Brew">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="format-detection" content="telephone=no">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="msapplication-TileColor" content="#1a1a1a">
+    <meta name="msapplication-config" content="none">
+
+    <link rel="canonical" href="https://bold-brew.com/blog/bold-brew-2-0-cask-support.html">
+    <link rel="alternate" hreflang="en" href="https://bold-brew.com/blog/bold-brew-2-0-cask-support.html">
+    <link rel="alternate" hreflang="x-default" href="https://bold-brew.com/blog/bold-brew-2-0-cask-support.html">
+    
+    <!-- Stylesheets -->
+    <link rel="preload" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" as="stylesheet">
+    <link rel="preload" href="/assets/css/styles.css" as="stylesheet">
+    <link rel="preload" href="/assets/bbrew-logo-nobg.png" as="image">
+    
+    <!-- Stylesheets -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/assets/css/styles.css" rel="stylesheet">
+    
+    <!-- Favicons -->
+    <link rel="icon" href="/assets/ico/bbrew-16.ico" sizes="16x16" type="image/x-icon">
+    <link rel="icon" href="/assets/ico/bbrew-24.ico" sizes="24x24" type="image/x-icon">
+    <link rel="icon" href="/assets/ico/bbrew-32.ico" sizes="32x32" type="image/x-icon">
+    <link rel="icon" href="/assets/ico/bbrew-48.ico" sizes="48x48" type="image/x-icon">
+    <link rel="manifest" href="/manifest.json">
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" defer></script>
+    
+    <!-- Schema.org Markup -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "Bold Brew (bbrew)",
+      "operatingSystem": ["macOS", "Linux"],
+      "applicationCategory": "DeveloperApplication",
+      "description": "Bold Brew: A modern TUI interface for managing Homebrew packages and casks on macOS and Linux. Effortlessly install, search, update, and remove packages with an elegant and intuitive interface.",
+      "url": "https://bold-brew.com",
+      "author": {
+        "@type": "Person",
+        "name": "Valkyrie00"
+      },
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      }
+    }
+    </script>
+
+    <!-- Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-MM4FCW9XZM"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-MM4FCW9XZM');
+    </script>
+</head>
+<body>
+    <header>
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <img src="/assets/bbrew-logo-nobg.png" alt="Bold Brew Logo" width="32" height="32">
+                <span>Bold Brew</span>
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/#features">Features</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/#install">Install</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/#about">About</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/blog/">Blog</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="https://github.com/Valkyrie00/bold-brew" target="_blank" rel="noopener noreferrer">GitHub</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+</header>
+
+    <main class="container my-5">
+    
+        <div class="container my-4">
+    <nav aria-label="breadcrumb">
+        <div class="breadcrumb">
+            
+                <div class="breadcrumb-item ">
+                    
+                        <a href="/">Home</a>
+                    
+                </div>
+            
+                <div class="breadcrumb-item ">
+                    
+                        <a href="/blog/">Blog</a>
+                    
+                </div>
+            
+                <div class="breadcrumb-item active">
+                    
+                        Bold Brew 2.0: Complete Homebrew Management with Cask Support
+                    
+                </div>
+            
+        </div>
+    </nav>
+</div> 
+    
+
+    <article>
+        <header class="mb-5">
+            <h1>Bold Brew 2.0: Complete Homebrew Management with Cask Support</h1>
+            <div class="meta">
+                <span class="date">2025-10-13</span>
+                <span class="author">By Valkyrie00</span>
+            </div>
+        </header>
+
+        <div class="content">
+            <h1>Bold Brew 2.0: Complete Homebrew Management with Cask Support</h1>
+<p>We&#39;re thrilled to announce <strong>Bold Brew 2.0</strong>, the biggest update since launch! This release transforms Bold Brew from a formula-only manager into a <strong>complete Homebrew management solution</strong> that handles both command-line tools and GUI applications.</p>
+<h2>🎉 What&#39;s New</h2>
+<h3>Full Homebrew Casks Support</h3>
+<p>The most requested feature is finally here! Bold Brew now provides <strong>complete support for Homebrew Casks</strong>, allowing you to manage GUI applications and binaries directly from the same intuitive interface you love.</p>
+<p><strong>What are Casks?</strong> Homebrew Casks extend Homebrew&#39;s package management to include macOS and Linux GUI applications. Instead of just installing command-line tools like <code>git</code> or <code>node</code>, you can now manage apps like Google Chrome, Visual Studio Code, Docker Desktop, and thousands more.</p>
+<h4>Visual Type Indicators</h4>
+<p>Never wonder what type of package you&#39;re looking at! Bold Brew 2.0 introduces clear visual indicators:</p>
+<ul>
+<li><code>[F]</code> - Formula (command-line tool)</li>
+<li><code>[C]</code> - Cask (GUI application or binary)</li>
+</ul>
+<p>These tags appear throughout the interface, making it instantly clear whether you&#39;re working with a CLI tool or a desktop application.</p>
+<h3>Smart Leaves Filter</h3>
+<p>Tired of seeing all those dependency packages cluttering your installed list? The new <strong>Leaves Filter</strong> (press <code>L</code>) shows only packages you explicitly installed, hiding all the dependencies that came along for the ride.</p>
+<p><strong>Perfect for:</strong></p>
+<ul>
+<li>Cleaning up your system by identifying what you actually need</li>
+<li>Creating reproducible development environments</li>
+<li>Understanding your actual package footprint</li>
+<li>Selective updates of only your core tools</li>
+</ul>
+<h3>XDG Base Directory Compliance</h3>
+<p>Bold Brew 2.0 now follows the <a href="https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html">XDG Base Directory Specification</a>, providing a cleaner, more standards-compliant cache management:</p>
+<ul>
+<li><strong>Linux</strong>: <code>~/.cache/bbrew</code> or <code>$XDG_CACHE_HOME/bbrew</code></li>
+<li><strong>macOS</strong>: <code>~/Library/Caches/bbrew</code> (native macOS location!)</li>
+<li><strong>Windows</strong> (WSL2): Windows Known Folders support</li>
+</ul>
+<p>No more random dotfiles in your home directory—everything is where it should be.</p>
+<h2>🔧 Technical Improvements</h2>
+<h3>Go 1.25 and Modern Tooling</h3>
+<ul>
+<li><strong>Updated to Go 1.25</strong> for better performance and latest language features</li>
+<li><strong>Migrated to Podman</strong> and OCI-compliant Containerfile for better security</li>
+<li><strong>Enhanced Makefile</strong> with 15+ new targets including <code>make test</code>, <code>make security</code>, and <code>make install</code></li>
+<li><strong>Improved build system</strong> with local and containerized build options</li>
+</ul>
+<h3>Enhanced Security</h3>
+<p>Security is a priority. Bold Brew 2.0 includes:</p>
+<ul>
+<li><strong>govulncheck</strong> - Automated Go vulnerability scanning</li>
+<li><strong>gosec</strong> - Static security analysis</li>
+<li><strong>GitHub Security integration</strong> - SARIF reports uploaded to Security tab</li>
+<li><strong>Fixed memory aliasing issues</strong> - Cleaner, safer code</li>
+<li><strong>Better permission handling</strong> - Secure cache directory permissions (0750)</li>
+</ul>
+<h3>Better User Experience</h3>
+<ul>
+<li><strong>Enhanced keyboard shortcuts</strong> - More intuitive navigation and filtering</li>
+<li><strong>Improved error messages</strong> - Better debugging and user feedback</li>
+<li><strong>Analytics integration</strong> - See popular packages based on 90-day download stats</li>
+<li><strong>Real-time feedback</strong> - Live updates during package operations</li>
+<li><strong>Fixed rendering issues</strong> - Proper display of all UI elements</li>
+</ul>
+<h2>🐛 Bug Fixes</h2>
+<ul>
+<li>Fixed cask analytics endpoint (now correctly fetches download statistics)</li>
+<li>Corrected installed casks detection (properly identifies locally installed casks)</li>
+<li>Fixed tview special character rendering for type tags</li>
+<li>Improved directory permission handling for cache</li>
+<li>Enhanced error handling throughout the application</li>
+</ul>
+<h2>🚀 Getting Started</h2>
+<h3>For Existing Users</h3>
+<p>Update to the latest version:</p>
+<pre><code class="language-bash">brew update
+brew upgrade bbrew
+</code></pre>
+<h3>For New Users</h3>
+<p>Install Bold Brew via Homebrew:</p>
+<pre><code class="language-bash">brew install Valkyrie00/homebrew-bbrew/bbrew
+</code></pre>
+<p>Or download from the <a href="https://github.com/Valkyrie00/bold-brew/releases">releases page</a>.</p>
+<h2>📖 Using the New Features</h2>
+<h3>Managing Casks</h3>
+<ol>
+<li><strong>Filter Casks Only</strong>: Press <code>C</code> to show only Cask packages</li>
+<li><strong>Search Casks</strong>: Type <code>/</code> and search for your favorite GUI app (e.g., &quot;chrome&quot;, &quot;vscode&quot;, &quot;docker&quot;)</li>
+<li><strong>Install a Cask</strong>: Select it and press <code>I</code></li>
+<li><strong>Update Casks</strong>: Press <code>U</code> on any outdated Cask, or <code>Ctrl+U</code> to update all</li>
+</ol>
+<h3>Using the Leaves Filter</h3>
+<ol>
+<li>Press <code>L</code> to activate the Leaves filter</li>
+<li>Browse only the packages you explicitly installed</li>
+<li>Identify packages you no longer need</li>
+<li>Press <code>R</code> to remove unwanted packages</li>
+</ol>
+<h3>Keyboard Shortcuts Reference</h3>
+<h4>Filters</h4>
+<ul>
+<li><code>F</code> - Filter installed packages</li>
+<li><code>O</code> - Filter outdated packages</li>
+<li><code>L</code> - Filter leaves (explicitly installed, no dependencies)</li>
+<li><code>C</code> - Filter casks only</li>
+</ul>
+<h4>Package Operations</h4>
+<ul>
+<li><code>I</code> - Install selected package</li>
+<li><code>U</code> - Update selected package</li>
+<li><code>R</code> - Remove selected package</li>
+<li><code>Ctrl+U</code> - Update all outdated packages</li>
+</ul>
+<h2>🌐 Cross-Platform Support</h2>
+<p>Bold Brew 2.0 provides excellent support across platforms:</p>
+<table>
+<thead>
+<tr>
+<th>Platform</th>
+<th>Support</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>🍎 <strong>macOS</strong></td>
+<td>✅ Full</td>
+<td>Native Homebrew support with macOS-specific cache location</td>
+</tr>
+<tr>
+<td>🐧 <strong>Linux</strong></td>
+<td>✅ Full</td>
+<td>Linuxbrew/Homebrew support with XDG compliance</td>
+</tr>
+<tr>
+<td>🪟 <strong>Windows</strong></td>
+<td>⚠️ Partial</td>
+<td>Via WSL2 with Homebrew</td>
+</tr>
+</tbody></table>
+<h2>🎯 What&#39;s Next</h2>
+<p>We&#39;re not stopping here! Future plans include:</p>
+<ul>
+<li><strong>Tap management</strong> - Add and manage custom Homebrew taps</li>
+<li><strong>Formulae pinning</strong> - Pin specific package versions</li>
+<li><strong>Backup/restore</strong> - Export and import your package lists</li>
+<li><strong>Themes</strong> - Customizable color schemes</li>
+<li><strong>Plugin system</strong> - Extend Bold Brew with custom functionality</li>
+</ul>
+<h2>🙏 Acknowledgments</h2>
+<p>A huge thank you to:</p>
+<ul>
+<li>The Homebrew team for the excellent package management system</li>
+<li>Project Bluefin for adopting Bold Brew as their official Homebrew TUI</li>
+<li>All contributors who submitted issues, PRs, and feature requests</li>
+<li>The community for their continued support and feedback</li>
+</ul>
+<h2>📣 Spread the Word</h2>
+<p>If you love Bold Brew 2.0:</p>
+<ul>
+<li>⭐ <a href="https://github.com/Valkyrie00/bold-brew">Star the project on GitHub</a></li>
+<li>🐦 Share on social media</li>
+<li>📝 Write about it on your blog</li>
+<li>💬 Tell your developer friends</li>
+</ul>
+<h2>🔗 Resources</h2>
+<ul>
+<li><a href="https://github.com/Valkyrie00/bold-brew">GitHub Repository</a></li>
+<li><a href="https://bold-brew.com">Documentation</a></li>
+<li><a href="https://github.com/Valkyrie00/bold-brew/releases">Release Notes</a></li>
+<li><a href="https://github.com/Valkyrie00/bold-brew/issues">Report Issues</a></li>
+</ul>
+<hr>
+<p><strong>Happy brewing! 🍺</strong></p>
+<p><em>The Bold Brew Team</em></p>
+
+        </div>
+
+        <footer class="mt-5">
+            <div class="tags">
+                <span class="tag">Homebrew</span>
+                <span class="tag">macOS</span>
+                <span class="tag">Command Line</span>
+                <span class="tag">Development Tools</span>
+            </div>
+        </footer>
+    </article>
+</main>
+
+    <footer>
+    <div class="container">
+        <p>&copy; 2025 Bold Brew | <a href="https://github.com/Valkyrie00/bold-brew" target="_blank" rel="noopener noreferrer">GitHub</a></p>
+    </div>
+</footer>
+
+    <!-- Back to top button -->
+    <button class="back-to-top" aria-label="Torna in alto">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18" />
+        </svg>
+    </button>
+
+    <!-- Scripts -->
+    <script>
+        function copyToClipboard(button) {
+            const preEl = button.parentElement.querySelector('pre');
+            const codeText = preEl.textContent;
+            const cleanText = codeText.replace(/^>\s/, '');
+        
+            navigator.clipboard.writeText(cleanText).then(() => {
+                const copyText = button.querySelector('.copy-text');
+                copyText.textContent = 'Copied!';
+        
+                setTimeout(() => {
+                    copyText.textContent = 'Copy';
+                }, 2000);
+            });
+        }
+
+        // Chiudi il menu mobile quando si clicca su un link
+        document.addEventListener('DOMContentLoaded', function() {
+            const navLinks = document.querySelectorAll('.navbar-nav .nav-link');
+            const menuToggle = document.getElementById('navbarNav');
+            const bsCollapse = new bootstrap.Collapse(menuToggle, {toggle: false});
+
+            navLinks.forEach(link => {
+                link.addEventListener('click', () => {
+                    if (window.innerWidth < 992) { // Solo su mobile
+                        bsCollapse.hide();
+                    }
+                });
+            });
+
+            // Gestione del pulsante back-to-top
+            const backToTop = document.querySelector('.back-to-top');
+            
+            window.addEventListener('scroll', () => {
+                if (window.scrollY > 300) {
+                    backToTop.classList.add('visible');
+                } else {
+                    backToTop.classList.remove('visible');
+                }
+            });
+
+            backToTop.addEventListener('click', () => {
+                window.scrollTo({
+                    top: 0,
+                    behavior: 'smooth'
+                });
+            });
+        });
+    </script>
+
+</body>
+</html> 

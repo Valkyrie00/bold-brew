@@ -6,12 +6,14 @@
                 <img src="assets/bbrew-logo-nobg.png" alt="Bold Brew Logo" class="logo-img animate-pulse" width="120" height="120">
                 <h1 class="display-4">Bold Brew</h1>
                 <h2 class="tagline"><code>bbrew</code></h2>
-                <p class="lead">A fast and practical TUI that simplifies your Homebrew package management on macOS, making installations and updates effortless</p>
+                <p class="lead">The modern Terminal UI for managing Homebrew packages and casks on macOS and Linux.</p>
                 <div class="badges">
                     <img src="https://img.shields.io/github/v/release/Valkyrie00/bold-brew" alt="Version" width="100" height="20">
                     <img src="https://img.shields.io/github/license/Valkyrie00/bold-brew" alt="License" width="100" height="20">
                     <img src="https://img.shields.io/github/actions/workflow/status/Valkyrie00/bold-brew/release.yml" alt="Build Status" width="100" height="20">
+                    <img src="https://github.com/Valkyrie00/bold-brew/workflows/Security/badge.svg" alt="Security" width="100" height="20">
                     <img src="https://img.shields.io/github/downloads/Valkyrie00/bold-brew/total" alt="Downloads" width="100" height="20">
+                    <img src="https://img.shields.io/badge/Featured_in-Project_Bluefin-0091e2" alt="Project Bluefin" width="140" height="20">
                 </div>
                 <div class="hero-cta">
                     <a href="#install" class="btn-primary">Start Now</a>
@@ -109,29 +111,68 @@
         </div>
     </section>
 
+    <section class="bluefin-banner" style="background: linear-gradient(135deg, #0091e2 0%, #5865f2 100%); color: white; padding: 3rem 0; margin: 2rem 0;">
+        <div class="container text-center">
+            <h2 style="color: white; margin-bottom: 1rem;">🌟 Official Homebrew TUI for Project Bluefin</h2>
+            <p class="lead" style="color: rgba(255,255,255,0.95); margin-bottom: 1.5rem;">
+                Bold Brew is the official Terminal UI for managing Homebrew in <strong>Project Bluefin</strong>, 
+                a next-generation Linux desktop serving tens of thousands of users worldwide.
+            </p>
+            <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+                <a href="https://projectbluefin.io/" target="_blank" class="btn" style="background: white; color: #0091e2; padding: 0.75rem 1.5rem; border-radius: 8px; text-decoration: none; font-weight: 600;">
+                    Learn About Bluefin →
+                </a>
+                <a href="blog/bold-brew-official-project-bluefin-tui.html" class="btn" style="background: rgba(255,255,255,0.2); color: white; padding: 0.75rem 1.5rem; border-radius: 8px; text-decoration: none; font-weight: 600; border: 2px solid white;">
+                    Read Announcement →
+                </a>
+            </div>
+        </div>
+    </section>
+
     <section id="features" class="py-5">
         <div class="container">
             <h2 class="text-center mb-5">Features</h2>
-            <div class="row">
+            <div class="row g-4">
+                <div class="col-md-4">
+                    <div class="feature-card">
+                        <i class="fas fa-cube"></i>
+                        <h3>Formulae & Casks</h3>
+                        <p>Manage both CLI tools and GUI applications. Full support for Homebrew formulae and casks in one interface.</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="feature-card">
+                        <i class="fas fa-filter"></i>
+                        <h3>Smart Filters</h3>
+                        <p>Filter by installed, outdated, leaves (explicitly installed), or casks. Find what you need instantly.</p>
+                    </div>
+                </div>
                 <div class="col-md-4">
                     <div class="feature-card">
                         <i class="fas fa-search"></i>
-                        <h3>Search Packages</h3>
-                        <p>Easily search and find Homebrew packages with our intuitive interface.</p>
+                        <h3>Fuzzy Search</h3>
+                        <p>Fast fuzzy search across all packages with real-time results and analytics integration.</p>
                     </div>
                 </div>
                 <div class="col-md-4">
                     <div class="feature-card">
-                        <i class="fas fa-download"></i>
-                        <h3>Install & Update</h3>
-                        <p>Install, update, and manage packages with just a few clicks.</p>
+                        <i class="fas fa-rocket"></i>
+                        <h3>Real-time Updates</h3>
+                        <p>Live feedback during installations, updates, and removals with detailed progress information.</p>
                     </div>
                 </div>
                 <div class="col-md-4">
                     <div class="feature-card">
-                        <i class="fas fa-cogs"></i>
-                        <h3>System Management</h3>
-                        <p>Monitor system status and manage Homebrew services efficiently.</p>
+                        <i class="fas fa-shield-alt"></i>
+                        <h3>Secure & Compliant</h3>
+                        <p>XDG Base Directory compliant with automated security scanning and vulnerability checks.</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="feature-card">
+                        <i class="fas fa-keyboard"></i>
+                        <h3>Keyboard Shortcuts</h3>
+                        <p>Intuitive keybindings for all operations. Navigate and manage packages without touching the mouse.</p>
                     </div>
                 </div>
             </div>
@@ -163,23 +204,25 @@
 
     <section class="seo-content" aria-label="Additional Information">
         <div class="container">
-            <h2>Manage Homebrew Packages on macOS with Bold Brew</h2>
+            <h2>Manage Homebrew Packages and Casks with Bold Brew</h2>
             <div class="row">
                 <div class="col-lg-8 mx-auto">
-                    <p><strong>Bold Brew</strong> transforms the way developers manage <strong>Homebrew packages on macOS</strong> with its elegant Terminal User Interface. Stop struggling with complex command-line syntax and enjoy a streamlined package management experience.</p>
+                    <p><strong>Bold Brew</strong> transforms the way developers manage <strong>Homebrew packages and casks</strong> across macOS and Linux with its elegant Terminal User Interface. Stop struggling with complex command-line syntax and enjoy a streamlined package management experience for both CLI tools and GUI applications.</p>
 
-                    <h3>Why macOS Users Choose Bold Brew</h3>
-                    <p>Managing your <strong>Homebrew ecosystem</strong> has never been easier. Bold Brew provides real-time visual feedback for installations, updates, and package removals—all while maintaining the speed and efficiency you expect from terminal-based applications.</p>
+                    <h3>Why Developers Choose Bold Brew</h3>
+                    <p>Managing your <strong>Homebrew ecosystem</strong> has never been easier. Bold Brew 2.0 provides complete support for both formulae (command-line tools) and casks (GUI applications), with real-time visual feedback for installations, updates, and package removals—all while maintaining the speed and efficiency you expect from terminal-based applications.</p>
 
-                    <h3>Key Benefits for macOS Developers</h3>
+                    <h3>Key Benefits for Developers</h3>
                     <ul>
-                        <li><strong>Faster package discovery</strong> with intuitive search functionality</li>
-                        <li><strong>Simplified dependency management</strong> with visual relationship mapping</li>
-                        <li><strong>Streamlined updates</strong> for all installed Homebrew packages</li>
-                        <li><strong>One-click installations</strong> without memorizing complex commands</li>
+                        <li><strong>Complete package management</strong> for both CLI tools and GUI applications</li>
+                        <li><strong>Smart filtering</strong> by installed, outdated, leaves, or casks</li>
+                        <li><strong>Faster package discovery</strong> with fuzzy search and analytics</li>
+                        <li><strong>XDG Base Directory compliance</strong> for clean cache management</li>
+                        <li><strong>Streamlined updates</strong> for all Homebrew packages with visual progress</li>
+                        <li><strong>Keyboard-driven workflow</strong> without memorizing complex commands</li>
                     </ul>
 
-                    <p>Built specifically for <strong>macOS users</strong> who rely on <strong>Homebrew</strong>, Bold Brew integrates perfectly with your development workflow while reducing cognitive load and increasing productivity.</p>
+                    <p>Trusted by <strong>Project Bluefin</strong> and used by <strong>tens of thousands of developers</strong>, Bold Brew integrates perfectly with your workflow while reducing cognitive load and increasing productivity on macOS and Linux.</p>
                 </div>
             </div>
         </div>
@@ -187,27 +230,28 @@
 
     <section class="about-section" id="about" aria-label="About">
         <div class="container">
-            <h2>About Bold Brew for macOS</h2>
+            <h2>About Bold Brew</h2>
             <div class="row justify-content-center">
                 <div class="col-lg-8">
-                    <p class="lead">The modern Homebrew package manager that macOS developers have been waiting for</p>
+                    <p class="lead">The modern Homebrew TUI that developers trust—from macOS to Linux</p>
 
                     <h3>The Bold Brew Advantage</h3>
-                    <p>Bold Brew was designed from the ground up to address the limitations of traditional Homebrew management. By providing a Terminal User Interface (TUI), Bold Brew combines the efficiency of command-line operations with intuitive visual feedback.</p>
+                    <p>Bold Brew was designed from the ground up to address the limitations of traditional Homebrew management. By providing a Terminal User Interface (TUI), Bold Brew combines the efficiency of command-line operations with intuitive visual feedback. Version 2.0 brings complete support for both formulae (CLI tools) and casks (GUI applications).</p>
 
-                    <h3>Homebrew Integration</h3>
-                    <p>As a dedicated Homebrew TUI manager for macOS, Bold Brew seamlessly integrates with your existing Homebrew installation. All operations—from searching the formula repository to managing casks—are visualized through an elegant interface while preserving the speed and reliability of Homebrew's core functionality.</p>
+                    <h3>Complete Homebrew Integration</h3>
+                    <p>As the official Homebrew TUI for Project Bluefin, Bold Brew seamlessly integrates with your existing Homebrew installation. All operations—from searching packages to managing casks, filtering leaves, and updating dependencies—are visualized through an elegant interface while preserving the speed and reliability of Homebrew's core functionality.</p>
 
                     <div class="compatibility-info">
-                        <h4>System Requirements</h4>
+                        <h4>Platform Support</h4>
                         <ul>
-                            <li>macOS 10.15 Catalina or newer</li>
-                            <li>Homebrew installation</li>
-                            <li>Terminal with true color support</li>
+                            <li><strong>macOS:</strong> Full support (10.15 Catalina or newer)</li>
+                            <li><strong>Linux:</strong> Full support (Project Bluefin, Linuxbrew, Homebrew on Linux)</li>
+                            <li>Requires: Homebrew installation, Terminal with true color support</li>
                         </ul>
                     </div>
 
-                    <p>Whether you're a seasoned developer or new to macOS package management, Bold Brew streamlines your workflow and makes Homebrew more accessible than ever before.</p>
+                    <h3>Trusted by the Community</h3>
+                    <p>Bold Brew is pre-installed in Project Bluefin, serving tens of thousands of developers worldwide. Whether you're a seasoned developer or new to package management, Bold Brew streamlines your workflow and makes Homebrew more accessible than ever before.</p>
                 </div>
             </div>
         </div>
@@ -229,7 +273,7 @@
                                 </div>
                             </div>
                             <div id="faq1" class="faq-answer collapse show" data-bs-parent="#faqAccordion">
-                                <p>Bold Brew (bbrew) is a modern Terminal User Interface for managing Homebrew packages on macOS. It provides an elegant and intuitive way to install, update, and manage your Homebrew packages without memorizing complex commands.</p>
+                                <p>Bold Brew (bbrew) is a modern Terminal User Interface for managing Homebrew packages and casks on macOS and Linux. It provides an elegant and intuitive way to install, update, and manage both command-line tools (formulae) and GUI applications (casks) without memorizing complex commands. It's the official Homebrew TUI for Project Bluefin.</p>
                             </div>
                         </div>
 
@@ -285,7 +329,20 @@
                                 </div>
                             </div>
                             <div id="faq5" class="faq-answer collapse" data-bs-parent="#faqAccordion">
-                                <p>Currently, Bold Brew is designed specifically for macOS since it depends on the Homebrew package manager, which is primarily for macOS.</p>
+                                <p>Yes! Bold Brew has full support for Linux (it's the official TUI for Project Bluefin). It works anywhere Homebrew is installed.</p>
+                            </div>
+                        </div>
+
+                        <div class="faq-item">
+                            <div class="faq-question" data-bs-toggle="collapse" data-bs-target="#faq7">
+                                <h3>What's new in Bold Brew 2.0?</h3>
+                                <div class="faq-icon">
+                                    <span class="plus">+</span>
+                                    <span class="minus">−</span>
+                                </div>
+                            </div>
+                            <div id="faq7" class="faq-answer collapse" data-bs-parent="#faqAccordion">
+                                <p>Version 2.0 introduces full Homebrew Casks support (GUI applications), a Leaves filter (explicitly installed packages), XDG Base Directory compliance, enhanced security scanning, and many performance improvements. <a href="blog/bold-brew-2-0-cask-support.html">Read the full announcement</a>.</p>
                             </div>
                         </div>
 

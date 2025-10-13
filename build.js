@@ -46,9 +46,9 @@ async function generatePage(template, data, outputPath) {
 async function generateHomepage() {
     const posts = getBlogPosts();
     await generatePage('index.ejs', {
-        title: 'Bold Brew (bbrew) - Modern Homebrew TUI Manager for macOS',
-        description: 'Bold Brew (bbrew) is the modern Terminal User Interface for Homebrew on macOS. Install, update, and manage packages with an elegant TUI. The perfect alternative to traditional Homebrew commands.',
-        keywords: 'bbrew, Bold Brew, Homebrew TUI, macOS package manager, Homebrew GUI, terminal package manager, Homebrew alternative, macOS development tools',
+        title: 'Bold Brew (bbrew) - Modern Homebrew TUI Manager for macOS and Linux',
+        description: 'Bold Brew (bbrew) is the modern Terminal User Interface for Homebrew on macOS and Linux. Install, update, and manage packages and casks with an elegant TUI.',
+        keywords: 'bbrew, Bold Brew, Homebrew TUI, macOS package manager, Linux package manager, Homebrew casks, Homebrew GUI, terminal package manager, Homebrew alternative, Project Bluefin, macOS development tools, Linux development tools',
         canonicalUrl: config.site.url,
         ogType: 'website',
         posts,

@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bold Brew Named Official Homebrew TUI for Project Bluefin</title>
+    <meta name="description" content="Bold Brew becomes the official Terminal UI for managing Homebrew in Project Bluefin, a next-generation Linux desktop serving tens of thousands of users worldwide.">
+    <meta name="keywords" content="Bold Brew, Project Bluefin, Universal Blue, Fedora Silverblue, atomic desktop, official TUI, Linux desktop, Homebrew Linux, immutable OS, cloud-native desktop">
+    <meta name="author" content="Valkyrie00">
+    <meta name="robots" content="index, follow, max-image-preview:large">
+    <meta name="theme-color" content="#1a1a1a">
+
+    <!-- DNS Prefetch & Preconnect for Performance -->
+    <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+    <link rel="dns-prefetch" href="https://www.googletagmanager.com">
+    <link rel="preconnect" href="https://www.googletagmanager.com" crossorigin>
+
+    <!-- OpenGraph Tags -->
+    <meta property="og:title" content="Bold Brew Named Official Homebrew TUI for Project Bluefin">
+    <meta property="og:description" content="Bold Brew becomes the official Terminal UI for managing Homebrew in Project Bluefin, a next-generation Linux desktop serving tens of thousands of users worldwide.">
+    <meta property="og:image" content="https://bold-brew.com/assets/logo/bbrew-logo-rounded.png">
+    <meta property="og:image:width" content="200">
+    <meta property="og:image:height" content="200">
+    <meta property="og:image:alt" content="Bold Brew Logo">
+    <meta property="og:url" content="https://bold-brew.com/blog/bold-brew-official-project-bluefin-tui.html">
+    <meta property="og:type" content="article">
+    <meta property="og:site_name" content="Bold Brew">
+
+    <!-- Twitter Card Tags -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Bold Brew Named Official Homebrew TUI for Project Bluefin">
+    <meta name="twitter:description" content="Bold Brew becomes the official Terminal UI for managing Homebrew in Project Bluefin, a next-generation Linux desktop serving tens of thousands of users worldwide.">
+    <meta name="twitter:image" content="https://bold-brew.com/assets/logo/bbrew-logo-rounded.png">
+    <meta name="twitter:image:alt" content="Bold Brew Logo">
+    <meta name="twitter:creator" content="@Valkyrie00">
+    <meta name="twitter:site" content="@Valkyrie00">
+
+    <!-- Additional SEO Meta Tags -->
+    <meta name="application-name" content="Bold Brew">
+    <meta name="apple-mobile-web-app-title" content="Bold Brew">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="format-detection" content="telephone=no">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="msapplication-TileColor" content="#1a1a1a">
+    <meta name="msapplication-config" content="none">
+
+    <link rel="canonical" href="https://bold-brew.com/blog/bold-brew-official-project-bluefin-tui.html">
+    <link rel="alternate" hreflang="en" href="https://bold-brew.com/blog/bold-brew-official-project-bluefin-tui.html">
+    <link rel="alternate" hreflang="x-default" href="https://bold-brew.com/blog/bold-brew-official-project-bluefin-tui.html">
+    
+    <!-- Stylesheets -->
+    <link rel="preload" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" as="stylesheet">
+    <link rel="preload" href="/assets/css/styles.css" as="stylesheet">
+    <link rel="preload" href="/assets/bbrew-logo-nobg.png" as="image">
+    
+    <!-- Stylesheets -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/assets/css/styles.css" rel="stylesheet">
+    
+    <!-- Favicons -->
+    <link rel="icon" href="/assets/ico/bbrew-16.ico" sizes="16x16" type="image/x-icon">
+    <link rel="icon" href="/assets/ico/bbrew-24.ico" sizes="24x24" type="image/x-icon">
+    <link rel="icon" href="/assets/ico/bbrew-32.ico" sizes="32x32" type="image/x-icon">
+    <link rel="icon" href="/assets/ico/bbrew-48.ico" sizes="48x48" type="image/x-icon">
+    <link rel="manifest" href="/manifest.json">
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" defer></script>
+    
+    <!-- Schema.org Markup -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "Bold Brew (bbrew)",
+      "operatingSystem": ["macOS", "Linux"],
+      "applicationCategory": "DeveloperApplication",
+      "description": "Bold Brew: A modern TUI interface for managing Homebrew packages and casks on macOS and Linux. Effortlessly install, search, update, and remove packages with an elegant and intuitive interface.",
+      "url": "https://bold-brew.com",
+      "author": {
+        "@type": "Person",
+        "name": "Valkyrie00"
+      },
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      }
+    }
+    </script>
+
+    <!-- Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-MM4FCW9XZM"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-MM4FCW9XZM');
+    </script>
+</head>
+<body>
+    <header>
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <img src="/assets/bbrew-logo-nobg.png" alt="Bold Brew Logo" width="32" height="32">
+                <span>Bold Brew</span>
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/#features">Features</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/#install">Install</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/#about">About</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/blog/">Blog</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="https://github.com/Valkyrie00/bold-brew" target="_blank" rel="noopener noreferrer">GitHub</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+</header>
+
+    <main class="container my-5">
+    
+        <div class="container my-4">
+    <nav aria-label="breadcrumb">
+        <div class="breadcrumb">
+            
+                <div class="breadcrumb-item ">
+                    
+                        <a href="/">Home</a>
+                    
+                </div>
+            
+                <div class="breadcrumb-item ">
+                    
+                        <a href="/blog/">Blog</a>
+                    
+                </div>
+            
+                <div class="breadcrumb-item active">
+                    
+                        Bold Brew Named Official Homebrew TUI for Project Bluefin
+                    
+                </div>
+            
+        </div>
+    </nav>
+</div> 
+    
+
+    <article>
+        <header class="mb-5">
+            <h1>Bold Brew Named Official Homebrew TUI for Project Bluefin</h1>
+            <div class="meta">
+                <span class="date">2025-10-13</span>
+                <span class="author">By Valkyrie00</span>
+            </div>
+        </header>
+
+        <div class="content">
+            <h1>Bold Brew Named Official Homebrew TUI for Project Bluefin</h1>
+<p>We&#39;re incredibly proud to announce that <strong>Bold Brew has been selected as the official Terminal UI</strong> for managing Homebrew in <a href="https://projectbluefin.io/"><strong>Project Bluefin</strong></a>, a next-generation Linux desktop that serves tens of thousands of users worldwide!</p>
+<h2>🌊 What is Project Bluefin?</h2>
+<p><a href="https://projectbluefin.io/">Project Bluefin</a> is a cutting-edge Linux desktop distribution that&#39;s part of the <a href="https://universal-blue.org/">Universal Blue</a> ecosystem. Built on Fedora Atomic Desktop (formerly Silverblue), Bluefin represents the future of cloud-native desktop computing.</p>
+<h3>Key Features of Bluefin</h3>
+<ul>
+<li><strong>Atomic Updates</strong> - System updates are atomic and can be rolled back</li>
+<li><strong>Immutable Base</strong> - Core system is read-only for enhanced security</li>
+<li><strong>Container-First</strong> - Development happens in containers, keeping the host clean</li>
+<li><strong>Modern Tooling</strong> - Ships with the latest development tools and workflows</li>
+<li><strong>Cloud-Native</strong> - Designed for modern cloud-native development practices</li>
+</ul>
+<p>Bluefin is perfect for developers, DevOps engineers, and anyone who wants a reliable, cutting-edge Linux desktop that &quot;just works.&quot;</p>
+<h2>🎯 Why Bold Brew?</h2>
+<p>Bluefin&#39;s philosophy emphasizes <strong>quality over quantity</strong> and <strong>user experience</strong> above all else. The project carefully curates every tool and application that ships with the distribution, ensuring they meet high standards for usability and reliability.</p>
+<p>From the <a href="https://docs.projectbluefin.io/command-line/">Bluefin documentation</a>:</p>
+<blockquote>
+<p><strong>Bold Brew</strong> is included as a text based user interface (TUI) to Brew. This application features full package management for homebrew in a nice nerdy interface.</p>
+</blockquote>
+<p>Bold Brew was selected because it:</p>
+<ul>
+<li><strong>Simplifies Homebrew management</strong> with an intuitive TUI</li>
+<li><strong>Aligns with Bluefin&#39;s design philosophy</strong> of modern, user-friendly tools</li>
+<li><strong>Enhances the terminal experience</strong> that Bluefin is passionate about</li>
+<li><strong>Works seamlessly</strong> with Bluefin&#39;s container-first workflow</li>
+<li><strong>Provides both power and simplicity</strong> for all user levels</li>
+</ul>
+<h2>🚀 Bold Brew on Bluefin</h2>
+<h3>Pre-installed and Ready</h3>
+<p>Bold Brew comes <strong>pre-installed</strong> on every Bluefin system. Users can launch it simply by typing:</p>
+<pre><code class="language-bash">bbrew
+</code></pre>
+<p>No installation, no configuration—it just works.</p>
+<h3>Perfect Integration</h3>
+<p>Bold Brew fits perfectly into Bluefin&#39;s command-line ecosystem, which includes:</p>
+<ul>
+<li><strong>Homebrew</strong> - Package manager for command-line tools</li>
+<li><strong>Flatpak</strong> - GUI application management</li>
+<li><strong>Podman</strong> - Container management</li>
+<li><strong>ujust</strong> - System configuration and automation</li>
+</ul>
+<p>Together, these tools provide a complete, modern package management experience.</p>
+<h3>The Bluefin CLI Experience</h3>
+<p>Bluefin offers an optional enhanced CLI experience called <code>bluefin-cli</code>, which includes modern terminal tools like:</p>
+<ul>
+<li><code>atuin</code> for shell history</li>
+<li><code>eza</code> as a modern <code>ls</code> replacement</li>
+<li><code>fd</code> for finding files</li>
+<li><code>ripgrep</code> for search</li>
+<li><code>zoxide</code> as a smarter <code>cd</code></li>
+</ul>
+<p>Bold Brew complements these tools by providing visual, interactive Homebrew management that&#39;s faster and more intuitive than typing commands.</p>
+<h2>📊 Impact and Reach</h2>
+<p>Being adopted by Project Bluefin means Bold Brew now reaches:</p>
+<ul>
+<li><strong>Tens of thousands</strong> of active Bluefin users</li>
+<li><strong>Developers and DevOps professionals</strong> worldwide</li>
+<li><strong>Cloud-native engineers</strong> building modern applications</li>
+<li><strong>Linux enthusiasts</strong> who want cutting-edge desktop experiences</li>
+</ul>
+<p>This partnership significantly expands Bold Brew&#39;s user base and validates our approach to TUI package management.</p>
+<h2>🤝 Community and Ecosystem</h2>
+<h3>Universal Blue Ecosystem</h3>
+<p>Project Bluefin is part of the broader <strong>Universal Blue</strong> ecosystem, which includes:</p>
+<ul>
+<li><strong><a href="https://getaurora.dev/">Aurora</a></strong> - KDE Plasma variant of Bluefin</li>
+<li><strong><a href="https://bazzite.gg/">Bazzite</a></strong> - Gaming-focused Linux desktop</li>
+<li><strong><a href="https://projectbluefin.io/cayo">Cayo</a></strong> - Bluefin for developers</li>
+</ul>
+<p>Bold Brew&#39;s adoption in Bluefin opens doors to potential integration across the entire Universal Blue ecosystem, bringing our TUI to even more users and use cases.</p>
+<h3>Growing Together</h3>
+<p>This partnership benefits both projects:</p>
+<p><strong>For Bluefin:</strong></p>
+<ul>
+<li>Enhanced user experience for Homebrew management</li>
+<li>Modern, intuitive tool that matches their design philosophy</li>
+<li>Active maintenance and feature development</li>
+<li>Community-driven improvements</li>
+</ul>
+<p><strong>For Bold Brew:</strong></p>
+<ul>
+<li>Significant user base and real-world testing</li>
+<li>Valuable feedback from power users</li>
+<li>Integration with a respected Linux distribution</li>
+<li>Increased visibility in the Linux community</li>
+</ul>
+<h2>🎓 What This Means for Users</h2>
+<h3>Bluefin Users</h3>
+<p>If you&#39;re a Bluefin user, you already have Bold Brew installed! Here&#39;s how to get started:</p>
+<ol>
+<li><strong>Launch Bold Brew</strong>: Just type <code>bbrew</code> in your terminal</li>
+<li><strong>Explore packages</strong>: Press <code>/</code> to search for any package</li>
+<li><strong>Filter views</strong>: Use <code>F</code> for installed, <code>O</code> for outdated, <code>L</code> for leaves, <code>C</code> for casks</li>
+<li><strong>Manage packages</strong>: Press <code>I</code> to install, <code>U</code> to update, <code>R</code> to remove</li>
+<li><strong>Stay updated</strong>: Bold Brew updates are automatically delivered with Bluefin</li>
+</ol>
+<h3>Bold Brew Users on Other Systems</h3>
+<p>This partnership validates Bold Brew as a production-ready tool trusted by a major Linux distribution. Whether you&#39;re on macOS or Linux, you can benefit from the same tool that Bluefin trusts.</p>
+<h2>🔮 Future Collaboration</h2>
+<p>We&#39;re excited to deepen our collaboration with Project Bluefin:</p>
+<ul>
+<li><strong>Feature requests</strong> from Bluefin users will help shape Bold Brew&#39;s roadmap</li>
+<li><strong>Integration improvements</strong> to make Bold Brew even more native to Bluefin</li>
+<li><strong>Documentation</strong> tailored for Bluefin users</li>
+<li><strong>Joint community events</strong> and user support</li>
+<li><strong>Possible expansion</strong> to other Universal Blue distributions</li>
+</ul>
+<h2>🙏 Thank You</h2>
+<p>We want to thank:</p>
+<ul>
+<li><strong>The Bluefin team</strong> for recognizing Bold Brew&#39;s potential and making it their official choice</li>
+<li><strong>Jorge Castro</strong> and the <strong>Universal Blue</strong> community for building amazing cloud-native desktops</li>
+<li><strong>The Bluefin community</strong> for welcoming Bold Brew and providing valuable feedback</li>
+<li><strong>Our contributors</strong> who made Bold Brew worthy of this recognition</li>
+<li><strong>The Homebrew team</strong> for creating the excellent package manager we&#39;re building on top of</li>
+</ul>
+<h2>📣 Try Bluefin Today</h2>
+<p>Interested in experiencing the future of Linux desktops?</p>
+<ol>
+<li><strong>Visit</strong> <a href="https://projectbluefin.io/">projectbluefin.io</a></li>
+<li><strong>Download</strong> the latest ISO</li>
+<li><strong>Install</strong> and experience Bold Brew out of the box</li>
+<li><strong>Join</strong> the <a href="https://universal-blue.discourse.group/">Bluefin community</a> on Discourse</li>
+</ol>
+<h2>🔗 Resources</h2>
+<h3>Bold Brew</h3>
+<ul>
+<li><a href="https://github.com/Valkyrie00/bold-brew">GitHub Repository</a></li>
+<li><a href="https://bold-brew.com">Documentation</a></li>
+<li><a href="https://github.com/Valkyrie00/bold-brew/releases">Releases</a></li>
+</ul>
+<h3>Project Bluefin</h3>
+<ul>
+<li><a href="https://projectbluefin.io/">Official Website</a></li>
+<li><a href="https://docs.projectbluefin.io/">Documentation</a></li>
+<li><a href="https://docs.projectbluefin.io/command-line/">Command Line Guide</a></li>
+<li><a href="https://github.com/ublue-os/bluefin">GitHub</a></li>
+</ul>
+<h3>Universal Blue</h3>
+<ul>
+<li><a href="https://universal-blue.org/">Website</a></li>
+<li><a href="https://universal-blue.discourse.group/">Discourse Community</a></li>
+<li><a href="https://github.com/ublue-os">GitHub Organization</a></li>
+</ul>
+<hr>
+<p><strong>This is just the beginning of an exciting partnership!</strong> 🎉</p>
+
+        </div>
+
+        <footer class="mt-5">
+            <div class="tags">
+                <span class="tag">Homebrew</span>
+                <span class="tag">macOS</span>
+                <span class="tag">Command Line</span>
+                <span class="tag">Development Tools</span>
+            </div>
+        </footer>
+    </article>
+</main>
+
+    <footer>
+    <div class="container">
+        <p>&copy; 2025 Bold Brew | <a href="https://github.com/Valkyrie00/bold-brew" target="_blank" rel="noopener noreferrer">GitHub</a></p>
+    </div>
+</footer>
+
+    <!-- Back to top button -->
+    <button class="back-to-top" aria-label="Torna in alto">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18" />
+        </svg>
+    </button>
+
+    <!-- Scripts -->
+    <script>
+        function copyToClipboard(button) {
+            const preEl = button.parentElement.querySelector('pre');
+            const codeText = preEl.textContent;
+            const cleanText = codeText.replace(/^>\s/, '');
+        
+            navigator.clipboard.writeText(cleanText).then(() => {
+                const copyText = button.querySelector('.copy-text');
+                copyText.textContent = 'Copied!';
+        
+                setTimeout(() => {
+                    copyText.textContent = 'Copy';
+                }, 2000);
+            });
+        }
+
+        // Chiudi il menu mobile quando si clicca su un link
+        document.addEventListener('DOMContentLoaded', function() {
+            const navLinks = document.querySelectorAll('.navbar-nav .nav-link');
+            const menuToggle = document.getElementById('navbarNav');
+            const bsCollapse = new bootstrap.Collapse(menuToggle, {toggle: false});
+
+            navLinks.forEach(link => {
+                link.addEventListener('click', () => {
+                    if (window.innerWidth < 992) { // Solo su mobile
+                        bsCollapse.hide();
+                    }
+                });
+            });
+
+            // Gestione del pulsante back-to-top
+            const backToTop = document.querySelector('.back-to-top');
+            
+            window.addEventListener('scroll', () => {
+                if (window.scrollY > 300) {
+                    backToTop.classList.add('visible');
+                } else {
+                    backToTop.classList.remove('visible');
+                }
+            });
+
+            backToTop.addEventListener('click', () => {
+                window.scrollTo({
+                    top: 0,
+                    behavior: 'smooth'
+                });
+            });
+        });
+    </script>
+
+</body>
+</html> 

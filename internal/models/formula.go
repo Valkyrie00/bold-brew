@@ -67,7 +67,8 @@ type Analytics struct {
 
 type AnalyticsItem struct {
 	Number  int    `json:"number"`
-	Formula string `json:"formula"`
+	Formula string `json:"formula"` // For formula analytics
+	Cask    string `json:"cask"`    // For cask analytics
 	Count   string `json:"count"`
 	Percent string `json:"percent"`
 }

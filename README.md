@@ -91,7 +91,6 @@ bbrew
 #### Other
 - `Ctrl+R` - Refresh package database
 - `Q` - Quit application
-- `?` - Show help (if available)
 
 ## 📋 What's New in v2.0.0
 
@@ -127,6 +126,22 @@ bbrew
   <img src="docs/assets/screenshots/bbrew-search-screenshot.png" alt="Search Screenshot" width="800">
   <p><em>Fuzzy search in action</em></p>
 </div>
+
+## 📊 Platform Support
+
+| Platform | Support | Notes |
+|----------|---------|-------|
+| 🍎 **macOS** | ✅ Full | Native Homebrew support |
+| 🐧 **Linux** | ✅ Full | Linuxbrew/Homebrew support |
+
+## 🛡️ Security
+
+Security is a priority for Bold Brew. We use:
+- **govulncheck** - Go vulnerability database scanning
+- **gosec** - Static security analysis
+- **Automated CI/CD** - Security checks on every PR and push
+
+Found a security issue? Please report it privately via [GitHub Security Advisories](https://github.com/Valkyrie00/bold-brew/security/advisories).
 
 ## 🔧 Development
 
@@ -177,15 +192,6 @@ Contributions are welcome! Please:
 5. 🚀 Push to the branch (`git push origin feat/amazing-feature`)
 6. 📬 Open a Pull Request
 
-### Commit Message Format
-We follow Conventional Commits:
-- `feat:` - New features
-- `fix:` - Bug fixes
-- `docs:` - Documentation changes
-- `refactor:` - Code refactoring
-- `chore:` - Maintenance tasks
-- `test:` - Test updates
-
 ## 🦸Contributors
 Bold Brew exists thanks to the efforts of these wonderful people
 
@@ -197,29 +203,12 @@ Bold Brew exists thanks to the efforts of these wonderful people
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 🛡️ Security
-
-Security is a priority for Bold Brew. We use:
-- **govulncheck** - Go vulnerability database scanning
-- **gosec** - Static security analysis
-- **Automated CI/CD** - Security checks on every PR and push
-
-Found a security issue? Please report it privately via [GitHub Security Advisories](https://github.com/Valkyrie00/bold-brew/security/advisories).
-
-## 📊 Platform Support
-
-| Platform | Support | Notes |
-|----------|---------|-------|
-| 🍎 **macOS** | ✅ Full | Native Homebrew support |
-| 🐧 **Linux** | ✅ Full | Linuxbrew/Homebrew support |
-
 ## 💖 Support
 
 - 🌟 [Star the project](https://github.com/Valkyrie00/bold-brew)
 - 🐛 [Report a bug](https://github.com/Valkyrie00/bold-brew/issues/new?labels=bug)
 - 💡 [Request a feature](https://github.com/Valkyrie00/bold-brew/issues/new?labels=enhancement)
 - 📣 Share the project with your friends
-- ☕ [Sponsor the project](https://github.com/sponsors/Valkyrie00) (if available)
 
 ---
 

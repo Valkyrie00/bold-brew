@@ -26,12 +26,13 @@
 
 ### 🌟 Official Homebrew TUI for Project Bluefin
 
-Bold Brew is the **official Terminal UI** for managing Homebrew in [**Project Bluefin**](https://projectbluefin.io/), a next-generation Linux desktop that serves tens of thousands of users worldwide.
+Bold Brew is the **official Terminal UI** for managing Homebrew in [**Project Bluefin**](https://projectbluefin.io/) and [**Aurora**](https://getaurora.dev), next-generation Linux desktops that serve tens of thousands of users worldwide.
 
 *"This application features full package management for homebrew in a nice nerdy interface"*  
 — [Bluefin Documentation](https://docs.projectbluefin.io/command-line/)
 
 [![Project Bluefin](https://img.shields.io/badge/Featured_in-Project_Bluefin-0091e2?style=for-the-badge&logo=linux)](https://projectbluefin.io/)
+[![Aurora](https://img.shields.io/badge/Featured_in-Aurora-9b59b6?style=for-the-badge&logo=linux)](https://getaurora.dev)
 [![Universal Blue](https://img.shields.io/badge/Part_of-Universal_Blue-5865f2?style=for-the-badge)](https://universal-blue.org/)
 
 </div>

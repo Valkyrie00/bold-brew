@@ -93,7 +93,7 @@ func (s *AppService) loadInitialData() {
 		app:            s.app,
 		appService:     s,
 		batchSize:      200,
-		updateInterval: 150 * time.Millisecond,
+		updateInterval: 20 * time.Millisecond,
 	}
 
 	loader.streamPackages(pkgChan, errChan)

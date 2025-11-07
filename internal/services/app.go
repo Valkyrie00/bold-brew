@@ -76,22 +76,95 @@ var NewAppService = func() AppServiceInterface {
 func (s *AppService) GetApp() *tview.Application    { return s.app }
 func (s *AppService) GetLayout() ui.LayoutInterface { return s.layout }
 
-// Boot initializes the application by setting up Homebrew and loading formulae data.
 func (s *AppService) Boot() (err error) {
 	if s.brewVersion, err = s.brewService.GetBrewVersion(); err != nil {
-		// This error is critical, as we need Homebrew to function
 		return fmt.Errorf("failed to get Homebrew version: %v", err)
 	}
+	return nil
+}
 
-	// Download and parse Homebrew formulae data
-	if err = s.brewService.SetupData(false); err != nil {
-		return fmt.Errorf("failed to load Homebrew formulae: %v", err)
+// loadInitialData streams Homebrew packages asynchronously.
+func (s *AppService) loadInitialData() {
+	s.layout.GetNotifier().ShowWarning("Loading Homebrew formulae...")
+
+	pkgChan, errChan := s.brewService.StreamPackages(false)
+
+	loader := &packageLoader{
+		app:            s.app,
+		appService:     s,
+		batchSize:      200,
+		updateInterval: 150 * time.Millisecond,
 	}
 
-	// Initialize packages and filteredPackages
-	s.packages = s.brewService.GetPackages()
-	*s.filteredPackages = *s.packages
-	return nil
+	loader.streamPackages(pkgChan, errChan)
+
+	go s.updateHomeBrew()
+}
+
+type packageLoader struct {
+	app            *tview.Application
+	appService     *AppService
+	batchSize      int
+	updateInterval time.Duration
+}
+
+func (l *packageLoader) streamPackages(pkgChan <-chan models.Package, errChan <-chan error) {
+	var packages []models.Package
+	batch := make([]models.Package, 0, l.batchSize)
+
+	ticker := time.NewTicker(l.updateInterval)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case pkg, ok := <-pkgChan:
+			if !ok {
+				if len(batch) > 0 {
+					packages = append(packages, batch...)
+					l.updateUI(packages)
+				}
+				l.showSuccess(len(packages))
+				return
+			}
+			batch = append(batch, pkg)
+
+		case <-ticker.C:
+			if len(batch) > 0 {
+				packages = append(packages, batch...)
+				l.updateUI(packages)
+				batch = batch[:0]
+			}
+
+		case err, ok := <-errChan:
+			if ok && err != nil {
+				l.showError(err)
+			}
+		}
+	}
+}
+
+func (l *packageLoader) updateUI(packages []models.Package) {
+	pkgCopy := make([]models.Package, len(packages))
+	copy(pkgCopy, packages)
+
+	l.app.QueueUpdateDraw(func() {
+		l.appService.packages = &pkgCopy
+		*l.appService.filteredPackages = pkgCopy
+		l.appService.setResults(l.appService.packages, false)
+		l.appService.layout.GetNotifier().ShowWarning(fmt.Sprintf("Loading... %d packages", len(pkgCopy)))
+	})
+}
+
+func (l *packageLoader) showSuccess(count int) {
+	l.app.QueueUpdateDraw(func() {
+		l.appService.layout.GetNotifier().ShowSuccess(fmt.Sprintf("Loaded %d packages", count))
+	})
+}
+
+func (l *packageLoader) showError(err error) {
+	l.app.QueueUpdateDraw(func() {
+		l.appService.layout.GetNotifier().ShowError(fmt.Sprintf("Error loading: %v", err))
+	})
 }
 
 // updateHomeBrew updates the Homebrew formulae and refreshes the results in the UI.
@@ -101,7 +174,6 @@ func (s *AppService) updateHomeBrew() {
 		s.layout.GetNotifier().ShowError("Could not update Homebrew formulae")
 		return
 	}
-	// Clear loading message and update results
 	s.layout.GetNotifier().ShowSuccess("Homebrew formulae updated successfully")
 	s.forceRefreshResults()
 }
@@ -295,6 +367,5 @@ func (s *AppService) BuildApp() {
 	s.app.SetRoot(s.layout.Root(), true)
 	s.app.SetFocus(s.layout.GetTable().View())
 
-	go s.updateHomeBrew()          // Update Async the Homebrew formulae
-	s.setResults(s.packages, true) // Set the results
+	go s.loadInitialData()
 }

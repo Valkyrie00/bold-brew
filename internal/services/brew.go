@@ -33,6 +33,7 @@ type BrewServiceInterface interface {
 	GetFormulae() (formulae *[]models.Formula)
 	GetPackages() (packages *[]models.Package)
 	SetupData(forceDownload bool) (err error)
+	StreamPackages(forceDownload bool) (<-chan models.Package, <-chan error)
 	GetBrewVersion() (version string, err error)
 
 	UpdateHomebrew() error
@@ -202,6 +203,170 @@ func (s *BrewService) GetPackages() (packages *[]models.Package) {
 	})
 
 	return s.allPackages
+}
+
+// StreamPackages streams packages as they are parsed and returns channels for packages and errors.
+func (s *BrewService) StreamPackages(forceDownload bool) (<-chan models.Package, <-chan error) {
+	pkgChan := make(chan models.Package, 100)
+	errChan := make(chan error, 1)
+
+	go func() {
+		defer close(pkgChan)
+		defer close(errChan)
+
+		metadata := s.loadMetadataAsync()
+
+		if err := s.streamFormulae(forceDownload, metadata, pkgChan); err != nil {
+			errChan <- err
+			return
+		}
+
+		if err := s.streamCasks(forceDownload, metadata, pkgChan); err != nil {
+			errChan <- err
+			return
+		}
+
+		metadata.wg.Wait()
+	}()
+
+	return pkgChan, errChan
+}
+
+type packageMetadata struct {
+	formulae   map[string]models.Formula
+	casks      map[string]models.Cask
+	mu         sync.Mutex
+	wg         sync.WaitGroup
+}
+
+func (s *BrewService) loadMetadataAsync() *packageMetadata {
+	meta := &packageMetadata{
+		formulae: make(map[string]models.Formula),
+		casks:    make(map[string]models.Cask),
+	}
+
+	meta.wg.Add(4)
+
+	go func() {
+		defer meta.wg.Done()
+		_ = s.loadAnalytics()
+	}()
+
+	go func() {
+		defer meta.wg.Done()
+		_ = s.loadCaskAnalytics()
+	}()
+
+	go func() {
+		defer meta.wg.Done()
+		if s.loadInstalled() == nil {
+			meta.mu.Lock()
+			for _, f := range *s.installed {
+				meta.formulae[f.Name] = f
+			}
+			meta.mu.Unlock()
+		}
+	}()
+
+	go func() {
+		defer meta.wg.Done()
+		if s.loadInstalledCasks() == nil {
+			meta.mu.Lock()
+			for _, c := range *s.installedCasks {
+				meta.casks[c.Token] = c
+			}
+			meta.mu.Unlock()
+		}
+	}()
+
+	return meta
+}
+
+func (s *BrewService) streamFormulae(forceDownload bool, meta *packageMetadata, pkgChan chan<- models.Package) error {
+	reader, err := s.openReader(forceDownload, "formula.json", FormulaeAPIURL)
+	if err != nil {
+		return err
+	}
+	defer reader.Close()
+
+	dec := json.NewDecoder(reader)
+	if _, err := dec.Token(); err != nil {
+		return fmt.Errorf("failed to read JSON start: %w", err)
+	}
+
+	for dec.More() {
+		var formula models.Formula
+		if err := dec.Decode(&formula); err != nil {
+			return fmt.Errorf("failed to decode formula: %w", err)
+		}
+
+		meta.mu.Lock()
+		if installed, exists := meta.formulae[formula.Name]; exists {
+			formula = installed
+		}
+		pkg := models.NewPackageFromFormula(&formula)
+		s.enrichPackageWithAnalytics(&pkg, formula.Name, s.analytics)
+		meta.mu.Unlock()
+
+		pkgChan <- pkg
+	}
+
+	return nil
+}
+
+func (s *BrewService) streamCasks(forceDownload bool, meta *packageMetadata, pkgChan chan<- models.Package) error {
+	reader, err := s.openReader(forceDownload, "cask.json", CaskAPIURL)
+	if err != nil {
+		return err
+	}
+	defer reader.Close()
+
+	dec := json.NewDecoder(reader)
+	if _, err := dec.Token(); err != nil {
+		return fmt.Errorf("failed to read JSON start: %w", err)
+	}
+
+	for dec.More() {
+		var cask models.Cask
+		if err := dec.Decode(&cask); err != nil {
+			return fmt.Errorf("failed to decode cask: %w", err)
+		}
+
+		meta.mu.Lock()
+		if installed, exists := meta.casks[cask.Token]; exists {
+			cask = installed
+		}
+		pkg := models.NewPackageFromCask(&cask)
+		s.enrichPackageWithAnalytics(&pkg, cask.Token, s.caskAnalytics)
+		meta.mu.Unlock()
+
+		pkgChan <- pkg
+	}
+
+	return nil
+}
+
+func (s *BrewService) openReader(forceDownload bool, filename, url string) (io.ReadCloser, error) {
+	if !forceDownload {
+		cacheFile := filepath.Join(getCacheDir(), filename)
+		if file, err := os.Open(cacheFile); err == nil {
+			return file, nil
+		}
+	}
+
+	resp, err := http.Get(url)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch %s: %w", filename, err)
+	}
+	return resp.Body, nil
+}
+
+func (s *BrewService) enrichPackageWithAnalytics(pkg *models.Package, key string, analytics map[string]models.AnalyticsItem) {
+	if a, exists := analytics[key]; exists && a.Number > 0 {
+		downloads, _ := strconv.Atoi(strings.ReplaceAll(a.Count, ",", ""))
+		pkg.Analytics90dRank = a.Number
+		pkg.Analytics90dDownloads = downloads
+	}
 }
 
 // SetupData initializes the BrewService by loading installed packages, remote formulae, casks, and analytics data.

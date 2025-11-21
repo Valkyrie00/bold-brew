@@ -1,0 +1,23 @@
+# Test Brewfile for bbrew
+# A simple example to test Brewfile mode functionality
+# Usage: bbrew -f test.brewfile
+
+# Command-line utilities (lightweight and common)
+brew "wget"
+brew "curl"
+brew "tree"
+brew "htop"
+brew "jq"
+
+# Development tools
+brew "git"
+brew "node"
+
+# Popular editors and IDEs
+cask "visual-studio-code"
+cask "sublime-text"
+
+# Alternative browsers (for testing)
+cask "firefox"
+cask "brave-browser"
+

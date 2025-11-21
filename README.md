@@ -43,6 +43,7 @@ Bold Brew is the **official Terminal UI** for managing Homebrew in [**Project Bl
 
 - 🚀 **Modern TUI Interface** - Clean and responsive terminal user interface
 - 📦 **Complete Package Management** - Manage both Homebrew formulae and casks
+- 📋 **Brewfile Mode** - Curated package collections from Brewfiles (perfect for themed installers)
 - 🔍 **Advanced Search** - Fast fuzzy search across all packages
 - 🎯 **Smart Filters** - Filter by installed, outdated, leaves, or casks
 - 📊 **Analytics Integration** - See popular packages based on 90-day download stats
@@ -64,10 +65,26 @@ Download the latest version from the [releases page](https://github.com/Valkyrie
 
 ## 📖 Quick Start
 
-Launch the application:
+### Standard Mode
+Launch the application to browse all Homebrew packages:
 ```sh
 bbrew
 ```
+
+### Brewfile Mode (New!)
+Launch with a curated Brewfile to show only specific packages:
+```sh
+bbrew -f /path/to/Brewfile
+```
+
+In Brewfile mode, you can:
+- View only packages from the Brewfile
+- Pick and choose what to install individually
+- Use all standard features (search, filters, etc.)
+
+Perfect for creating themed collections like IDE choosers, dev tools, AI tools, K8s tools, etc.
+
+See the `examples/` directory for ready-to-use Brewfiles.
 
 ### Keyboard Shortcuts
 

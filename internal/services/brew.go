@@ -40,6 +40,7 @@ type BrewServiceInterface interface {
 	UpdatePackage(info models.Package, app *tview.Application, outputView *tview.TextView) error
 	RemovePackage(info models.Package, app *tview.Application, outputView *tview.TextView) error
 	InstallPackage(info models.Package, app *tview.Application, outputView *tview.TextView) error
+	ParseBrewfile(filepath string) ([]models.BrewfileEntry, error)
 }
 
 // BrewService provides methods to interact with Homebrew, including
@@ -590,4 +591,56 @@ func (s *BrewService) executeCommand(
 
 	wg.Wait()
 	return nil
+}
+
+// ParseBrewfile parses a Brewfile and returns a list of packages to be installed.
+// It handles both 'brew' and 'cask' entries in the Brewfile format.
+func (s *BrewService) ParseBrewfile(filepath string) ([]models.BrewfileEntry, error) {
+	// #nosec G304 -- filepath is user-provided via CLI flag
+	data, err := os.ReadFile(filepath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read Brewfile: %w", err)
+	}
+
+	var entries []models.BrewfileEntry
+	lines := strings.Split(string(data), "\n")
+
+	for _, line := range lines {
+		line = strings.TrimSpace(line)
+
+		// Skip empty lines and comments
+		if line == "" || strings.HasPrefix(line, "#") {
+			continue
+		}
+
+		// Parse brew entries: brew "package-name"
+		if strings.HasPrefix(line, "brew ") {
+			// Extract package name from quotes
+			start := strings.Index(line, "\"")
+			end := strings.LastIndex(line, "\"")
+			if start != -1 && end != -1 && start < end {
+				packageName := line[start+1 : end]
+				entries = append(entries, models.BrewfileEntry{
+					Name:   packageName,
+					IsCask: false,
+				})
+			}
+		}
+
+		// Parse cask entries: cask "package-name"
+		if strings.HasPrefix(line, "cask ") {
+			// Extract package name from quotes
+			start := strings.Index(line, "\"")
+			end := strings.LastIndex(line, "\"")
+			if start != -1 && end != -1 && start < end {
+				packageName := line[start+1 : end]
+				entries = append(entries, models.BrewfileEntry{
+					Name:   packageName,
+					IsCask: true,
+				})
+			}
+		}
+	}
+
+	return entries, nil
 }

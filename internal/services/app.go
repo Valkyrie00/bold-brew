@@ -24,6 +24,8 @@ type AppServiceInterface interface {
 	GetLayout() ui.LayoutInterface
 	Boot() (err error)
 	BuildApp()
+	SetBrewfilePath(path string)
+	IsBrewfileMode() bool
 }
 
 // AppService manages the application state, Homebrew integration, and UI components.
@@ -39,6 +41,10 @@ type AppService struct {
 	showOnlyLeaves    bool
 	showOnlyCasks     bool
 	brewVersion       string
+
+	// Brewfile support
+	brewfilePath     string
+	brewfilePackages *[]models.Package
 
 	brewService       BrewServiceInterface
 	selfUpdateService SelfUpdateServiceInterface
@@ -63,6 +69,9 @@ var NewAppService = func() AppServiceInterface {
 		showOnlyLeaves:    false,
 		showOnlyCasks:     false,
 		brewVersion:       "-",
+
+		brewfilePath:     "",
+		brewfilePackages: new([]models.Package),
 	}
 
 	// Initialize services
@@ -75,6 +84,8 @@ var NewAppService = func() AppServiceInterface {
 
 func (s *AppService) GetApp() *tview.Application    { return s.app }
 func (s *AppService) GetLayout() ui.LayoutInterface { return s.layout }
+func (s *AppService) SetBrewfilePath(path string)   { s.brewfilePath = path }
+func (s *AppService) IsBrewfileMode() bool          { return s.brewfilePath != "" }
 
 // Boot initializes the application by setting up Homebrew and loading formulae data.
 func (s *AppService) Boot() (err error) {
@@ -91,6 +102,42 @@ func (s *AppService) Boot() (err error) {
 	// Initialize packages and filteredPackages
 	s.packages = s.brewService.GetPackages()
 	*s.filteredPackages = *s.packages
+
+	// If Brewfile is specified, parse it and filter packages
+	if s.IsBrewfileMode() {
+		if err = s.loadBrewfilePackages(); err != nil {
+			return fmt.Errorf("failed to load Brewfile: %v", err)
+		}
+	}
+
+	return nil
+}
+
+// loadBrewfilePackages parses the Brewfile and creates a filtered package list
+func (s *AppService) loadBrewfilePackages() error {
+	entries, err := s.brewService.ParseBrewfile(s.brewfilePath)
+	if err != nil {
+		return err
+	}
+
+	// Create a map for quick lookup
+	packageMap := make(map[string]models.PackageType)
+	for _, entry := range entries {
+		if entry.IsCask {
+			packageMap[entry.Name] = models.PackageTypeCask
+		} else {
+			packageMap[entry.Name] = models.PackageTypeFormula
+		}
+	}
+
+	// Filter packages to only include those in the Brewfile
+	*s.brewfilePackages = []models.Package{}
+	for _, pkg := range *s.packages {
+		if pkgType, exists := packageMap[pkg.Name]; exists && pkgType == pkg.Type {
+			*s.brewfilePackages = append(*s.brewfilePackages, pkg)
+		}
+	}
+
 	return nil
 }
 
@@ -112,41 +159,51 @@ func (s *AppService) search(searchText string, scrollToTop bool) {
 	uniquePackages := make(map[string]bool)
 
 	// Determine the source list based on the current filter state
+	// If Brewfile mode is active, use brewfilePackages as the base source
 	sourceList := s.packages
+	if s.IsBrewfileMode() {
+		sourceList = s.brewfilePackages
+	}
+
+	// Apply filters on the base source list (either all packages or Brewfile packages)
 	if s.showOnlyInstalled && !s.showOnlyOutdated {
-		sourceList = &[]models.Package{}
-		for _, info := range *s.packages {
+		filteredSource := &[]models.Package{}
+		for _, info := range *sourceList {
 			if info.LocallyInstalled {
-				*sourceList = append(*sourceList, info)
+				*filteredSource = append(*filteredSource, info)
 			}
 		}
+		sourceList = filteredSource
 	}
 
 	if s.showOnlyOutdated {
-		sourceList = &[]models.Package{}
-		for _, info := range *s.packages {
+		filteredSource := &[]models.Package{}
+		for _, info := range *sourceList {
 			if info.LocallyInstalled && info.Outdated {
-				*sourceList = append(*sourceList, info)
+				*filteredSource = append(*filteredSource, info)
 			}
 		}
+		sourceList = filteredSource
 	}
 
 	if s.showOnlyLeaves {
-		sourceList = &[]models.Package{}
-		for _, info := range *s.packages {
+		filteredSource := &[]models.Package{}
+		for _, info := range *sourceList {
 			if info.LocallyInstalled && info.InstalledOnRequest {
-				*sourceList = append(*sourceList, info)
+				*filteredSource = append(*filteredSource, info)
 			}
 		}
+		sourceList = filteredSource
 	}
 
 	if s.showOnlyCasks {
-		sourceList = &[]models.Package{}
-		for _, info := range *s.packages {
+		filteredSource := &[]models.Package{}
+		for _, info := range *sourceList {
 			if info.Type == models.PackageTypeCask {
-				*sourceList = append(*sourceList, info)
+				*filteredSource = append(*filteredSource, info)
 			}
 		}
+		sourceList = filteredSource
 	}
 
 	if searchText == "" {
@@ -185,7 +242,14 @@ func (s *AppService) search(searchText string, scrollToTop bool) {
 func (s *AppService) forceRefreshResults() {
 	_ = s.brewService.SetupData(true)
 	s.packages = s.brewService.GetPackages()
-	*s.filteredPackages = *s.packages
+
+	// If in Brewfile mode, reload the filtered packages
+	if s.IsBrewfileMode() {
+		_ = s.loadBrewfilePackages()
+		*s.filteredPackages = *s.brewfilePackages
+	} else {
+		*s.filteredPackages = *s.packages
+	}
 
 	s.app.QueueUpdateDraw(func() {
 		s.search(s.layout.GetSearch().Field().GetText(), false)
@@ -251,6 +315,12 @@ func (s *AppService) setResults(data *[]models.Package, scrollToTop bool) {
 func (s *AppService) BuildApp() {
 	// Build the layout
 	s.layout.Setup()
+
+	// Update the app name based on the mode
+	if s.IsBrewfileMode() {
+		AppName = fmt.Sprintf("%s [Brewfile Mode]", AppName)
+	}
+
 	s.layout.GetHeader().Update(AppName, AppVersion, s.brewVersion)
 
 	// Evaluate if there is a new version available
@@ -295,6 +365,13 @@ func (s *AppService) BuildApp() {
 	s.app.SetRoot(s.layout.Root(), true)
 	s.app.SetFocus(s.layout.GetTable().View())
 
-	go s.updateHomeBrew()          // Update Async the Homebrew formulae
-	s.setResults(s.packages, true) // Set the results
+	go s.updateHomeBrew() // Update Async the Homebrew formulae
+
+	// Set initial results based on mode
+	if s.IsBrewfileMode() {
+		*s.filteredPackages = *s.brewfilePackages // Sync filteredPackages
+		s.setResults(s.brewfilePackages, true)    // Show only Brewfile packages
+	} else {
+		s.setResults(s.packages, true) // Show all packages
+	}
 }

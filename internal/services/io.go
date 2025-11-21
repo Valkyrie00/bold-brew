@@ -198,20 +198,45 @@ func (s *IOService) handleFilterEvent(filterType FilterType) {
 	}
 
 	// Update the search field label and legend based on the current filter state
+	baseLabel := "Search"
+	if s.appService.IsBrewfileMode() {
+		baseLabel = "Search (Brewfile"
+	}
+
 	if s.appService.showOnlyOutdated {
-		s.layout.GetSearch().Field().SetLabel("Search (Outdated): ")
+		if s.appService.IsBrewfileMode() {
+			s.layout.GetSearch().Field().SetLabel(baseLabel + " - Outdated): ")
+		} else {
+			s.layout.GetSearch().Field().SetLabel("Search (Outdated): ")
+		}
 		s.layout.GetLegend().SetLegend(s.legendEntries, s.ActionFilterOutdated.KeySlug)
 	} else if s.appService.showOnlyInstalled {
-		s.layout.GetSearch().Field().SetLabel("Search (Installed): ")
+		if s.appService.IsBrewfileMode() {
+			s.layout.GetSearch().Field().SetLabel(baseLabel + " - Installed): ")
+		} else {
+			s.layout.GetSearch().Field().SetLabel("Search (Installed): ")
+		}
 		s.layout.GetLegend().SetLegend(s.legendEntries, s.ActionFilterInstalled.KeySlug)
 	} else if s.appService.showOnlyLeaves {
-		s.layout.GetSearch().Field().SetLabel("Search (Leaves): ")
+		if s.appService.IsBrewfileMode() {
+			s.layout.GetSearch().Field().SetLabel(baseLabel + " - Leaves): ")
+		} else {
+			s.layout.GetSearch().Field().SetLabel("Search (Leaves): ")
+		}
 		s.layout.GetLegend().SetLegend(s.legendEntries, s.ActionFilterLeaves.KeySlug)
 	} else if s.appService.showOnlyCasks {
-		s.layout.GetSearch().Field().SetLabel("Search (Casks): ")
+		if s.appService.IsBrewfileMode() {
+			s.layout.GetSearch().Field().SetLabel(baseLabel + " - Casks): ")
+		} else {
+			s.layout.GetSearch().Field().SetLabel("Search (Casks): ")
+		}
 		s.layout.GetLegend().SetLegend(s.legendEntries, s.ActionFilterCasks.KeySlug)
 	} else {
-		s.layout.GetSearch().Field().SetLabel("Search (All): ")
+		if s.appService.IsBrewfileMode() {
+			s.layout.GetSearch().Field().SetLabel(baseLabel + "): ")
+		} else {
+			s.layout.GetSearch().Field().SetLabel("Search (All): ")
+		}
 	}
 
 	s.appService.search(s.layout.GetSearch().Field().GetText(), true)

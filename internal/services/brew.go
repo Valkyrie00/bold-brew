@@ -28,11 +28,27 @@ func getCacheDir() string {
 	return filepath.Join(xdg.CacheHome, "bbrew")
 }
 
+type multiCloser []io.Closer
+
+func (mc multiCloser) Close() error {
+	var errs []string
+	for _, c := range mc {
+		if err := c.Close(); err != nil {
+			errs = append(errs, err.Error())
+		}
+	}
+	if len(errs) > 0 {
+		return fmt.Errorf("errors while closing: %s", strings.Join(errs, "; "))
+	}
+	return nil
+}
+
 type BrewServiceInterface interface {
 	GetPrefixPath() (path string)
 	GetFormulae() (formulae *[]models.Formula)
 	GetPackages() (packages *[]models.Package)
 	SetupData(forceDownload bool) (err error)
+	StreamPackages(forceDownload bool) (<-chan models.Package, <-chan error)
 	GetBrewVersion() (version string, err error)
 
 	UpdateHomebrew() error
@@ -59,6 +75,8 @@ type BrewService struct {
 
 	// Unified package list
 	allPackages *[]models.Package
+
+	analyticsMutex sync.RWMutex
 
 	brewVersion string
 	prefixPath  string
@@ -202,6 +220,183 @@ func (s *BrewService) GetPackages() (packages *[]models.Package) {
 	})
 
 	return s.allPackages
+}
+
+// StreamPackages streams packages as they are parsed and returns channels for packages and errors.
+func (s *BrewService) StreamPackages(forceDownload bool) (<-chan models.Package, <-chan error) {
+	pkgChan := make(chan models.Package, 100)
+	errChan := make(chan error, 1)
+
+	go func() {
+		defer close(pkgChan)
+		defer close(errChan)
+
+		var wg sync.WaitGroup
+		wg.Add(4)
+
+		// Load analytics concurrently
+		go func() {
+			defer wg.Done()
+			_ = s.loadAnalytics()
+		}()
+		go func() {
+			defer wg.Done()
+			_ = s.loadCaskAnalytics()
+		}()
+
+		// Load installed packages concurrently
+		installedFormulae := make(map[string]models.Formula)
+		installedCasks := make(map[string]models.Cask)
+		var installedMutex sync.Mutex
+
+		go func() {
+			defer wg.Done()
+			if s.loadInstalled() == nil {
+				installedMutex.Lock()
+				for _, f := range *s.installed {
+					installedFormulae[f.Name] = f
+				}
+				installedMutex.Unlock()
+			}
+		}()
+		go func() {
+			defer wg.Done()
+			if s.loadInstalledCasks() == nil {
+				installedMutex.Lock()
+				for _, c := range *s.installedCasks {
+					installedCasks[c.Token] = c
+				}
+				installedMutex.Unlock()
+			}
+		}()
+
+		// Wait for all metadata to load before streaming
+		wg.Wait()
+
+		var streamWg sync.WaitGroup
+		streamWg.Add(2)
+
+		go func() {
+			defer streamWg.Done()
+			if err := s.streamFormulae(forceDownload, installedFormulae, pkgChan); err != nil {
+				errChan <- err
+			}
+		}()
+
+		go func() {
+			defer streamWg.Done()
+			if err := s.streamCasks(forceDownload, installedCasks, pkgChan); err != nil {
+				errChan <- err
+			}
+		}()
+
+		streamWg.Wait()
+	}()
+
+	return pkgChan, errChan
+}
+
+func (s *BrewService) streamFormulae(forceDownload bool, installed map[string]models.Formula, pkgChan chan<- models.Package) error {
+	reader, err := s.openReader(forceDownload, "formula.json", FormulaeAPIURL)
+	if err != nil {
+		return err
+	}
+	defer reader.Close()
+
+	dec := json.NewDecoder(reader)
+	if _, err := dec.Token(); err != nil { // Read opening bracket
+		return fmt.Errorf("failed to read JSON start: %w", err)
+	}
+
+	for dec.More() {
+		var formula models.Formula
+		if err := dec.Decode(&formula); err != nil {
+			return fmt.Errorf("failed to decode formula: %w", err)
+		}
+
+		if inst, ok := installed[formula.Name]; ok {
+			formula = inst
+		}
+
+		pkg := models.NewPackageFromFormula(&formula)
+		s.enrichPackageWithAnalytics(&pkg, formula.Name, s.analytics)
+		pkgChan <- pkg
+	}
+	return nil
+}
+
+func (s *BrewService) streamCasks(forceDownload bool, installed map[string]models.Cask, pkgChan chan<- models.Package) error {
+	reader, err := s.openReader(forceDownload, "cask.json", CaskAPIURL)
+	if err != nil {
+		return err
+	}
+	defer reader.Close()
+
+	dec := json.NewDecoder(reader)
+	if _, err := dec.Token(); err != nil { // Read opening bracket
+		return fmt.Errorf("failed to read JSON start: %w", err)
+	}
+
+	for dec.More() {
+		var cask models.Cask
+		if err := dec.Decode(&cask); err != nil {
+			return fmt.Errorf("failed to decode cask: %w", err)
+		}
+
+		if inst, ok := installed[cask.Token]; ok {
+			cask = inst
+		}
+
+		pkg := models.NewPackageFromCask(&cask)
+		s.enrichPackageWithAnalytics(&pkg, cask.Token, s.caskAnalytics)
+		pkgChan <- pkg
+	}
+	return nil
+}
+
+func (s *BrewService) openReader(forceDownload bool, filename, url string) (io.ReadCloser, error) {
+	cacheFile := filepath.Join(getCacheDir(), filename)
+	if !forceDownload {
+		if file, err := os.Open(cacheFile); err == nil {
+			return file, nil
+		}
+	}
+
+	resp, err := http.Get(url)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch %s: %w", filename, err)
+	}
+
+	// Ensure cache directory exists
+	if err := os.MkdirAll(getCacheDir(), 0750); err != nil {
+		return resp.Body, fmt.Errorf("could not create cache directory: %w", err)
+	}
+
+	file, err := os.Create(cacheFile)
+	if err != nil {
+		return resp.Body, fmt.Errorf("could not create cache file: %w", err) // Return body if we can't cache
+	}
+
+	// Use a struct that holds both closers
+	type readCloser struct {
+		io.Reader
+		io.Closer
+	}
+
+	return readCloser{
+		Reader: io.TeeReader(resp.Body, file),
+		Closer: multiCloser{resp.Body, file},
+	}, nil
+}
+
+func (s *BrewService) enrichPackageWithAnalytics(pkg *models.Package, key string, analytics map[string]models.AnalyticsItem) {
+	s.analyticsMutex.RLock()
+	defer s.analyticsMutex.RUnlock()
+	if a, exists := analytics[key]; exists && a.Number > 0 {
+		downloads, _ := strconv.Atoi(strings.ReplaceAll(a.Count, ",", ""))
+		pkg.Analytics90dRank = a.Number
+		pkg.Analytics90dDownloads = downloads
+	}
 }
 
 // SetupData initializes the BrewService by loading installed packages, remote formulae, casks, and analytics data.
@@ -418,7 +613,9 @@ func (s *BrewService) loadAnalytics() (err error) {
 		analyticsByFormula[f.Formula] = f
 	}
 
+	s.analyticsMutex.Lock()
 	s.analytics = analyticsByFormula
+	s.analyticsMutex.Unlock()
 	return nil
 }
 
@@ -445,7 +642,9 @@ func (s *BrewService) loadCaskAnalytics() (err error) {
 		}
 	}
 
+	s.analyticsMutex.Lock()
 	s.caskAnalytics = analyticsByCask
+	s.analyticsMutex.Unlock()
 	return nil
 }
 

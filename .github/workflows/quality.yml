@@ -25,7 +25,15 @@ jobs:
 
   build:
     name: Build
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        include:
+          - os: ubuntu-latest
+            artifact_name: bbrew-linux-amd64
+          - os: macos-latest
+            artifact_name: bbrew-darwin-arm64
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
@@ -35,3 +43,13 @@ jobs:
         run: go mod download
       - name: Build
         run: go build -v ./...
+      - name: Build binary for testing
+        run: |
+          go build -o bbrew ./cmd/bbrew
+          chmod +x bbrew
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact_name }}
+          path: bbrew
+          retention-days: 7

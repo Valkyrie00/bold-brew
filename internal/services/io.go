@@ -32,6 +32,7 @@ func (k *IOAction) SetAction(action func()) {
 // IOServiceInterface defines the interface for handling input/output actions in the application.
 type IOServiceInterface interface {
 	HandleKeyEventInput(event *tcell.EventKey) *tcell.EventKey
+	EnableBrewfileMode()
 }
 
 // IOService implements the IOServiceInterface and handles key events for the application.
@@ -52,6 +53,7 @@ type IOService struct {
 	ActionUpdate          *IOAction
 	ActionRemove          *IOAction
 	ActionUpdateAll       *IOAction
+	ActionInstallAll      *IOAction
 	ActionBack            *IOAction
 	ActionQuit            *IOAction
 }
@@ -73,6 +75,7 @@ var NewIOService = func(appService *AppService) IOServiceInterface {
 	s.ActionUpdate = &IOAction{Key: tcell.KeyRune, Rune: 'u', KeySlug: "u", Name: "Update"}
 	s.ActionRemove = &IOAction{Key: tcell.KeyRune, Rune: 'r', KeySlug: "r", Name: "Remove"}
 	s.ActionUpdateAll = &IOAction{Key: tcell.KeyCtrlU, Rune: 0, KeySlug: "ctrl+u", Name: "Update All"}
+	s.ActionInstallAll = &IOAction{Key: tcell.KeyCtrlA, Rune: 0, KeySlug: "ctrl+a", Name: "Install All (Brewfile)"}
 	s.ActionBack = &IOAction{Key: tcell.KeyEsc, Rune: 0, KeySlug: "esc", Name: "Back to Table"}
 	s.ActionQuit = &IOAction{Key: tcell.KeyRune, Rune: 'q', KeySlug: "q", Name: "Quit"}
 
@@ -86,10 +89,12 @@ var NewIOService = func(appService *AppService) IOServiceInterface {
 	s.ActionUpdate.SetAction(s.handleUpdatePackageEvent)
 	s.ActionRemove.SetAction(s.handleRemovePackageEvent)
 	s.ActionUpdateAll.SetAction(s.handleUpdateAllPackagesEvent)
+	s.ActionInstallAll.SetAction(s.handleInstallAllPackagesEvent)
 	s.ActionBack.SetAction(s.handleBack)
 	s.ActionQuit.SetAction(s.handleQuitEvent)
 
 	// Add all actions to the keyActions slice
+	// Note: ActionInstallAll will be added dynamically if in Brewfile mode
 	s.keyActions = []*IOAction{
 		s.ActionSearch,
 		s.ActionFilterInstalled,
@@ -105,14 +110,31 @@ var NewIOService = func(appService *AppService) IOServiceInterface {
 	}
 
 	// Convert keyActions to legend entries
+	s.updateLegendEntries()
+	return s
+}
+
+// updateLegendEntries updates the legend entries based on current keyActions
+func (s *IOService) updateLegendEntries() {
 	s.legendEntries = make([]struct{ KeySlug, Name string }, len(s.keyActions))
 	for i, input := range s.keyActions {
 		s.legendEntries[i] = struct{ KeySlug, Name string }{KeySlug: input.KeySlug, Name: input.Name}
 	}
-
-	// Initialize the legend text, literally the UI component that displays the key bindings
 	s.layout.GetLegend().SetLegend(s.legendEntries, "")
-	return s
+}
+
+// EnableBrewfileMode enables Brewfile mode, adding the Install All action to the legend
+func (s *IOService) EnableBrewfileMode() {
+	// Add Install All action after Update All
+	newActions := []*IOAction{}
+	for _, action := range s.keyActions {
+		newActions = append(newActions, action)
+		if action == s.ActionUpdateAll {
+			newActions = append(newActions, s.ActionInstallAll)
+		}
+	}
+	s.keyActions = newActions
+	s.updateLegendEntries()
 }
 
 // HandleKeyEventInput processes key events and triggers the corresponding actions.
@@ -356,6 +378,74 @@ func (s *IOService) handleUpdateAllPackagesEvent() {
 				return
 			}
 			s.layout.GetNotifier().ShowSuccess("Updated all Packages")
+			s.appService.forceRefreshResults()
+		}()
+	}, s.closeModal)
+}
+
+// handleInstallAllPackagesEvent is called when the user presses the install all key (Ctrl+A).
+// This is only available in Brewfile mode and installs all packages from the Brewfile.
+func (s *IOService) handleInstallAllPackagesEvent() {
+	if !s.appService.IsBrewfileMode() {
+		return // Only available in Brewfile mode
+	}
+
+	packages := *s.appService.GetBrewfilePackages()
+	if len(packages) == 0 {
+		s.layout.GetNotifier().ShowError("No packages found in Brewfile")
+		return
+	}
+
+	// Count how many packages are not yet installed
+	notInstalled := 0
+	for _, pkg := range packages {
+		if !pkg.LocallyInstalled {
+			notInstalled++
+		}
+	}
+
+	message := fmt.Sprintf("Install all packages from Brewfile?\n\nTotal: %d packages\nNot installed: %d", len(packages), notInstalled)
+
+	s.showModal(message, func() {
+		s.closeModal()
+		s.layout.GetOutput().Clear()
+		go func() {
+			// Install all packages with progress notifications
+			current := 0
+			total := len(packages)
+
+			for _, pkg := range packages {
+				current++
+
+				// Check if package is already installed
+				if pkg.LocallyInstalled {
+					s.layout.GetNotifier().ShowWarning(fmt.Sprintf("[%d/%d] Skipping %s (already installed)", current, total, pkg.Name))
+					s.appService.app.QueueUpdateDraw(func() {
+						fmt.Fprintf(s.layout.GetOutput().View(), "[SKIP] %s (already installed)\n", pkg.Name)
+					})
+					continue
+				}
+
+				// Show progress in notifier
+				s.layout.GetNotifier().ShowWarning(fmt.Sprintf("[%d/%d] Installing %s...", current, total, pkg.Name))
+				s.appService.app.QueueUpdateDraw(func() {
+					fmt.Fprintf(s.layout.GetOutput().View(), "\n[INSTALL] Installing %s...\n", pkg.Name)
+				})
+
+				if err := s.brewService.InstallPackage(pkg, s.appService.app, s.layout.GetOutput().View()); err != nil {
+					s.layout.GetNotifier().ShowError(fmt.Sprintf("[%d/%d] Failed to install %s", current, total, pkg.Name))
+					s.appService.app.QueueUpdateDraw(func() {
+						fmt.Fprintf(s.layout.GetOutput().View(), "[ERROR] Failed to install %s: %v\n", pkg.Name, err)
+					})
+					continue
+				}
+
+				s.appService.app.QueueUpdateDraw(func() {
+					fmt.Fprintf(s.layout.GetOutput().View(), "[SUCCESS] %s installed successfully\n", pkg.Name)
+				})
+			}
+
+			s.layout.GetNotifier().ShowSuccess(fmt.Sprintf("Completed! Processed %d packages", total))
 			s.appService.forceRefreshResults()
 		}()
 	}, s.closeModal)

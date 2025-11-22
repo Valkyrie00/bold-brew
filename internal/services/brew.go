@@ -40,6 +40,7 @@ type BrewServiceInterface interface {
 	UpdatePackage(info models.Package, app *tview.Application, outputView *tview.TextView) error
 	RemovePackage(info models.Package, app *tview.Application, outputView *tview.TextView) error
 	InstallPackage(info models.Package, app *tview.Application, outputView *tview.TextView) error
+	InstallAllPackages(packages []models.Package, app *tview.Application, outputView *tview.TextView) error
 	ParseBrewfile(filepath string) ([]models.BrewfileEntry, error)
 }
 
@@ -643,4 +644,36 @@ func (s *BrewService) ParseBrewfile(filepath string) ([]models.BrewfileEntry, er
 	}
 
 	return entries, nil
+}
+
+// InstallAllPackages installs a list of packages sequentially.
+// This is designed for Brewfile mode where the package list is curated and small.
+func (s *BrewService) InstallAllPackages(packages []models.Package, app *tview.Application, outputView *tview.TextView) error {
+	for _, pkg := range packages {
+		// Check if package is already installed
+		if pkg.LocallyInstalled {
+			app.QueueUpdateDraw(func() {
+				fmt.Fprintf(outputView, "[SKIP] %s (already installed)\n", pkg.Name)
+			})
+			continue
+		}
+
+		app.QueueUpdateDraw(func() {
+			fmt.Fprintf(outputView, "\n[INSTALL] Installing %s...\n", pkg.Name)
+		})
+
+		if err := s.InstallPackage(pkg, app, outputView); err != nil {
+			app.QueueUpdateDraw(func() {
+				fmt.Fprintf(outputView, "[ERROR] Failed to install %s: %v\n", pkg.Name, err)
+			})
+			// Continue with next package even if one fails
+			continue
+		}
+
+		app.QueueUpdateDraw(func() {
+			fmt.Fprintf(outputView, "[SUCCESS] %s installed successfully\n", pkg.Name)
+		})
+	}
+
+	return nil
 }

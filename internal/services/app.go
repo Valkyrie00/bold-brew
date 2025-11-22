@@ -26,6 +26,7 @@ type AppServiceInterface interface {
 	BuildApp()
 	SetBrewfilePath(path string)
 	IsBrewfileMode() bool
+	GetBrewfilePackages() *[]models.Package
 }
 
 // AppService manages the application state, Homebrew integration, and UI components.
@@ -82,10 +83,11 @@ var NewAppService = func() AppServiceInterface {
 	return s
 }
 
-func (s *AppService) GetApp() *tview.Application    { return s.app }
-func (s *AppService) GetLayout() ui.LayoutInterface { return s.layout }
-func (s *AppService) SetBrewfilePath(path string)   { s.brewfilePath = path }
-func (s *AppService) IsBrewfileMode() bool          { return s.brewfilePath != "" }
+func (s *AppService) GetApp() *tview.Application             { return s.app }
+func (s *AppService) GetLayout() ui.LayoutInterface          { return s.layout }
+func (s *AppService) SetBrewfilePath(path string)            { s.brewfilePath = path }
+func (s *AppService) IsBrewfileMode() bool                   { return s.brewfilePath != "" }
+func (s *AppService) GetBrewfilePackages() *[]models.Package { return s.brewfilePackages }
 
 // Boot initializes the application by setting up Homebrew and loading formulae data.
 func (s *AppService) Boot() (err error) {
@@ -316,12 +318,14 @@ func (s *AppService) BuildApp() {
 	// Build the layout
 	s.layout.Setup()
 
-	// Update the app name based on the mode
+	// Update header and enable Brewfile mode features if needed
+	headerName := AppName
 	if s.IsBrewfileMode() {
-		AppName = fmt.Sprintf("%s [Brewfile Mode]", AppName)
+		headerName = fmt.Sprintf("%s [Brewfile Mode]", AppName)
+		s.layout.GetSearch().Field().SetLabel("Search (Brewfile): ")
+		s.ioService.EnableBrewfileMode() // Add Install All action
 	}
-
-	s.layout.GetHeader().Update(AppName, AppVersion, s.brewVersion)
+	s.layout.GetHeader().Update(headerName, AppVersion, s.brewVersion)
 
 	// Evaluate if there is a new version available
 	// This is done in a goroutine to avoid blocking the UI during startup
@@ -334,7 +338,11 @@ func (s *AppService) BuildApp() {
 		if latestVersion, err := s.selfUpdateService.CheckForUpdates(ctx); err == nil && latestVersion != AppVersion {
 			s.app.QueueUpdateDraw(func() {
 				AppVersion = fmt.Sprintf("%s ([orange]New Version Available: %s[-])", AppVersion, latestVersion)
-				s.layout.GetHeader().Update(AppName, AppVersion, s.brewVersion)
+				headerName := AppName
+				if s.IsBrewfileMode() {
+					headerName = fmt.Sprintf("%s [Brewfile Mode]", AppName)
+				}
+				s.layout.GetHeader().Update(headerName, AppVersion, s.brewVersion)
 			})
 		}
 	}()

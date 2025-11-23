@@ -40,6 +40,9 @@ type BrewServiceInterface interface {
 	UpdatePackage(info models.Package, app *tview.Application, outputView *tview.TextView) error
 	RemovePackage(info models.Package, app *tview.Application, outputView *tview.TextView) error
 	InstallPackage(info models.Package, app *tview.Application, outputView *tview.TextView) error
+	InstallAllPackages(packages []models.Package, app *tview.Application, outputView *tview.TextView) error
+	RemoveAllPackages(packages []models.Package, app *tview.Application, outputView *tview.TextView) error
+	ParseBrewfile(filepath string) ([]models.BrewfileEntry, error)
 }
 
 // BrewService provides methods to interact with Homebrew, including
@@ -589,5 +592,121 @@ func (s *BrewService) executeCommand(
 	}()
 
 	wg.Wait()
+	return nil
+}
+
+// ParseBrewfile parses a Brewfile and returns a list of packages to be installed.
+// It handles both 'brew' and 'cask' entries in the Brewfile format.
+func (s *BrewService) ParseBrewfile(filepath string) ([]models.BrewfileEntry, error) {
+	// #nosec G304 -- filepath is user-provided via CLI flag
+	data, err := os.ReadFile(filepath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read Brewfile: %w", err)
+	}
+
+	var entries []models.BrewfileEntry
+	lines := strings.Split(string(data), "\n")
+
+	for _, line := range lines {
+		line = strings.TrimSpace(line)
+
+		// Skip empty lines and comments
+		if line == "" || strings.HasPrefix(line, "#") {
+			continue
+		}
+
+		// Parse brew entries: brew "package-name"
+		if strings.HasPrefix(line, "brew ") {
+			// Extract package name from quotes
+			start := strings.Index(line, "\"")
+			end := strings.LastIndex(line, "\"")
+			if start != -1 && end != -1 && start < end {
+				packageName := line[start+1 : end]
+				entries = append(entries, models.BrewfileEntry{
+					Name:   packageName,
+					IsCask: false,
+				})
+			}
+		}
+
+		// Parse cask entries: cask "package-name"
+		if strings.HasPrefix(line, "cask ") {
+			// Extract package name from quotes
+			start := strings.Index(line, "\"")
+			end := strings.LastIndex(line, "\"")
+			if start != -1 && end != -1 && start < end {
+				packageName := line[start+1 : end]
+				entries = append(entries, models.BrewfileEntry{
+					Name:   packageName,
+					IsCask: true,
+				})
+			}
+		}
+	}
+
+	return entries, nil
+}
+
+// InstallAllPackages installs a list of packages sequentially.
+// This is designed for Brewfile mode where the package list is curated and small.
+func (s *BrewService) InstallAllPackages(packages []models.Package, app *tview.Application, outputView *tview.TextView) error {
+	for _, pkg := range packages {
+		// Check if package is already installed
+		if pkg.LocallyInstalled {
+			app.QueueUpdateDraw(func() {
+				fmt.Fprintf(outputView, "[SKIP] %s (already installed)\n", pkg.Name)
+			})
+			continue
+		}
+
+		app.QueueUpdateDraw(func() {
+			fmt.Fprintf(outputView, "\n[INSTALL] Installing %s...\n", pkg.Name)
+		})
+
+		if err := s.InstallPackage(pkg, app, outputView); err != nil {
+			app.QueueUpdateDraw(func() {
+				fmt.Fprintf(outputView, "[ERROR] Failed to install %s: %v\n", pkg.Name, err)
+			})
+			// Continue with next package even if one fails
+			continue
+		}
+
+		app.QueueUpdateDraw(func() {
+			fmt.Fprintf(outputView, "[SUCCESS] %s installed successfully\n", pkg.Name)
+		})
+	}
+
+	return nil
+}
+
+// RemoveAllPackages removes a list of packages sequentially.
+// This is designed for Brewfile mode where the package list is curated and small.
+func (s *BrewService) RemoveAllPackages(packages []models.Package, app *tview.Application, outputView *tview.TextView) error {
+	for _, pkg := range packages {
+		// Check if package is not installed
+		if !pkg.LocallyInstalled {
+			app.QueueUpdateDraw(func() {
+				fmt.Fprintf(outputView, "[SKIP] %s (not installed)\n", pkg.Name)
+			})
+			continue
+		}
+
+		app.QueueUpdateDraw(func() {
+			fmt.Fprintf(outputView, "\n[REMOVE] Removing %s...\n", pkg.Name)
+		})
+
+		if err := s.RemovePackage(pkg, app, outputView); err != nil {
+			app.QueueUpdateDraw(func() {
+				fmt.Fprintf(outputView, "[ERROR] Failed to remove %s: %v\n", pkg.Name, err)
+			})
+			// Continue with next package even if one fails
+			continue
+		}
+
+		app.QueueUpdateDraw(func() {
+			fmt.Fprintf(outputView, "[SUCCESS] %s removed successfully\n", pkg.Name)
+		})
+	}
+
 	return nil
 }

@@ -32,6 +32,7 @@ func (k *IOAction) SetAction(action func()) {
 // IOServiceInterface defines the interface for handling input/output actions in the application.
 type IOServiceInterface interface {
 	HandleKeyEventInput(event *tcell.EventKey) *tcell.EventKey
+	EnableBrewfileMode()
 }
 
 // IOService implements the IOServiceInterface and handles key events for the application.
@@ -52,6 +53,8 @@ type IOService struct {
 	ActionUpdate          *IOAction
 	ActionRemove          *IOAction
 	ActionUpdateAll       *IOAction
+	ActionInstallAll      *IOAction
+	ActionRemoveAll       *IOAction
 	ActionBack            *IOAction
 	ActionQuit            *IOAction
 }
@@ -65,14 +68,16 @@ var NewIOService = func(appService *AppService) IOServiceInterface {
 
 	// Initialize key actions with their respective keys, runes, and names.
 	s.ActionSearch = &IOAction{Key: tcell.KeyRune, Rune: '/', KeySlug: "/", Name: "Search"}
-	s.ActionFilterInstalled = &IOAction{Key: tcell.KeyRune, Rune: 'f', KeySlug: "f", Name: "Filter Installed"}
-	s.ActionFilterOutdated = &IOAction{Key: tcell.KeyRune, Rune: 'o', KeySlug: "o", Name: "Filter Outdated"}
-	s.ActionFilterLeaves = &IOAction{Key: tcell.KeyRune, Rune: 'l', KeySlug: "l", Name: "Filter Leaves"}
-	s.ActionFilterCasks = &IOAction{Key: tcell.KeyRune, Rune: 'c', KeySlug: "c", Name: "Filter Casks"}
+	s.ActionFilterInstalled = &IOAction{Key: tcell.KeyRune, Rune: 'f', KeySlug: "f", Name: "Installed"}
+	s.ActionFilterOutdated = &IOAction{Key: tcell.KeyRune, Rune: 'o', KeySlug: "o", Name: "Outdated"}
+	s.ActionFilterLeaves = &IOAction{Key: tcell.KeyRune, Rune: 'l', KeySlug: "l", Name: "Leaves"}
+	s.ActionFilterCasks = &IOAction{Key: tcell.KeyRune, Rune: 'c', KeySlug: "c", Name: "Casks"}
 	s.ActionInstall = &IOAction{Key: tcell.KeyRune, Rune: 'i', KeySlug: "i", Name: "Install"}
 	s.ActionUpdate = &IOAction{Key: tcell.KeyRune, Rune: 'u', KeySlug: "u", Name: "Update"}
 	s.ActionRemove = &IOAction{Key: tcell.KeyRune, Rune: 'r', KeySlug: "r", Name: "Remove"}
 	s.ActionUpdateAll = &IOAction{Key: tcell.KeyCtrlU, Rune: 0, KeySlug: "ctrl+u", Name: "Update All"}
+	s.ActionInstallAll = &IOAction{Key: tcell.KeyCtrlA, Rune: 0, KeySlug: "ctrl+a", Name: "Install All (Brewfile)"}
+	s.ActionRemoveAll = &IOAction{Key: tcell.KeyCtrlR, Rune: 0, KeySlug: "ctrl+r", Name: "Remove All (Brewfile)"}
 	s.ActionBack = &IOAction{Key: tcell.KeyEsc, Rune: 0, KeySlug: "esc", Name: "Back to Table"}
 	s.ActionQuit = &IOAction{Key: tcell.KeyRune, Rune: 'q', KeySlug: "q", Name: "Quit"}
 
@@ -86,10 +91,13 @@ var NewIOService = func(appService *AppService) IOServiceInterface {
 	s.ActionUpdate.SetAction(s.handleUpdatePackageEvent)
 	s.ActionRemove.SetAction(s.handleRemovePackageEvent)
 	s.ActionUpdateAll.SetAction(s.handleUpdateAllPackagesEvent)
+	s.ActionInstallAll.SetAction(s.handleInstallAllPackagesEvent)
+	s.ActionRemoveAll.SetAction(s.handleRemoveAllPackagesEvent)
 	s.ActionBack.SetAction(s.handleBack)
 	s.ActionQuit.SetAction(s.handleQuitEvent)
 
 	// Add all actions to the keyActions slice
+	// Note: ActionInstallAll and ActionRemoveAll will be added dynamically if in Brewfile mode
 	s.keyActions = []*IOAction{
 		s.ActionSearch,
 		s.ActionFilterInstalled,
@@ -105,14 +113,31 @@ var NewIOService = func(appService *AppService) IOServiceInterface {
 	}
 
 	// Convert keyActions to legend entries
+	s.updateLegendEntries()
+	return s
+}
+
+// updateLegendEntries updates the legend entries based on current keyActions
+func (s *IOService) updateLegendEntries() {
 	s.legendEntries = make([]struct{ KeySlug, Name string }, len(s.keyActions))
 	for i, input := range s.keyActions {
 		s.legendEntries[i] = struct{ KeySlug, Name string }{KeySlug: input.KeySlug, Name: input.Name}
 	}
-
-	// Initialize the legend text, literally the UI component that displays the key bindings
 	s.layout.GetLegend().SetLegend(s.legendEntries, "")
-	return s
+}
+
+// EnableBrewfileMode enables Brewfile mode, adding Install All and Remove All actions to the legend
+func (s *IOService) EnableBrewfileMode() {
+	// Add Install All and Remove All actions after Update All
+	newActions := []*IOAction{}
+	for _, action := range s.keyActions {
+		newActions = append(newActions, action)
+		if action == s.ActionUpdateAll {
+			newActions = append(newActions, s.ActionInstallAll, s.ActionRemoveAll)
+		}
+	}
+	s.keyActions = newActions
+	s.updateLegendEntries()
 }
 
 // HandleKeyEventInput processes key events and triggers the corresponding actions.
@@ -198,20 +223,45 @@ func (s *IOService) handleFilterEvent(filterType FilterType) {
 	}
 
 	// Update the search field label and legend based on the current filter state
+	baseLabel := "Search"
+	if s.appService.IsBrewfileMode() {
+		baseLabel = "Search (Brewfile"
+	}
+
 	if s.appService.showOnlyOutdated {
-		s.layout.GetSearch().Field().SetLabel("Search (Outdated): ")
+		if s.appService.IsBrewfileMode() {
+			s.layout.GetSearch().Field().SetLabel(baseLabel + " - Outdated): ")
+		} else {
+			s.layout.GetSearch().Field().SetLabel("Search (Outdated): ")
+		}
 		s.layout.GetLegend().SetLegend(s.legendEntries, s.ActionFilterOutdated.KeySlug)
 	} else if s.appService.showOnlyInstalled {
-		s.layout.GetSearch().Field().SetLabel("Search (Installed): ")
+		if s.appService.IsBrewfileMode() {
+			s.layout.GetSearch().Field().SetLabel(baseLabel + " - Installed): ")
+		} else {
+			s.layout.GetSearch().Field().SetLabel("Search (Installed): ")
+		}
 		s.layout.GetLegend().SetLegend(s.legendEntries, s.ActionFilterInstalled.KeySlug)
 	} else if s.appService.showOnlyLeaves {
-		s.layout.GetSearch().Field().SetLabel("Search (Leaves): ")
+		if s.appService.IsBrewfileMode() {
+			s.layout.GetSearch().Field().SetLabel(baseLabel + " - Leaves): ")
+		} else {
+			s.layout.GetSearch().Field().SetLabel("Search (Leaves): ")
+		}
 		s.layout.GetLegend().SetLegend(s.legendEntries, s.ActionFilterLeaves.KeySlug)
 	} else if s.appService.showOnlyCasks {
-		s.layout.GetSearch().Field().SetLabel("Search (Casks): ")
+		if s.appService.IsBrewfileMode() {
+			s.layout.GetSearch().Field().SetLabel(baseLabel + " - Casks): ")
+		} else {
+			s.layout.GetSearch().Field().SetLabel("Search (Casks): ")
+		}
 		s.layout.GetLegend().SetLegend(s.legendEntries, s.ActionFilterCasks.KeySlug)
 	} else {
-		s.layout.GetSearch().Field().SetLabel("Search (All): ")
+		if s.appService.IsBrewfileMode() {
+			s.layout.GetSearch().Field().SetLabel(baseLabel + "): ")
+		} else {
+			s.layout.GetSearch().Field().SetLabel("Search (All): ")
+		}
 	}
 
 	s.appService.search(s.layout.GetSearch().Field().GetText(), true)
@@ -331,6 +381,147 @@ func (s *IOService) handleUpdateAllPackagesEvent() {
 				return
 			}
 			s.layout.GetNotifier().ShowSuccess("Updated all Packages")
+			s.appService.forceRefreshResults()
+		}()
+	}, s.closeModal)
+}
+
+// handleInstallAllPackagesEvent is called when the user presses the install all key (Ctrl+A).
+// This is only available in Brewfile mode and installs all packages from the Brewfile.
+func (s *IOService) handleInstallAllPackagesEvent() {
+	if !s.appService.IsBrewfileMode() {
+		return // Only available in Brewfile mode
+	}
+
+	packages := *s.appService.GetBrewfilePackages()
+	if len(packages) == 0 {
+		s.layout.GetNotifier().ShowError("No packages found in Brewfile")
+		return
+	}
+
+	// Count how many packages are not yet installed
+	notInstalled := 0
+	for _, pkg := range packages {
+		if !pkg.LocallyInstalled {
+			notInstalled++
+		}
+	}
+
+	message := fmt.Sprintf("Install all packages from Brewfile?\n\nTotal: %d packages\nNot installed: %d", len(packages), notInstalled)
+
+	s.showModal(message, func() {
+		s.closeModal()
+		s.layout.GetOutput().Clear()
+		go func() {
+			// Install all packages with progress notifications
+			current := 0
+			total := len(packages)
+
+			for _, pkg := range packages {
+				current++
+
+				// Check if package is already installed
+				if pkg.LocallyInstalled {
+					s.layout.GetNotifier().ShowWarning(fmt.Sprintf("[%d/%d] Skipping %s (already installed)", current, total, pkg.Name))
+					s.appService.app.QueueUpdateDraw(func() {
+						fmt.Fprintf(s.layout.GetOutput().View(), "[SKIP] %s (already installed)\n", pkg.Name)
+					})
+					continue
+				}
+
+				// Show progress in notifier
+				s.layout.GetNotifier().ShowWarning(fmt.Sprintf("[%d/%d] Installing %s...", current, total, pkg.Name))
+				s.appService.app.QueueUpdateDraw(func() {
+					fmt.Fprintf(s.layout.GetOutput().View(), "\n[INSTALL] Installing %s...\n", pkg.Name)
+				})
+
+				if err := s.brewService.InstallPackage(pkg, s.appService.app, s.layout.GetOutput().View()); err != nil {
+					s.layout.GetNotifier().ShowError(fmt.Sprintf("[%d/%d] Failed to install %s", current, total, pkg.Name))
+					s.appService.app.QueueUpdateDraw(func() {
+						fmt.Fprintf(s.layout.GetOutput().View(), "[ERROR] Failed to install %s: %v\n", pkg.Name, err)
+					})
+					continue
+				}
+
+				s.appService.app.QueueUpdateDraw(func() {
+					fmt.Fprintf(s.layout.GetOutput().View(), "[SUCCESS] %s installed successfully\n", pkg.Name)
+				})
+			}
+
+			s.layout.GetNotifier().ShowSuccess(fmt.Sprintf("Completed! Processed %d packages", total))
+			s.appService.forceRefreshResults()
+		}()
+	}, s.closeModal)
+}
+
+// handleRemoveAllPackagesEvent is called when the user presses the remove all key (Ctrl+R).
+// This is only available in Brewfile mode and removes all installed packages from the Brewfile.
+func (s *IOService) handleRemoveAllPackagesEvent() {
+	if !s.appService.IsBrewfileMode() {
+		return // Only available in Brewfile mode
+	}
+
+	packages := *s.appService.GetBrewfilePackages()
+	if len(packages) == 0 {
+		s.layout.GetNotifier().ShowError("No packages found in Brewfile")
+		return
+	}
+
+	// Count how many packages are installed
+	installed := 0
+	for _, pkg := range packages {
+		if pkg.LocallyInstalled {
+			installed++
+		}
+	}
+
+	if installed == 0 {
+		s.layout.GetNotifier().ShowWarning("No packages to remove (none are installed)")
+		return
+	}
+
+	message := fmt.Sprintf("Remove all installed packages from Brewfile?\n\nTotal: %d packages\nInstalled: %d", len(packages), installed)
+
+	s.showModal(message, func() {
+		s.closeModal()
+		s.layout.GetOutput().Clear()
+		go func() {
+			// Remove all packages with progress notifications
+			current := 0
+			total := len(packages)
+
+			for _, pkg := range packages {
+				current++
+
+				// Check if package is not installed
+				if !pkg.LocallyInstalled {
+					s.layout.GetNotifier().ShowWarning(fmt.Sprintf("[%d/%d] Skipping %s (not installed)", current, total, pkg.Name))
+					s.appService.app.QueueUpdateDraw(func() {
+						fmt.Fprintf(s.layout.GetOutput().View(), "[SKIP] %s (not installed)\n", pkg.Name)
+					})
+					continue
+				}
+
+				// Show progress in notifier
+				s.layout.GetNotifier().ShowWarning(fmt.Sprintf("[%d/%d] Removing %s...", current, total, pkg.Name))
+				s.appService.app.QueueUpdateDraw(func() {
+					fmt.Fprintf(s.layout.GetOutput().View(), "\n[REMOVE] Removing %s...\n", pkg.Name)
+				})
+
+				if err := s.brewService.RemovePackage(pkg, s.appService.app, s.layout.GetOutput().View()); err != nil {
+					s.layout.GetNotifier().ShowError(fmt.Sprintf("[%d/%d] Failed to remove %s", current, total, pkg.Name))
+					s.appService.app.QueueUpdateDraw(func() {
+						fmt.Fprintf(s.layout.GetOutput().View(), "[ERROR] Failed to remove %s: %v\n", pkg.Name, err)
+					})
+					continue
+				}
+
+				s.appService.app.QueueUpdateDraw(func() {
+					fmt.Fprintf(s.layout.GetOutput().View(), "[SUCCESS] %s removed successfully\n", pkg.Name)
+				})
+			}
+
+			s.layout.GetNotifier().ShowSuccess(fmt.Sprintf("Completed! Processed %d packages", total))
 			s.appService.forceRefreshResults()
 		}()
 	}, s.closeModal)

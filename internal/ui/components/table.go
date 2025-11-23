@@ -2,6 +2,8 @@ package components
 
 import (
 	"bbrew/internal/ui/theme"
+
+	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 )
 
@@ -18,6 +20,10 @@ func NewTable(theme *theme.Theme) *Table {
 	table.view.SetBorders(false)
 	table.view.SetSelectable(true, false)
 	table.view.SetFixed(1, 0)
+
+	// Use reverse video for selection to ensure visibility on any terminal theme
+	table.view.SetSelectedStyle(tcell.StyleDefault.Reverse(true))
+
 	return table
 }
 

@@ -210,7 +210,7 @@ func (s *BrewService) GetPackages() (packages *[]models.Package) {
 // SetupData initializes the BrewService by loading installed packages, remote formulae, casks, and analytics data.
 func (s *BrewService) SetupData(forceDownload bool) (err error) {
 	// Load formulae
-	if err = s.loadInstalled(); err != nil {
+	if err = s.loadInstalled(forceDownload); err != nil {
 		return fmt.Errorf("failed to load installed formulae: %w", err)
 	}
 
@@ -218,12 +218,12 @@ func (s *BrewService) SetupData(forceDownload bool) (err error) {
 		return fmt.Errorf("failed to load remote formulae: %w", err)
 	}
 
-	if err = s.loadAnalytics(); err != nil {
+	if err = s.loadAnalytics(forceDownload); err != nil {
 		return fmt.Errorf("failed to load formulae analytics: %w", err)
 	}
 
 	// Load casks
-	if err = s.loadInstalledCasks(); err != nil {
+	if err = s.loadInstalledCasks(forceDownload); err != nil {
 		return fmt.Errorf("failed to load installed casks: %w", err)
 	}
 
@@ -231,15 +231,46 @@ func (s *BrewService) SetupData(forceDownload bool) (err error) {
 		return fmt.Errorf("failed to load remote casks: %w", err)
 	}
 
-	if err = s.loadCaskAnalytics(); err != nil {
+	if err = s.loadCaskAnalytics(forceDownload); err != nil {
 		return fmt.Errorf("failed to load cask analytics: %w", err)
 	}
 
 	return nil
 }
 
-// loadInstalled retrieves the list of installed Homebrew formulae and updates their local paths.
-func (s *BrewService) loadInstalled() (err error) {
+// loadInstalled retrieves installed formulae, optionally using cache.
+func (s *BrewService) loadInstalled(forceDownload bool) (err error) {
+	cacheDir := getCacheDir()
+	installedFile := filepath.Join(cacheDir, "installed.json")
+	if _, err := os.Stat(cacheDir); os.IsNotExist(err) {
+		if err := os.MkdirAll(cacheDir, 0750); err != nil {
+			return err
+		}
+	}
+
+	// Check if we should use the cached file
+	if !forceDownload {
+		if fileInfo, err := os.Stat(installedFile); err == nil {
+			// Only use cache if file is not empty (size > 10 bytes for "[]" or "{}")
+			if fileInfo.Size() > 10 {
+				// #nosec G304 -- installedFile path is safely constructed from UserHomeDir and sanitized with filepath.Join
+				data, err := os.ReadFile(installedFile)
+				if err == nil && len(data) > 0 {
+					*s.installed = make([]models.Formula, 0)
+					if err := json.Unmarshal(data, &s.installed); err == nil {
+						// Mark all installed Packages as locally installed and set LocalPath
+						prefix := s.GetPrefixPath()
+						for i := range *s.installed {
+							(*s.installed)[i].LocallyInstalled = true
+							(*s.installed)[i].LocalPath = filepath.Join(prefix, "Cellar", (*s.installed)[i].Name)
+						}
+						return nil
+					}
+				}
+			}
+		}
+	}
+
 	cmd := exec.Command("brew", "info", "--json=v1", "--installed")
 	output, err := cmd.Output()
 	if err != nil {
@@ -259,11 +290,46 @@ func (s *BrewService) loadInstalled() (err error) {
 		(*s.installed)[i].LocalPath = filepath.Join(prefix, "Cellar", (*s.installed)[i].Name)
 	}
 
+	// Cache the installed formulae data
+	_ = os.WriteFile(installedFile, output, 0600)
 	return nil
 }
 
-// loadInstalledCasks retrieves the list of installed Homebrew casks.
-func (s *BrewService) loadInstalledCasks() (err error) {
+// loadInstalledCasks retrieves installed casks, optionally using cache.
+func (s *BrewService) loadInstalledCasks(forceDownload bool) (err error) {
+	cacheDir := getCacheDir()
+	installedCasksFile := filepath.Join(cacheDir, "installed-casks.json")
+	if _, err := os.Stat(cacheDir); os.IsNotExist(err) {
+		if err := os.MkdirAll(cacheDir, 0750); err != nil {
+			return err
+		}
+	}
+
+	// Check if we should use the cached file
+	if !forceDownload {
+		if fileInfo, err := os.Stat(installedCasksFile); err == nil {
+			// Only use cache if file is not empty (size > 10 bytes for minimal JSON)
+			if fileInfo.Size() > 10 {
+				// #nosec G304 -- installedCasksFile path is safely constructed from UserHomeDir and sanitized with filepath.Join
+				data, err := os.ReadFile(installedCasksFile)
+				if err == nil && len(data) > 0 {
+					var response struct {
+						Casks []models.Cask `json:"casks"`
+					}
+					if err := json.Unmarshal(data, &response); err == nil {
+						*s.installedCasks = response.Casks
+						// Mark all installed casks as locally installed
+						for i := range *s.installedCasks {
+							(*s.installedCasks)[i].LocallyInstalled = true
+							(*s.installedCasks)[i].IsCask = true
+						}
+						return nil
+					}
+				}
+			}
+		}
+	}
+
 	// Get list of installed cask names
 	listCmd := exec.Command("brew", "list", "--cask")
 	listOutput, err := listCmd.Output()
@@ -307,6 +373,8 @@ func (s *BrewService) loadInstalledCasks() (err error) {
 		(*s.installedCasks)[i].IsCask = true
 	}
 
+	// Cache the installed casks data
+	_ = os.WriteFile(installedCasksFile, infoOutput, 0600)
 	return nil
 }
 
@@ -322,13 +390,16 @@ func (s *BrewService) loadRemote(forceDownload bool) (err error) {
 
 	// Check if we should use the cached file
 	if !forceDownload {
-		if _, err := os.Stat(formulaFile); err == nil {
-			// #nosec G304 -- formulaFile path is safely constructed from UserHomeDir and sanitized with filepath.Join
-			data, err := os.ReadFile(formulaFile)
-			if err == nil {
-				*s.remote = make([]models.Formula, 0)
-				if err := json.Unmarshal(data, &s.remote); err == nil {
-					return nil
+		if fileInfo, err := os.Stat(formulaFile); err == nil {
+			// Only use cache if file has reasonable size (formulae list should be several MB)
+			if fileInfo.Size() > 1000 {
+				// #nosec G304 -- formulaFile path is safely constructed from UserHomeDir and sanitized with filepath.Join
+				data, err := os.ReadFile(formulaFile)
+				if err == nil && len(data) > 0 {
+					*s.remote = make([]models.Formula, 0)
+					if err := json.Unmarshal(data, &s.remote); err == nil && len(*s.remote) > 0 {
+						return nil
+					}
 				}
 			}
 		}
@@ -368,13 +439,16 @@ func (s *BrewService) loadRemoteCasks(forceDownload bool) (err error) {
 
 	// Check if we should use the cached file
 	if !forceDownload {
-		if _, err := os.Stat(caskFile); err == nil {
-			// #nosec G304 -- caskFile path is safely constructed from UserHomeDir and sanitized with filepath.Join
-			data, err := os.ReadFile(caskFile)
-			if err == nil {
-				*s.remoteCasks = make([]models.Cask, 0)
-				if err := json.Unmarshal(data, &s.remoteCasks); err == nil {
-					return nil
+		if fileInfo, err := os.Stat(caskFile); err == nil {
+			// Only use cache if file has reasonable size (cask list should be several MB)
+			if fileInfo.Size() > 1000 {
+				// #nosec G304 -- caskFile path is safely constructed from UserHomeDir and sanitized with filepath.Join
+				data, err := os.ReadFile(caskFile)
+				if err == nil && len(data) > 0 {
+					*s.remoteCasks = make([]models.Cask, 0)
+					if err := json.Unmarshal(data, &s.remoteCasks); err == nil && len(*s.remoteCasks) > 0 {
+						return nil
+					}
 				}
 			}
 		}
@@ -402,16 +476,51 @@ func (s *BrewService) loadRemoteCasks(forceDownload bool) (err error) {
 	return nil
 }
 
-// loadAnalytics retrieves the analytics data for Homebrew formulae from the API.
-func (s *BrewService) loadAnalytics() (err error) {
+// loadAnalytics retrieves the analytics data for Homebrew formulae from the API and caches them locally.
+func (s *BrewService) loadAnalytics(forceDownload bool) (err error) {
+	cacheDir := getCacheDir()
+	analyticsFile := filepath.Join(cacheDir, "analytics.json")
+	if _, err := os.Stat(cacheDir); os.IsNotExist(err) {
+		if err := os.MkdirAll(cacheDir, 0750); err != nil {
+			return err
+		}
+	}
+
+	// Check if we should use the cached file
+	if !forceDownload {
+		if fileInfo, err := os.Stat(analyticsFile); err == nil {
+			// Only use cache if file has reasonable size (analytics should be > 1KB)
+			if fileInfo.Size() > 100 {
+				// #nosec G304 -- analyticsFile path is safely constructed from UserHomeDir and sanitized with filepath.Join
+				data, err := os.ReadFile(analyticsFile)
+				if err == nil && len(data) > 0 {
+					analytics := models.Analytics{}
+					if err := json.Unmarshal(data, &analytics); err == nil && len(analytics.Items) > 0 {
+						analyticsByFormula := map[string]models.AnalyticsItem{}
+						for _, f := range analytics.Items {
+							analyticsByFormula[f.Formula] = f
+						}
+						s.analytics = analyticsByFormula
+						return nil
+					}
+				}
+			}
+		}
+	}
+
 	resp, err := http.Get(AnalyticsAPIURL)
 	if err != nil {
 		return err
 	}
 	defer resp.Body.Close()
 
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return err
+	}
+
 	analytics := models.Analytics{}
-	err = json.NewDecoder(resp.Body).Decode(&analytics)
+	err = json.Unmarshal(body, &analytics)
 	if err != nil {
 		return err
 	}
@@ -422,19 +531,61 @@ func (s *BrewService) loadAnalytics() (err error) {
 	}
 
 	s.analytics = analyticsByFormula
+
+	// Cache the analytics data
+	_ = os.WriteFile(analyticsFile, body, 0600)
 	return nil
 }
 
-// loadCaskAnalytics retrieves the analytics data for Homebrew casks from the API.
-func (s *BrewService) loadCaskAnalytics() (err error) {
+// loadCaskAnalytics retrieves the analytics data for Homebrew casks from the API and caches them locally.
+func (s *BrewService) loadCaskAnalytics(forceDownload bool) (err error) {
+	cacheDir := getCacheDir()
+	caskAnalyticsFile := filepath.Join(cacheDir, "cask-analytics.json")
+	if _, err := os.Stat(cacheDir); os.IsNotExist(err) {
+		if err := os.MkdirAll(cacheDir, 0750); err != nil {
+			return err
+		}
+	}
+
+	// Check if we should use the cached file
+	if !forceDownload {
+		if fileInfo, err := os.Stat(caskAnalyticsFile); err == nil {
+			// Only use cache if file has reasonable size (analytics should be > 1KB)
+			if fileInfo.Size() > 100 {
+				// #nosec G304 -- caskAnalyticsFile path is safely constructed from UserHomeDir and sanitized with filepath.Join
+				data, err := os.ReadFile(caskAnalyticsFile)
+				if err == nil && len(data) > 0 {
+					analytics := models.Analytics{}
+					if err := json.Unmarshal(data, &analytics); err == nil && len(analytics.Items) > 0 {
+						analyticsByCask := map[string]models.AnalyticsItem{}
+						for _, c := range analytics.Items {
+							// Cask analytics use the "cask" field instead of "formula"
+							caskName := c.Cask
+							if caskName != "" {
+								analyticsByCask[caskName] = c
+							}
+						}
+						s.caskAnalytics = analyticsByCask
+						return nil
+					}
+				}
+			}
+		}
+	}
+
 	resp, err := http.Get(CaskAnalyticsAPIURL)
 	if err != nil {
 		return err
 	}
 	defer resp.Body.Close()
 
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return err
+	}
+
 	analytics := models.Analytics{}
-	err = json.NewDecoder(resp.Body).Decode(&analytics)
+	err = json.Unmarshal(body, &analytics)
 	if err != nil {
 		return err
 	}
@@ -449,6 +600,9 @@ func (s *BrewService) loadCaskAnalytics() (err error) {
 	}
 
 	s.caskAnalytics = analyticsByCask
+
+	// Cache the cask analytics data
+	_ = os.WriteFile(caskAnalyticsFile, body, 0600)
 	return nil
 }
 

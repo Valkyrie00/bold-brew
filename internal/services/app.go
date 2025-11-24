@@ -6,6 +6,7 @@ import (
 	"bbrew/internal/ui/theme"
 	"context"
 	"fmt"
+	"os"
 	"sort"
 	"strings"
 	"time"
@@ -97,8 +98,11 @@ func (s *AppService) Boot() (err error) {
 	}
 
 	// Download and parse Homebrew formulae data
+	// Non-critical: if this fails (corrupted cache + no internet), app will start with empty data
+	// and background update will populate it when network is available
 	if err = s.brewService.SetupData(false); err != nil {
-		return fmt.Errorf("failed to load Homebrew formulae: %v", err)
+		// Log error but don't fail - app can work with empty/partial data
+		fmt.Fprintf(os.Stderr, "Warning: failed to load Homebrew data (will retry in background): %v\n", err)
 	}
 
 	// Initialize packages and filteredPackages

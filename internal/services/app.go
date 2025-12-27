@@ -314,6 +314,8 @@ func (s *AppService) setResults(data *[]models.Package, scrollToTop bool) {
 		return
 	}
 
+	// Update the filter counter even if no results are found
+	s.layout.GetSearch().UpdateCounter(len(*s.packages), len(*s.filteredPackages))
 	s.layout.GetDetails().SetContent(nil) // Clear details if no results
 }
 

@@ -18,11 +18,12 @@ const (
 
 // IOAction represents an input/output action that can be triggered by a key event.
 type IOAction struct {
-	Key     tcell.Key
-	Rune    rune
-	Name    string
-	KeySlug string
-	Action  func()
+	Key            tcell.Key
+	Rune           rune
+	Name           string
+	KeySlug        string
+	Action         func()
+	HideFromLegend bool // If true, this action won't appear in the legend bar
 }
 
 func (k *IOAction) SetAction(action func()) {
@@ -78,8 +79,8 @@ var NewIOService = func(appService *AppService) IOServiceInterface {
 	s.ActionUpdateAll = &IOAction{Key: tcell.KeyCtrlU, Rune: 0, KeySlug: "ctrl+u", Name: "Update All"}
 	s.ActionInstallAll = &IOAction{Key: tcell.KeyCtrlA, Rune: 0, KeySlug: "ctrl+a", Name: "Install All (Brewfile)"}
 	s.ActionRemoveAll = &IOAction{Key: tcell.KeyCtrlR, Rune: 0, KeySlug: "ctrl+r", Name: "Remove All (Brewfile)"}
-	s.ActionBack = &IOAction{Key: tcell.KeyEsc, Rune: 0, KeySlug: "esc", Name: "Back to Table"}
-	s.ActionQuit = &IOAction{Key: tcell.KeyRune, Rune: 'q', KeySlug: "q", Name: "Quit"}
+	s.ActionBack = &IOAction{Key: tcell.KeyEsc, Rune: 0, KeySlug: "esc", Name: "Back to Table", HideFromLegend: true}
+	s.ActionQuit = &IOAction{Key: tcell.KeyRune, Rune: 'q', KeySlug: "q", Name: "Quit", HideFromLegend: true}
 
 	// Define actions for each key input,
 	s.ActionSearch.SetAction(s.handleSearchFieldEvent)
@@ -119,9 +120,11 @@ var NewIOService = func(appService *AppService) IOServiceInterface {
 
 // updateLegendEntries updates the legend entries based on current keyActions
 func (s *IOService) updateLegendEntries() {
-	s.legendEntries = make([]struct{ KeySlug, Name string }, len(s.keyActions))
-	for i, input := range s.keyActions {
-		s.legendEntries[i] = struct{ KeySlug, Name string }{KeySlug: input.KeySlug, Name: input.Name}
+	s.legendEntries = make([]struct{ KeySlug, Name string }, 0, len(s.keyActions))
+	for _, input := range s.keyActions {
+		if !input.HideFromLegend {
+			s.legendEntries = append(s.legendEntries, struct{ KeySlug, Name string }{KeySlug: input.KeySlug, Name: input.Name})
+		}
 	}
 	s.layout.GetLegend().SetLegend(s.legendEntries, "")
 }

@@ -18,11 +18,12 @@ const (
 
 // IOAction represents an input/output action that can be triggered by a key event.
 type IOAction struct {
-	Key     tcell.Key
-	Rune    rune
-	Name    string
-	KeySlug string
-	Action  func()
+	Key            tcell.Key
+	Rune           rune
+	Name           string
+	KeySlug        string
+	Action         func()
+	HideFromLegend bool // If true, this action won't appear in the legend bar
 }
 
 func (k *IOAction) SetAction(action func()) {
@@ -55,6 +56,7 @@ type IOService struct {
 	ActionUpdateAll       *IOAction
 	ActionInstallAll      *IOAction
 	ActionRemoveAll       *IOAction
+	ActionHelp            *IOAction
 	ActionBack            *IOAction
 	ActionQuit            *IOAction
 }
@@ -69,17 +71,18 @@ var NewIOService = func(appService *AppService) IOServiceInterface {
 	// Initialize key actions with their respective keys, runes, and names.
 	s.ActionSearch = &IOAction{Key: tcell.KeyRune, Rune: '/', KeySlug: "/", Name: "Search"}
 	s.ActionFilterInstalled = &IOAction{Key: tcell.KeyRune, Rune: 'f', KeySlug: "f", Name: "Installed"}
-	s.ActionFilterOutdated = &IOAction{Key: tcell.KeyRune, Rune: 'o', KeySlug: "o", Name: "Outdated"}
-	s.ActionFilterLeaves = &IOAction{Key: tcell.KeyRune, Rune: 'l', KeySlug: "l", Name: "Leaves"}
-	s.ActionFilterCasks = &IOAction{Key: tcell.KeyRune, Rune: 'c', KeySlug: "c", Name: "Casks"}
+	s.ActionFilterOutdated = &IOAction{Key: tcell.KeyRune, Rune: 'o', KeySlug: "o", Name: "Outdated", HideFromLegend: true}
+	s.ActionFilterLeaves = &IOAction{Key: tcell.KeyRune, Rune: 'l', KeySlug: "l", Name: "Leaves", HideFromLegend: true}
+	s.ActionFilterCasks = &IOAction{Key: tcell.KeyRune, Rune: 'c', KeySlug: "c", Name: "Casks", HideFromLegend: true}
 	s.ActionInstall = &IOAction{Key: tcell.KeyRune, Rune: 'i', KeySlug: "i", Name: "Install"}
 	s.ActionUpdate = &IOAction{Key: tcell.KeyRune, Rune: 'u', KeySlug: "u", Name: "Update"}
 	s.ActionRemove = &IOAction{Key: tcell.KeyRune, Rune: 'r', KeySlug: "r", Name: "Remove"}
-	s.ActionUpdateAll = &IOAction{Key: tcell.KeyCtrlU, Rune: 0, KeySlug: "ctrl+u", Name: "Update All"}
+	s.ActionUpdateAll = &IOAction{Key: tcell.KeyCtrlU, Rune: 0, KeySlug: "ctrl+u", Name: "Update All", HideFromLegend: true}
 	s.ActionInstallAll = &IOAction{Key: tcell.KeyCtrlA, Rune: 0, KeySlug: "ctrl+a", Name: "Install All (Brewfile)"}
 	s.ActionRemoveAll = &IOAction{Key: tcell.KeyCtrlR, Rune: 0, KeySlug: "ctrl+r", Name: "Remove All (Brewfile)"}
-	s.ActionBack = &IOAction{Key: tcell.KeyEsc, Rune: 0, KeySlug: "esc", Name: "Back to Table"}
-	s.ActionQuit = &IOAction{Key: tcell.KeyRune, Rune: 'q', KeySlug: "q", Name: "Quit"}
+	s.ActionHelp = &IOAction{Key: tcell.KeyRune, Rune: '?', KeySlug: "?", Name: "Help"}
+	s.ActionBack = &IOAction{Key: tcell.KeyEsc, Rune: 0, KeySlug: "esc", Name: "Back to Table", HideFromLegend: true}
+	s.ActionQuit = &IOAction{Key: tcell.KeyRune, Rune: 'q', KeySlug: "q", Name: "Quit", HideFromLegend: true}
 
 	// Define actions for each key input,
 	s.ActionSearch.SetAction(s.handleSearchFieldEvent)
@@ -93,6 +96,7 @@ var NewIOService = func(appService *AppService) IOServiceInterface {
 	s.ActionUpdateAll.SetAction(s.handleUpdateAllPackagesEvent)
 	s.ActionInstallAll.SetAction(s.handleInstallAllPackagesEvent)
 	s.ActionRemoveAll.SetAction(s.handleRemoveAllPackagesEvent)
+	s.ActionHelp.SetAction(s.handleHelpEvent)
 	s.ActionBack.SetAction(s.handleBack)
 	s.ActionQuit.SetAction(s.handleQuitEvent)
 
@@ -108,6 +112,7 @@ var NewIOService = func(appService *AppService) IOServiceInterface {
 		s.ActionUpdate,
 		s.ActionRemove,
 		s.ActionUpdateAll,
+		s.ActionHelp,
 		s.ActionBack,
 		s.ActionQuit,
 	}
@@ -119,9 +124,11 @@ var NewIOService = func(appService *AppService) IOServiceInterface {
 
 // updateLegendEntries updates the legend entries based on current keyActions
 func (s *IOService) updateLegendEntries() {
-	s.legendEntries = make([]struct{ KeySlug, Name string }, len(s.keyActions))
-	for i, input := range s.keyActions {
-		s.legendEntries[i] = struct{ KeySlug, Name string }{KeySlug: input.KeySlug, Name: input.Name}
+	s.legendEntries = make([]struct{ KeySlug, Name string }, 0, len(s.keyActions))
+	for _, input := range s.keyActions {
+		if !input.HideFromLegend {
+			s.legendEntries = append(s.legendEntries, struct{ KeySlug, Name string }{KeySlug: input.KeySlug, Name: input.Name})
+		}
 	}
 	s.layout.GetLegend().SetLegend(s.legendEntries, "")
 }
@@ -177,6 +184,23 @@ func (s *IOService) handleSearchFieldEvent() {
 // handleQuitEvent is called when the user presses the quit key (q).
 func (s *IOService) handleQuitEvent() {
 	s.appService.GetApp().Stop()
+}
+
+// handleHelpEvent shows the help screen with all keyboard shortcuts.
+func (s *IOService) handleHelpEvent() {
+	helpScreen := s.layout.GetHelpScreen()
+	helpScreen.SetBrewfileMode(s.appService.IsBrewfileMode())
+	helpPages := helpScreen.Build(s.layout.Root())
+
+	// Set up key handler to close help on any key press
+	helpPages.SetInputCapture(func(_ *tcell.EventKey) *tcell.EventKey {
+		// Close help and return to main view
+		s.appService.GetApp().SetRoot(s.layout.Root(), true)
+		s.appService.GetApp().SetFocus(s.layout.GetTable().View())
+		return nil
+	})
+
+	s.appService.GetApp().SetRoot(helpPages, true)
 }
 
 // handleFilterEvent toggles the filter for installed or outdated packages based on the provided filter type.

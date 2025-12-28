@@ -19,6 +19,7 @@ type LayoutInterface interface {
 	GetLegend() *components.Legend
 	GetNotifier() *components.Notifier
 	GetModal() *components.Modal
+	GetHelpScreen() *components.HelpScreen
 }
 
 type Layout struct {
@@ -31,6 +32,7 @@ type Layout struct {
 	legend      *components.Legend
 	notifier    *components.Notifier
 	modal       *components.Modal
+	helpScreen  *components.HelpScreen
 	theme       *theme.Theme
 }
 
@@ -45,6 +47,7 @@ func NewLayout(theme *theme.Theme) LayoutInterface {
 		legend:      components.NewLegend(theme),
 		notifier:    components.NewNotifier(theme),
 		modal:       components.NewModal(theme),
+		helpScreen:  components.NewHelpScreen(theme),
 		theme:       theme,
 	}
 }
@@ -103,11 +106,12 @@ func (l *Layout) Root() tview.Primitive {
 	return l.mainContent
 }
 
-func (l *Layout) GetHeader() *components.Header     { return l.header }
-func (l *Layout) GetSearch() *components.Search     { return l.search }
-func (l *Layout) GetTable() *components.Table       { return l.table }
-func (l *Layout) GetDetails() *components.Details   { return l.details }
-func (l *Layout) GetOutput() *components.Output     { return l.output }
-func (l *Layout) GetLegend() *components.Legend     { return l.legend }
-func (l *Layout) GetNotifier() *components.Notifier { return l.notifier }
-func (l *Layout) GetModal() *components.Modal       { return l.modal }
+func (l *Layout) GetHeader() *components.Header         { return l.header }
+func (l *Layout) GetSearch() *components.Search         { return l.search }
+func (l *Layout) GetTable() *components.Table           { return l.table }
+func (l *Layout) GetDetails() *components.Details       { return l.details }
+func (l *Layout) GetOutput() *components.Output         { return l.output }
+func (l *Layout) GetLegend() *components.Legend         { return l.legend }
+func (l *Layout) GetNotifier() *components.Notifier     { return l.notifier }
+func (l *Layout) GetModal() *components.Modal           { return l.modal }
+func (l *Layout) GetHelpScreen() *components.HelpScreen { return l.helpScreen }

@@ -65,6 +65,9 @@ type BrewServiceInterface interface {
 // BrewService provides methods to interact with Homebrew, including
 // retrieving formulae, casks, and handling analytics.
 type BrewService struct {
+	// Data provider for loading packages
+	dataProvider DataProviderInterface
+
 	// Formula lists
 	all       *[]models.Formula
 	installed *[]models.Formula
@@ -87,6 +90,7 @@ type BrewService struct {
 // NewBrewService creates a new instance of BrewService with initialized package lists.
 var NewBrewService = func() BrewServiceInterface {
 	return &BrewService{
+		dataProvider:   NewDataProvider(),
 		all:            new([]models.Formula),
 		installed:      new([]models.Formula),
 		remote:         new([]models.Formula),
@@ -135,4 +139,3 @@ func (s *BrewService) UpdateHomebrew() error {
 	cmd := exec.Command("brew", "update")
 	return cmd.Run()
 }
-

@@ -43,6 +43,15 @@ type BrewServiceInterface interface {
 	InstallAllPackages(packages []models.Package, app *tview.Application, outputView *tview.TextView) error
 	RemoveAllPackages(packages []models.Package, app *tview.Application, outputView *tview.TextView) error
 	ParseBrewfile(filepath string) ([]models.BrewfileEntry, error)
+	ParseBrewfileWithTaps(filepath string) (*models.BrewfileResult, error)
+	InstallTap(tapName string, app *tview.Application, outputView *tview.TextView) error
+	IsTapInstalled(tapName string) bool
+	IsPackageInstalled(name string, isCask bool) bool
+	GetInstalledCaskNames() map[string]bool
+	GetInstalledFormulaNames() map[string]bool
+	GetPackagesInfo(names []string, isCask bool) map[string]models.Package
+	LoadTapPackagesCache() map[string]models.Package
+	SaveTapPackagesToCache(packages []models.Package) error
 }
 
 // BrewService provides methods to interact with Homebrew, including
@@ -685,12 +694,15 @@ func (s *BrewService) executeCommand(
 	var wg sync.WaitGroup
 	wg.Add(3)
 
+	// Channel to capture the command exit error
+	cmdErrCh := make(chan error, 1)
+
 	// Goroutine to wait for the command to finish
 	go func() {
 		defer wg.Done()
 		defer stdoutWriter.Close()
 		defer stderrWriter.Close()
-		_ = cmd.Wait() // #nosec G104 -- Error is handled by pipe readers below
+		cmdErrCh <- cmd.Wait()
 	}()
 
 	// Stdout handler
@@ -746,19 +758,34 @@ func (s *BrewService) executeCommand(
 	}()
 
 	wg.Wait()
-	return nil
+
+	// Return the command exit error (nil if successful)
+	return <-cmdErrCh
 }
 
 // ParseBrewfile parses a Brewfile and returns a list of packages to be installed.
-// It handles both 'brew' and 'cask' entries in the Brewfile format.
+// It handles 'tap', 'brew' and 'cask' entries in the Brewfile format.
 func (s *BrewService) ParseBrewfile(filepath string) ([]models.BrewfileEntry, error) {
+	result, err := s.ParseBrewfileWithTaps(filepath)
+	if err != nil {
+		return nil, err
+	}
+	return result.Packages, nil
+}
+
+// ParseBrewfileWithTaps parses a Brewfile and returns taps and packages separately.
+// This allows installing taps before packages.
+func (s *BrewService) ParseBrewfileWithTaps(filepath string) (*models.BrewfileResult, error) {
 	// #nosec G304 -- filepath is user-provided via CLI flag
 	data, err := os.ReadFile(filepath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read Brewfile: %w", err)
 	}
 
-	var entries []models.BrewfileEntry
+	result := &models.BrewfileResult{
+		Taps:     []string{},
+		Packages: []models.BrewfileEntry{},
+	}
 	lines := strings.Split(string(data), "\n")
 
 	for _, line := range lines {
@@ -769,6 +796,16 @@ func (s *BrewService) ParseBrewfile(filepath string) ([]models.BrewfileEntry, er
 			continue
 		}
 
+		// Parse tap entries: tap "user/repo"
+		if strings.HasPrefix(line, "tap ") {
+			start := strings.Index(line, "\"")
+			end := strings.LastIndex(line, "\"")
+			if start != -1 && end != -1 && start < end {
+				tapName := line[start+1 : end]
+				result.Taps = append(result.Taps, tapName)
+			}
+		}
+
 		// Parse brew entries: brew "package-name"
 		if strings.HasPrefix(line, "brew ") {
 			// Extract package name from quotes
@@ -776,7 +813,7 @@ func (s *BrewService) ParseBrewfile(filepath string) ([]models.BrewfileEntry, er
 			end := strings.LastIndex(line, "\"")
 			if start != -1 && end != -1 && start < end {
 				packageName := line[start+1 : end]
-				entries = append(entries, models.BrewfileEntry{
+				result.Packages = append(result.Packages, models.BrewfileEntry{
 					Name:   packageName,
 					IsCask: false,
 				})
@@ -790,7 +827,7 @@ func (s *BrewService) ParseBrewfile(filepath string) ([]models.BrewfileEntry, er
 			end := strings.LastIndex(line, "\"")
 			if start != -1 && end != -1 && start < end {
 				packageName := line[start+1 : end]
-				entries = append(entries, models.BrewfileEntry{
+				result.Packages = append(result.Packages, models.BrewfileEntry{
 					Name:   packageName,
 					IsCask: true,
 				})
@@ -798,7 +835,175 @@ func (s *BrewService) ParseBrewfile(filepath string) ([]models.BrewfileEntry, er
 		}
 	}
 
-	return entries, nil
+	return result, nil
+}
+
+// InstallTap installs a Homebrew tap.
+func (s *BrewService) InstallTap(tapName string, app *tview.Application, outputView *tview.TextView) error {
+	cmd := exec.Command("brew", "tap", tapName) // #nosec G204
+	return s.executeCommand(app, cmd, outputView)
+}
+
+// IsTapInstalled checks if a tap is already installed.
+func (s *BrewService) IsTapInstalled(tapName string) bool {
+	cmd := exec.Command("brew", "tap")
+	output, err := cmd.Output()
+	if err != nil {
+		return false
+	}
+
+	taps := strings.Split(strings.TrimSpace(string(output)), "\n")
+	for _, tap := range taps {
+		if strings.TrimSpace(tap) == tapName {
+			return true
+		}
+	}
+	return false
+}
+
+// IsPackageInstalled checks if a package (formula or cask) is installed by name.
+func (s *BrewService) IsPackageInstalled(name string, isCask bool) bool {
+	var cmd *exec.Cmd
+	if isCask {
+		cmd = exec.Command("brew", "list", "--cask", name)
+	} else {
+		cmd = exec.Command("brew", "list", "--formula", name)
+	}
+	err := cmd.Run()
+	return err == nil
+}
+
+// GetInstalledCaskNames returns a map of installed cask names for quick lookup.
+func (s *BrewService) GetInstalledCaskNames() map[string]bool {
+	result := make(map[string]bool)
+	cmd := exec.Command("brew", "list", "--cask")
+	output, err := cmd.Output()
+	if err != nil {
+		return result
+	}
+	names := strings.Split(strings.TrimSpace(string(output)), "\n")
+	for _, name := range names {
+		if name != "" {
+			result[name] = true
+		}
+	}
+	return result
+}
+
+// GetInstalledFormulaNames returns a map of installed formula names for quick lookup.
+func (s *BrewService) GetInstalledFormulaNames() map[string]bool {
+	result := make(map[string]bool)
+	cmd := exec.Command("brew", "list", "--formula")
+	output, err := cmd.Output()
+	if err != nil {
+		return result
+	}
+	names := strings.Split(strings.TrimSpace(string(output)), "\n")
+	for _, name := range names {
+		if name != "" {
+			result[name] = true
+		}
+	}
+	return result
+}
+
+// getPackageInfoSingle retrieves info for a single package directly.
+// Used internally as fallback when batch call fails.
+func (s *BrewService) getPackageInfoSingle(name string, isCask bool) *models.Package {
+	var cmd *exec.Cmd
+	if isCask {
+		cmd = exec.Command("brew", "info", "--json=v2", "--cask", name)
+	} else {
+		cmd = exec.Command("brew", "info", "--json=v1", name)
+	}
+
+	output, err := cmd.Output()
+	if err != nil {
+		return nil
+	}
+
+	if isCask {
+		var response struct {
+			Casks []models.Cask `json:"casks"`
+		}
+		if err := json.Unmarshal(output, &response); err != nil || len(response.Casks) == 0 {
+			return nil
+		}
+		cask := response.Casks[0]
+		cask.LocallyInstalled = s.IsPackageInstalled(name, true)
+		pkg := models.NewPackageFromCask(&cask)
+		return &pkg
+	}
+
+	var formulae []models.Formula
+	if err := json.Unmarshal(output, &formulae); err != nil || len(formulae) == 0 {
+		return nil
+	}
+	formula := formulae[0]
+	formula.LocallyInstalled = s.IsPackageInstalled(name, false)
+	pkg := models.NewPackageFromFormula(&formula)
+	return &pkg
+}
+
+// GetPackagesInfo retrieves package information for multiple packages in a single brew call.
+// This is much faster than calling GetPackageInfo for each package individually.
+// If the batch call fails, it falls back to individual calls for each package.
+// Returns a map of package name to Package.
+func (s *BrewService) GetPackagesInfo(names []string, isCask bool) map[string]models.Package {
+	result := make(map[string]models.Package)
+	if len(names) == 0 {
+		return result
+	}
+
+	var cmd *exec.Cmd
+	if isCask {
+		args := append([]string{"info", "--json=v2", "--cask"}, names...)
+		cmd = exec.Command("brew", args...)
+	} else {
+		args := append([]string{"info", "--json=v1"}, names...)
+		cmd = exec.Command("brew", args...)
+	}
+
+	output, err := cmd.Output()
+	if err != nil {
+		// Batch call failed - try each package individually
+		for _, name := range names {
+			if pkg := s.getPackageInfoSingle(name, isCask); pkg != nil {
+				result[name] = *pkg
+			}
+		}
+		return result
+	}
+
+	if isCask {
+		// Parse cask JSON (v2 format)
+		var response struct {
+			Casks []models.Cask `json:"casks"`
+		}
+		if err := json.Unmarshal(output, &response); err != nil {
+			return result
+		}
+		for _, cask := range response.Casks {
+			c := cask
+			c.LocallyInstalled = s.IsPackageInstalled(c.Token, true)
+			pkg := models.NewPackageFromCask(&c)
+			result[c.Token] = pkg
+		}
+	} else {
+		// Parse formula JSON (v1 format)
+		var formulae []models.Formula
+		if err := json.Unmarshal(output, &formulae); err != nil {
+			return result
+		}
+		for _, formula := range formulae {
+			f := formula
+			f.LocallyInstalled = s.IsPackageInstalled(f.Name, false)
+			pkg := models.NewPackageFromFormula(&f)
+			result[f.Name] = pkg
+		}
+	}
+
+	return result
 }
 
 // InstallAllPackages installs a list of packages sequentially.
@@ -863,4 +1068,56 @@ func (s *BrewService) RemoveAllPackages(packages []models.Package, app *tview.Ap
 	}
 
 	return nil
+}
+
+// LoadTapPackagesCache loads cached tap packages from disk.
+// Returns a map of package name to Package, or empty map if cache doesn't exist.
+func (s *BrewService) LoadTapPackagesCache() map[string]models.Package {
+	result := make(map[string]models.Package)
+
+	cacheDir := getCacheDir()
+	tapPackagesFile := filepath.Join(cacheDir, "tap_packages.json")
+	if _, err := os.Stat(cacheDir); os.IsNotExist(err) {
+		return result // Cache directory doesn't exist
+	}
+
+	// Check if cache file exists and has reasonable size
+	if fileInfo, err := os.Stat(tapPackagesFile); err == nil {
+		// Only use cache if file has reasonable size (> 10 bytes for minimal JSON "[]")
+		if fileInfo.Size() > 10 {
+			// #nosec G304 -- tapPackagesFile path is safely constructed from getCacheDir and sanitized with filepath.Join
+			data, err := os.ReadFile(tapPackagesFile)
+			if err == nil && len(data) > 0 {
+				var packages []models.Package
+				if err := json.Unmarshal(data, &packages); err == nil && len(packages) > 0 {
+					// Convert to map for quick lookup
+					for _, pkg := range packages {
+						result[pkg.Name] = pkg
+					}
+					return result
+				}
+			}
+		}
+	}
+
+	return result
+}
+
+// SaveTapPackagesToCache saves tap packages to disk cache.
+func (s *BrewService) SaveTapPackagesToCache(packages []models.Package) error {
+	cacheDir := getCacheDir()
+	tapPackagesFile := filepath.Join(cacheDir, "tap_packages.json")
+	if _, err := os.Stat(cacheDir); os.IsNotExist(err) {
+		if err := os.MkdirAll(cacheDir, 0750); err != nil {
+			return err
+		}
+	}
+
+	data, err := json.Marshal(packages)
+	if err != nil {
+		return err
+	}
+
+	// Cache the tap packages data
+	return os.WriteFile(tapPackagesFile, data, 0600)
 }

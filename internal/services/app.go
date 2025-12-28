@@ -47,6 +47,7 @@ type AppService struct {
 	// Brewfile support
 	brewfilePath     string
 	brewfilePackages *[]models.Package
+	brewfileTaps     []string // Taps required by the Brewfile
 
 	brewService       BrewServiceInterface
 	selfUpdateService SelfUpdateServiceInterface
@@ -97,9 +98,8 @@ func (s *AppService) Boot() (err error) {
 		return fmt.Errorf("failed to get Homebrew version: %v", err)
 	}
 
-	// Download and parse Homebrew formulae data
-	// Non-critical: if this fails (corrupted cache + no internet), app will start with empty data
-	// and background update will populate it when network is available
+	// Load Homebrew data from cache for fast startup
+	// Installation status might be stale but will be refreshed in background by updateHomeBrew()
 	if err = s.brewService.SetupData(false); err != nil {
 		// Log error but don't fail - app can work with empty/partial data
 		fmt.Fprintf(os.Stderr, "Warning: failed to load Homebrew data (will retry in background): %v\n", err)
@@ -119,16 +119,20 @@ func (s *AppService) Boot() (err error) {
 	return nil
 }
 
-// loadBrewfilePackages parses the Brewfile and creates a filtered package list
+// loadBrewfilePackages parses the Brewfile and creates a filtered package list.
+// Packages not found in s.packages are loaded from cache, or show "(loading...)" if not cached.
 func (s *AppService) loadBrewfilePackages() error {
-	entries, err := s.brewService.ParseBrewfile(s.brewfilePath)
+	result, err := s.brewService.ParseBrewfileWithTaps(s.brewfilePath)
 	if err != nil {
 		return err
 	}
 
-	// Create a map for quick lookup
+	// Store taps for later installation
+	s.brewfileTaps = result.Taps
+
+	// Create a map for quick lookup of Brewfile entries
 	packageMap := make(map[string]models.PackageType)
-	for _, entry := range entries {
+	for _, entry := range result.Packages {
 		if entry.IsCask {
 			packageMap[entry.Name] = models.PackageTypeCask
 		} else {
@@ -136,26 +140,216 @@ func (s *AppService) loadBrewfilePackages() error {
 		}
 	}
 
+	// Track which packages were found in the main package list
+	foundPackages := make(map[string]bool)
+
+	// Get actual installed packages (2 calls total, much faster than per-package checks)
+	installedCasks := s.brewService.GetInstalledCaskNames()
+	installedFormulae := s.brewService.GetInstalledFormulaNames()
+
 	// Filter packages to only include those in the Brewfile
 	*s.brewfilePackages = []models.Package{}
 	for _, pkg := range *s.packages {
 		if pkgType, exists := packageMap[pkg.Name]; exists && pkgType == pkg.Type {
+			// Verify installation status against actual installed lists
+			if pkgType == models.PackageTypeCask {
+				pkg.LocallyInstalled = installedCasks[pkg.Name]
+			} else {
+				pkg.LocallyInstalled = installedFormulae[pkg.Name]
+			}
 			*s.brewfilePackages = append(*s.brewfilePackages, pkg)
+			foundPackages[pkg.Name] = true
 		}
 	}
+
+	// Load tap packages cache for packages not found in main list
+	tapCache := s.brewService.LoadTapPackagesCache()
+
+	// For packages not found, try cache first, then show "(loading...)"
+	for _, entry := range result.Packages {
+		if foundPackages[entry.Name] {
+			continue
+		}
+
+		// Try to get from cache
+		if cachedPkg, exists := tapCache[entry.Name]; exists {
+			// Update installation status from local system
+			if entry.IsCask {
+				cachedPkg.LocallyInstalled = s.brewService.IsPackageInstalled(entry.Name, true)
+			} else {
+				cachedPkg.LocallyInstalled = s.brewService.IsPackageInstalled(entry.Name, false)
+			}
+			*s.brewfilePackages = append(*s.brewfilePackages, cachedPkg)
+			continue
+		}
+
+		// Not in cache - show placeholder
+		pkgType := models.PackageTypeFormula
+		if entry.IsCask {
+			pkgType = models.PackageTypeCask
+		}
+		*s.brewfilePackages = append(*s.brewfilePackages, models.Package{
+			Name:        entry.Name,
+			DisplayName: entry.Name,
+			Description: "(loading...)",
+			Type:        pkgType,
+		})
+	}
+
+	// Sort by name for consistent display
+	sort.Slice(*s.brewfilePackages, func(i, j int) bool {
+		return (*s.brewfilePackages)[i].Name < (*s.brewfilePackages)[j].Name
+	})
 
 	return nil
 }
 
+// fetchTapPackages fetches info for packages from third-party taps and adds them to s.packages.
+// This is called after taps are installed so that loadBrewfilePackages can find them.
+// It also saves the fetched data to cache for faster startup next time.
+func (s *AppService) fetchTapPackages() {
+	if !s.IsBrewfileMode() || len(s.brewfileTaps) == 0 {
+		return
+	}
+
+	result, err := s.brewService.ParseBrewfileWithTaps(s.brewfilePath)
+	if err != nil {
+		return
+	}
+
+	// Build a map of existing packages for quick lookup
+	existingPackages := make(map[string]models.Package)
+	for _, pkg := range *s.packages {
+		existingPackages[pkg.Name] = pkg
+	}
+
+	// Collect packages not in s.packages (need to fetch) and packages already present (for cache)
+	var missingCasks []string
+	var missingFormulae []string
+	var presentPackages []models.Package // Packages already in s.packages (installed tap packages)
+
+	for _, entry := range result.Packages {
+		if pkg, exists := existingPackages[entry.Name]; exists {
+			// Package is already in s.packages (likely installed)
+			// Save it to cache so it's available after uninstall
+			presentPackages = append(presentPackages, pkg)
+		} else {
+			// Package is missing, need to fetch
+			if entry.IsCask {
+				missingCasks = append(missingCasks, entry.Name)
+			} else {
+				missingFormulae = append(missingFormulae, entry.Name)
+			}
+		}
+	}
+
+	// Collect all tap packages to save to cache (both fetched and already present)
+	tapPackages := append([]models.Package{}, presentPackages...)
+
+	// Fetch and add missing casks
+	if len(missingCasks) > 0 {
+		caskInfo := s.brewService.GetPackagesInfo(missingCasks, true)
+		for _, name := range missingCasks {
+			if pkg, exists := caskInfo[name]; exists {
+				*s.packages = append(*s.packages, pkg)
+				tapPackages = append(tapPackages, pkg)
+			} else {
+				// Add fallback entry if brew info failed
+				fallback := models.Package{
+					Name:        name,
+					DisplayName: name,
+					Description: "(unable to load package info)",
+					Type:        models.PackageTypeCask,
+				}
+				*s.packages = append(*s.packages, fallback)
+				tapPackages = append(tapPackages, fallback)
+			}
+		}
+	}
+
+	// Fetch and add missing formulae
+	if len(missingFormulae) > 0 {
+		formulaInfo := s.brewService.GetPackagesInfo(missingFormulae, false)
+		for _, name := range missingFormulae {
+			if pkg, exists := formulaInfo[name]; exists {
+				*s.packages = append(*s.packages, pkg)
+				tapPackages = append(tapPackages, pkg)
+			} else {
+				// Add fallback entry if brew info failed
+				fallback := models.Package{
+					Name:        name,
+					DisplayName: name,
+					Description: "(unable to load package info)",
+					Type:        models.PackageTypeFormula,
+				}
+				*s.packages = append(*s.packages, fallback)
+				tapPackages = append(tapPackages, fallback)
+			}
+		}
+	}
+
+	// Save ALL tap packages to cache (including already installed ones)
+	if len(tapPackages) > 0 {
+		_ = s.brewService.SaveTapPackagesToCache(tapPackages)
+	}
+}
+
+// installBrewfileTapsAtStartup installs any missing taps from the Brewfile at app startup.
+// This runs before updateHomeBrew, which will then reload all data including the new taps.
+func (s *AppService) installBrewfileTapsAtStartup() {
+	// Check which taps need to be installed
+	var tapsToInstall []string
+	for _, tap := range s.brewfileTaps {
+		if !s.brewService.IsTapInstalled(tap) {
+			tapsToInstall = append(tapsToInstall, tap)
+		}
+	}
+
+	if len(tapsToInstall) == 0 {
+		return // All taps already installed
+	}
+
+	// Install missing taps
+	for _, tap := range tapsToInstall {
+		tap := tap // Create local copy for closures
+		s.app.QueueUpdateDraw(func() {
+			s.layout.GetNotifier().ShowWarning(fmt.Sprintf("Installing tap %s...", tap))
+			fmt.Fprintf(s.layout.GetOutput().View(), "[TAP] Installing %s...\n", tap)
+		})
+
+		if err := s.brewService.InstallTap(tap, s.app, s.layout.GetOutput().View()); err != nil {
+			s.app.QueueUpdateDraw(func() {
+				s.layout.GetNotifier().ShowError(fmt.Sprintf("Failed to install tap %s", tap))
+				fmt.Fprintf(s.layout.GetOutput().View(), "[ERROR] Failed to install tap %s\n", tap)
+			})
+		} else {
+			s.app.QueueUpdateDraw(func() {
+				s.layout.GetNotifier().ShowSuccess(fmt.Sprintf("Tap %s installed", tap))
+				fmt.Fprintf(s.layout.GetOutput().View(), "[SUCCESS] tap %s installed\n", tap)
+			})
+		}
+	}
+
+	s.app.QueueUpdateDraw(func() {
+		s.layout.GetNotifier().ShowSuccess("All taps installed")
+	})
+}
+
 // updateHomeBrew updates the Homebrew formulae and refreshes the results in the UI.
 func (s *AppService) updateHomeBrew() {
-	s.layout.GetNotifier().ShowWarning("Updating Homebrew formulae...")
+	s.app.QueueUpdateDraw(func() {
+		s.layout.GetNotifier().ShowWarning("Updating Homebrew formulae...")
+	})
 	if err := s.brewService.UpdateHomebrew(); err != nil {
-		s.layout.GetNotifier().ShowError("Could not update Homebrew formulae")
+		s.app.QueueUpdateDraw(func() {
+			s.layout.GetNotifier().ShowError("Could not update Homebrew formulae")
+		})
 		return
 	}
 	// Clear loading message and update results
-	s.layout.GetNotifier().ShowSuccess("Homebrew formulae updated successfully")
+	s.app.QueueUpdateDraw(func() {
+		s.layout.GetNotifier().ShowSuccess("Homebrew formulae updated successfully")
+	})
 	s.forceRefreshResults()
 }
 
@@ -246,14 +440,27 @@ func (s *AppService) search(searchText string, scrollToTop bool) {
 
 // forceRefreshResults forces a refresh of the Homebrew formulae and cask data and updates the results in the UI.
 func (s *AppService) forceRefreshResults() {
-	_ = s.brewService.SetupData(true)
+	// Use cached API data (fast) - only installed status needs refresh
+	_ = s.brewService.SetupData(false)
 	s.packages = s.brewService.GetPackages()
 
-	// If in Brewfile mode, reload the filtered packages
+	// If in Brewfile mode, load tap packages and verify installed status
 	if s.IsBrewfileMode() {
-		_ = s.loadBrewfilePackages()
+		s.fetchTapPackages()
+		_ = s.loadBrewfilePackages() // Gets fresh installed status via GetInstalledCaskNames/FormulaNames
 		*s.filteredPackages = *s.brewfilePackages
 	} else {
+		// For non-Brewfile mode, get fresh installed status
+		installedCasks := s.brewService.GetInstalledCaskNames()
+		installedFormulae := s.brewService.GetInstalledFormulaNames()
+		for i := range *s.packages {
+			pkg := &(*s.packages)[i]
+			if pkg.Type == models.PackageTypeCask {
+				pkg.LocallyInstalled = installedCasks[pkg.Name]
+			} else {
+				pkg.LocallyInstalled = installedFormulae[pkg.Name]
+			}
+		}
 		*s.filteredPackages = *s.packages
 	}
 
@@ -302,21 +509,21 @@ func (s *AppService) setResults(data *[]models.Package, scrollToTop bool) {
 	}
 
 	// Update the details view with the first item in the list
-	if len(*data) > 0 {
-		if scrollToTop {
-			s.layout.GetTable().View().Select(1, 0)
-			s.layout.GetTable().View().ScrollToBeginning()
-			s.layout.GetDetails().SetContent(&(*data)[0])
-		}
-
-		// Update the filter counter
-		s.layout.GetSearch().UpdateCounter(len(*s.packages), len(*s.filteredPackages))
-		return
+	if len(*data) > 0 && scrollToTop {
+		s.layout.GetTable().View().Select(1, 0)
+		s.layout.GetTable().View().ScrollToBeginning()
+		s.layout.GetDetails().SetContent(&(*data)[0])
+	} else if len(*data) == 0 {
+		s.layout.GetDetails().SetContent(nil) // Clear details if no results
 	}
 
-	// Update the filter counter even if no results are found
-	s.layout.GetSearch().UpdateCounter(len(*s.packages), len(*s.filteredPackages))
-	s.layout.GetDetails().SetContent(nil) // Clear details if no results
+	// Update the filter counter
+	// In Brewfile mode, show total Brewfile packages instead of all packages
+	totalCount := len(*s.packages)
+	if s.IsBrewfileMode() {
+		totalCount = len(*s.brewfilePackages)
+	}
+	s.layout.GetSearch().UpdateCounter(totalCount, len(*s.filteredPackages))
 }
 
 // BuildApp builds the application layout, sets up event handlers, and initializes the UI components.
@@ -379,7 +586,15 @@ func (s *AppService) BuildApp() {
 	s.app.SetRoot(s.layout.Root(), true)
 	s.app.SetFocus(s.layout.GetTable().View())
 
-	go s.updateHomeBrew() // Update Async the Homebrew formulae
+	// Start background tasks: install taps first (if Brewfile mode), then update Homebrew
+	go func() {
+		// In Brewfile mode, install missing taps first
+		if s.IsBrewfileMode() && len(s.brewfileTaps) > 0 {
+			s.installBrewfileTapsAtStartup()
+		}
+		// Then update Homebrew (which will reload all data including new taps)
+		s.updateHomeBrew()
+	}()
 
 	// Set initial results based on mode
 	if s.IsBrewfileMode() {

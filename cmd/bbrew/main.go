@@ -19,12 +19,13 @@ func main() {
 		fmt.Fprintf(os.Stderr, "Bold Brew - A TUI for Homebrew package management\n\n")
 		fmt.Fprintf(os.Stderr, "Usage: bbrew [options]\n\n")
 		fmt.Fprintf(os.Stderr, "Options:\n")
-		fmt.Fprintf(os.Stderr, "  -f <path>     Path to Brewfile (show only packages from this Brewfile)\n")
+		fmt.Fprintf(os.Stderr, "  -f <path|url> Path or URL to Brewfile\n")
 		fmt.Fprintf(os.Stderr, "  -v, --version Show version information\n")
 		fmt.Fprintf(os.Stderr, "  -h, --help    Show this help message\n")
 		fmt.Fprintf(os.Stderr, "\nExamples:\n")
 		fmt.Fprintf(os.Stderr, "  bbrew                    Launch the TUI with all packages\n")
-		fmt.Fprintf(os.Stderr, "  bbrew -f ~/Brewfile      Launch with packages from Brewfile\n")
+		fmt.Fprintf(os.Stderr, "  bbrew -f ~/Brewfile      Launch with packages from local Brewfile\n")
+		fmt.Fprintf(os.Stderr, "  bbrew -f https://...     Launch with packages from remote Brewfile\n")
 	}
 
 	flag.Parse()
@@ -35,15 +36,17 @@ func main() {
 		os.Exit(0)
 	}
 
-	// Validate Brewfile path if provided
+	// Resolve Brewfile path (handles both local and remote URLs)
+	var cleanup func()
 	if *brewfilePath != "" {
-		if _, err := os.Stat(*brewfilePath); os.IsNotExist(err) {
-			fmt.Fprintf(os.Stderr, "Error: Brewfile not found: %s\n", *brewfilePath)
-			os.Exit(1)
-		} else if err != nil {
-			fmt.Fprintf(os.Stderr, "Error: Cannot access Brewfile: %v\n", err)
+		localPath, cleanupFn, err := services.ResolveBrewfilePath(*brewfilePath)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 			os.Exit(1)
 		}
+		*brewfilePath = localPath
+		cleanup = cleanupFn
+		defer cleanup()
 	}
 
 	// Initialize app service

@@ -25,10 +25,69 @@ package services
 import (
 	"bbrew/internal/models"
 	"fmt"
+	"io"
+	"net/http"
 	"os"
+	"path/filepath"
 	"sort"
 	"strings"
 )
+
+// ResolveBrewfilePath resolves a Brewfile path which can be local or a remote URL.
+// Returns the local file path and a cleanup function to call when done.
+// For local files, cleanup is a no-op. For remote files, cleanup removes the temp file.
+func ResolveBrewfilePath(pathOrURL string) (localPath string, cleanup func(), err error) {
+	// Check if it's a remote URL (HTTPS only for security)
+	if strings.HasPrefix(pathOrURL, "https://") {
+		localPath, err = downloadBrewfile(pathOrURL)
+		if err != nil {
+			return "", nil, err
+		}
+		// Return cleanup function that removes the temp file
+		cleanup = func() { os.Remove(localPath) }
+		return localPath, cleanup, nil
+	}
+
+	// Local file - validate it exists
+	if _, err := os.Stat(pathOrURL); os.IsNotExist(err) {
+		return "", nil, fmt.Errorf("brewfile not found: %s", pathOrURL)
+	} else if err != nil {
+		return "", nil, fmt.Errorf("cannot access Brewfile: %w", err)
+	}
+
+	// No cleanup needed for local files
+	return pathOrURL, func() {}, nil
+}
+
+// downloadBrewfile downloads a remote Brewfile to a temporary file.
+func downloadBrewfile(url string) (string, error) {
+	fmt.Fprintf(os.Stderr, "Downloading Brewfile from %s...\n", url)
+
+	resp, err := http.Get(url) // #nosec G107 - URL is user-provided, HTTPS enforced
+	if err != nil {
+		return "", fmt.Errorf("failed to fetch URL: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("HTTP %d: %s", resp.StatusCode, resp.Status)
+	}
+
+	// Create temp file
+	tempFile, err := os.CreateTemp(os.TempDir(), "bbrew-remote-*.brewfile")
+	if err != nil {
+		return "", fmt.Errorf("failed to create temp file: %w", err)
+	}
+	defer tempFile.Close()
+
+	// Copy content
+	if _, err = io.Copy(tempFile, resp.Body); err != nil {
+		os.Remove(tempFile.Name())
+		return "", fmt.Errorf("failed to save Brewfile: %w", err)
+	}
+
+	return filepath.Clean(tempFile.Name()), nil
+}
 
 // parseBrewfileWithTaps parses a Brewfile and returns taps and packages separately.
 func parseBrewfileWithTaps(filepath string) (*models.BrewfileResult, error) {

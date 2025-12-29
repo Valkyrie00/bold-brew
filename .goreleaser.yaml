@@ -1,8 +1,10 @@
 version: 2
 project_name: bbrew
+
 builds:
   - id: bbrew
     main: ./cmd/bbrew
+    binary: bbrew
     goos:
       - darwin
       - linux
@@ -14,13 +16,36 @@ builds:
     ldflags:
       - -s -w
       - -X 'bbrew/internal/services.AppVersion={{ .Version }}'
+
 archives:
   - format: tar.gz
     name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+
+checksum:
+  name_template: "checksums.txt"
+  algorithm: sha256
+
+release:
+  github:
+    owner: Valkyrie00
+    name: bold-brew
+  draft: false
+  prerelease: auto
+  header: |
+    ## Bold Brew {{ .Version }}
+    
+    Install or upgrade:
+    ```bash
+    brew upgrade bbrew
+    # or
+    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Valkyrie00/bold-brew/main/install.sh)"
+    ```
+
 brews:
   - name: bbrew
-    homepage: "https://github.com/Valkyrie00/bold-brew"
-    description: "A simple TUI tool to make your homebrew bold."
+    homepage: "https://bold-brew.com"
+    description: "Modern TUI for managing Homebrew packages and casks on macOS and Linux"
+    license: "MIT"
     url_template: "https://github.com/Valkyrie00/bold-brew/releases/download/{{ .Tag }}/{{ .ArtifactName }}"
     commit_author:
       name: goreleaserbot
@@ -28,7 +53,7 @@ brews:
     commit_msg_template: "Brew formula update for {{ .ProjectName }} version {{ .Tag }}"
     directory: Formula
     test: |
-      system "#{bin}/bbrew --version"
+      assert_match "Usage", shell_output("#{bin}/bbrew -h")
     install: |
       bin.install "bbrew"
     repository:
@@ -36,27 +61,35 @@ brews:
       name: homebrew-bbrew
       branch: main
       token: "{{ .Env.GITHUB_TOKEN }}"
+
 changelog:
   use: github
   sort: asc
   filters:
     exclude:
-      - '^docs:'
-      - '^test:'
-      - '^ci:'
-      - '^chore:'
-      - Merge pull request
-      - Merge branch
+      - "^docs:"
+      - "^test:"
+      - "^ci:"
+      - "^chore:"
+      - "^style:"
+      - "Merge pull request"
+      - "Merge branch"
   groups:
-    - title: '⚠️ Breaking Changes'
+    - title: "⚠️ Breaking Changes"
       regexp: "^.*!:.+$"
       order: 0
-    - title: '✨ Features'
+    - title: "✨ Features"
       regexp: "^.*feat[(\\w)]*:.*$"
       order: 1
-    - title: '🐛 Bug Fixes'
+    - title: "🐛 Bug Fixes"
       regexp: "^.*fix[(\\w)]*:.*$"
       order: 2
-    - title: '⚡️ Improvements'
-      regexp: "^.*perf[(\\w)]*:.*$"
+    - title: "♻️ Refactoring"
+      regexp: "^.*refactor[(\\w)]*:.*$"
       order: 3
+    - title: "⚡️ Performance"
+      regexp: "^.*perf[(\\w)]*:.*$"
+      order: 4
+    - title: "🔒 Security"
+      regexp: "^.*security[(\\w)]*:.*$"
+      order: 5

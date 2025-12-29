@@ -79,7 +79,7 @@ func NewDataProvider() *DataProvider {
 
 // fetchFromAPI downloads data from a URL.
 func fetchFromAPI(url string) ([]byte, error) {
-	resp, err := http.Get(url)
+	resp, err := http.Get(url) // #nosec G107 - URLs are internal constants
 	if err != nil {
 		return nil, err
 	}

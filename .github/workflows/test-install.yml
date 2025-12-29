@@ -91,46 +91,6 @@ jobs:
           bbrew --help | head -3
           echo "✓ All checks passed!"
 
-  test-macos-intel:
-    name: Test on macOS (Intel)
-    runs-on: macos-13  # Intel runner
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Ensure clean state (no Homebrew)
-        run: |
-          if command -v brew &> /dev/null || [ -d /usr/local/Homebrew ]; then
-            echo "Removing existing Homebrew..."
-            if [ -x /usr/local/bin/brew ]; then
-              NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/uninstall.sh)" || true
-            fi
-            sudo rm -rf /usr/local/Homebrew
-            sudo rm -rf /usr/local/Cellar
-            sudo rm -rf /usr/local/Caskroom
-            sudo rm -f /usr/local/bin/brew
-          fi
-          if [ -d /usr/local/Homebrew ]; then
-            echo "ERROR: Failed to remove Homebrew"
-            exit 1
-          fi
-          echo "✓ Clean state confirmed"
-
-      - name: Run install script
-        run: |
-          chmod +x install.sh
-          ./install.sh
-
-      - name: Verify installation
-        run: |
-          eval "$(/usr/local/bin/brew shellenv)"
-          echo "==> Checking brew..."
-          brew --version
-          echo "==> Checking bbrew..."
-          which bbrew
-          bbrew --help | head -3
-          echo "✓ All checks passed!"
-
   test-already-installed:
     name: Test upgrade path (Homebrew already installed)
     runs-on: ubuntu-latest

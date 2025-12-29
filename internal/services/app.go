@@ -50,6 +50,7 @@ type AppService struct {
 	brewfileTaps     []string // Taps required by the Brewfile
 
 	brewService       BrewServiceInterface
+	dataProvider      DataProviderInterface // Direct access for Brewfile operations
 	selfUpdateService SelfUpdateServiceInterface
 	ioService         IOServiceInterface
 }
@@ -79,6 +80,7 @@ var NewAppService = func() AppServiceInterface {
 
 	// Initialize services
 	s.ioService = NewIOService(s)
+	s.dataProvider = NewDataProvider()
 	s.brewService = NewBrewService()
 	s.selfUpdateService = NewSelfUpdateService()
 
@@ -100,13 +102,13 @@ func (s *AppService) Boot() (err error) {
 
 	// Load Homebrew data from cache for fast startup
 	// Installation status might be stale but will be refreshed in background by updateHomeBrew()
-	if err = s.brewService.SetupData(false); err != nil {
+	if err = s.dataProvider.SetupData(false); err != nil {
 		// Log error but don't fail - app can work with empty/partial data
 		fmt.Fprintf(os.Stderr, "Warning: failed to load Homebrew data (will retry in background): %v\n", err)
 	}
 
 	// Initialize packages and filteredPackages
-	s.packages = s.brewService.GetPackages()
+	s.packages = s.dataProvider.GetPackages()
 	*s.filteredPackages = *s.packages
 
 	// If Brewfile is specified, parse it and filter packages
@@ -225,8 +227,8 @@ func (s *AppService) search(searchText string, scrollToTop bool) {
 // forceRefreshResults forces a refresh of the Homebrew formulae and cask data and updates the results in the UI.
 func (s *AppService) forceRefreshResults() {
 	// Use cached API data (fast) - only installed status needs refresh
-	_ = s.brewService.SetupData(false)
-	s.packages = s.brewService.GetPackages()
+	_ = s.dataProvider.SetupData(false)
+	s.packages = s.dataProvider.GetPackages()
 
 	// If in Brewfile mode, load tap packages and verify installed status
 	if s.IsBrewfileMode() {
@@ -235,8 +237,8 @@ func (s *AppService) forceRefreshResults() {
 		*s.filteredPackages = *s.brewfilePackages
 	} else {
 		// For non-Brewfile mode, get fresh installed status
-		installedCasks := s.brewService.GetInstalledCaskNames()
-		installedFormulae := s.brewService.GetInstalledFormulaNames()
+		installedCasks := s.dataProvider.GetInstalledCaskNames()
+		installedFormulae := s.dataProvider.GetInstalledFormulaNames()
 		for i := range *s.packages {
 			pkg := &(*s.packages)[i]
 			if pkg.Type == models.PackageTypeCask {

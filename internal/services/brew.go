@@ -23,16 +23,13 @@ func getCacheDir() string {
 	return filepath.Join(xdg.CacheHome, "bbrew")
 }
 
-// BrewServiceInterface defines the contract for interacting with Homebrew.
+// BrewServiceInterface defines the contract for Homebrew operations.
+// BrewService is a pure executor of brew commands - it does NOT hold data.
+// For data retrieval, use DataProviderInterface.
 type BrewServiceInterface interface {
 	// Core info
 	GetPrefixPath() string
 	GetBrewVersion() (string, error)
-
-	// Package retrieval
-	GetFormulae() *[]models.Formula
-	GetPackages() *[]models.Package
-	SetupData(forceDownload bool) error
 
 	// Package operations
 	UpdateHomebrew() error
@@ -50,55 +47,18 @@ type BrewServiceInterface interface {
 	// Tap support
 	InstallTap(tapName string, app *tview.Application, outputView *tview.TextView) error
 	IsTapInstalled(tapName string) bool
-
-	// Package info
-	IsPackageInstalled(name string, isCask bool) bool
-	GetInstalledCaskNames() map[string]bool
-	GetInstalledFormulaNames() map[string]bool
-	GetPackagesInfo(names []string, isCask bool) map[string]models.Package
-
-	// Cache
-	LoadTapPackagesCache() map[string]models.Package
-	SaveTapPackagesToCache(packages []models.Package) error
 }
 
-// BrewService provides methods to interact with Homebrew, including
-// retrieving formulae, casks, and handling analytics.
+// BrewService provides methods to execute Homebrew commands.
+// It is a pure executor - no data storage. Use DataProvider for data.
 type BrewService struct {
-	// Data provider for loading packages
-	dataProvider DataProviderInterface
-
-	// Formula lists
-	all       *[]models.Formula
-	installed *[]models.Formula
-	remote    *[]models.Formula
-	analytics map[string]models.AnalyticsItem
-
-	// Cask lists
-	allCasks       *[]models.Cask
-	installedCasks *[]models.Cask
-	remoteCasks    *[]models.Cask
-	caskAnalytics  map[string]models.AnalyticsItem
-
-	// Unified package list
-	allPackages *[]models.Package
-
 	brewVersion string
 	prefixPath  string
 }
 
-// NewBrewService creates a new instance of BrewService with initialized package lists.
+// NewBrewService creates a new instance of BrewService.
 var NewBrewService = func() BrewServiceInterface {
-	return &BrewService{
-		dataProvider:   NewDataProvider(),
-		all:            new([]models.Formula),
-		installed:      new([]models.Formula),
-		remote:         new([]models.Formula),
-		allCasks:       new([]models.Cask),
-		installedCasks: new([]models.Cask),
-		remoteCasks:    new([]models.Cask),
-		allPackages:    new([]models.Package),
-	}
+	return &BrewService{}
 }
 
 // GetPrefixPath retrieves the Homebrew prefix path, caching it for future calls.

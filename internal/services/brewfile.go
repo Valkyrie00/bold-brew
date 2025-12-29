@@ -7,7 +7,7 @@ import (
 )
 
 // loadBrewfilePackages parses the Brewfile and creates a filtered package list.
-// Packages not found in s.packages are loaded from cache, or show "(loading...)" if not cached.
+// Uses the DataProvider to load tap packages from cache or fetch via brew info.
 func (s *AppService) loadBrewfilePackages() error {
 	result, err := s.brewService.ParseBrewfileWithTaps(s.brewfilePath)
 	if err != nil {
@@ -31,8 +31,8 @@ func (s *AppService) loadBrewfilePackages() error {
 	foundPackages := make(map[string]bool)
 
 	// Get actual installed packages (2 calls total, much faster than per-package checks)
-	installedCasks := s.brewService.GetInstalledCaskNames()
-	installedFormulae := s.brewService.GetInstalledFormulaNames()
+	installedCasks := s.dataProvider.GetInstalledCaskNames()
+	installedFormulae := s.dataProvider.GetInstalledFormulaNames()
 
 	// Filter packages to only include those in the Brewfile
 	*s.brewfilePackages = []models.Package{}
@@ -49,38 +49,34 @@ func (s *AppService) loadBrewfilePackages() error {
 		}
 	}
 
-	// Load tap packages cache for packages not found in main list
-	tapCache := s.brewService.LoadTapPackagesCache()
-
-	// For packages not found, try cache first, then show "(loading...)"
+	// Collect entries not found in main list (tap packages)
+	var tapEntries []models.BrewfileEntry
 	for _, entry := range result.Packages {
-		if foundPackages[entry.Name] {
-			continue
+		if !foundPackages[entry.Name] {
+			tapEntries = append(tapEntries, entry)
+		}
+	}
+
+	// Load tap packages from cache (fast startup)
+	if len(tapEntries) > 0 {
+		// Build existing packages map
+		existingPackages := make(map[string]models.Package)
+		for _, pkg := range *s.packages {
+			existingPackages[pkg.Name] = pkg
 		}
 
-		// Try to get from cache
-		if cachedPkg, exists := tapCache[entry.Name]; exists {
-			// Update installation status from local system
-			if entry.IsCask {
-				cachedPkg.LocallyInstalled = s.brewService.IsPackageInstalled(entry.Name, true)
+		// Use DataProvider to load tap packages (from cache only at startup, no fetch)
+		tapPackages, _ := s.dataProvider.LoadTapPackages(tapEntries, existingPackages, false)
+
+		// Add tap packages to brewfilePackages, updating installed status
+		for _, pkg := range tapPackages {
+			if pkg.Type == models.PackageTypeCask {
+				pkg.LocallyInstalled = installedCasks[pkg.Name]
 			} else {
-				cachedPkg.LocallyInstalled = s.brewService.IsPackageInstalled(entry.Name, false)
+				pkg.LocallyInstalled = installedFormulae[pkg.Name]
 			}
-			*s.brewfilePackages = append(*s.brewfilePackages, cachedPkg)
-			continue
+			*s.brewfilePackages = append(*s.brewfilePackages, pkg)
 		}
-
-		// Not in cache - show placeholder
-		pkgType := models.PackageTypeFormula
-		if entry.IsCask {
-			pkgType = models.PackageTypeCask
-		}
-		*s.brewfilePackages = append(*s.brewfilePackages, models.Package{
-			Name:        entry.Name,
-			DisplayName: entry.Name,
-			Description: "(loading...)",
-			Type:        pkgType,
-		})
 	}
 
 	// Sort by name for consistent display
@@ -93,7 +89,7 @@ func (s *AppService) loadBrewfilePackages() error {
 
 // fetchTapPackages fetches info for packages from third-party taps and adds them to s.packages.
 // This is called after taps are installed so that loadBrewfilePackages can find them.
-// It also saves the fetched data to cache for faster startup next time.
+// Uses the DataProvider to fetch and cache tap package data.
 func (s *AppService) fetchTapPackages() {
 	if !s.IsBrewfileMode() || len(s.brewfileTaps) == 0 {
 		return
@@ -110,74 +106,14 @@ func (s *AppService) fetchTapPackages() {
 		existingPackages[pkg.Name] = pkg
 	}
 
-	// Collect packages not in s.packages (need to fetch) and packages already present (for cache)
-	var missingCasks []string
-	var missingFormulae []string
-	var presentPackages []models.Package // Packages already in s.packages (installed tap packages)
+	// Use DataProvider to fetch all tap packages (force download to get fresh data)
+	tapPackages, _ := s.dataProvider.LoadTapPackages(result.Packages, existingPackages, true)
 
-	for _, entry := range result.Packages {
-		if pkg, exists := existingPackages[entry.Name]; exists {
-			// Package is already in s.packages (likely installed)
-			// Save it to cache so it's available after uninstall
-			presentPackages = append(presentPackages, pkg)
-		} else {
-			// Package is missing, need to fetch
-			if entry.IsCask {
-				missingCasks = append(missingCasks, entry.Name)
-			} else {
-				missingFormulae = append(missingFormulae, entry.Name)
-			}
+	// Add tap packages to s.packages (avoiding duplicates)
+	for _, pkg := range tapPackages {
+		if _, exists := existingPackages[pkg.Name]; !exists {
+			*s.packages = append(*s.packages, pkg)
 		}
-	}
-
-	// Collect all tap packages to save to cache (both fetched and already present)
-	tapPackages := append([]models.Package{}, presentPackages...)
-
-	// Fetch and add missing casks
-	if len(missingCasks) > 0 {
-		caskInfo := s.brewService.GetPackagesInfo(missingCasks, true)
-		for _, name := range missingCasks {
-			if pkg, exists := caskInfo[name]; exists {
-				*s.packages = append(*s.packages, pkg)
-				tapPackages = append(tapPackages, pkg)
-			} else {
-				// Add fallback entry if brew info failed
-				fallback := models.Package{
-					Name:        name,
-					DisplayName: name,
-					Description: "(unable to load package info)",
-					Type:        models.PackageTypeCask,
-				}
-				*s.packages = append(*s.packages, fallback)
-				tapPackages = append(tapPackages, fallback)
-			}
-		}
-	}
-
-	// Fetch and add missing formulae
-	if len(missingFormulae) > 0 {
-		formulaInfo := s.brewService.GetPackagesInfo(missingFormulae, false)
-		for _, name := range missingFormulae {
-			if pkg, exists := formulaInfo[name]; exists {
-				*s.packages = append(*s.packages, pkg)
-				tapPackages = append(tapPackages, pkg)
-			} else {
-				// Add fallback entry if brew info failed
-				fallback := models.Package{
-					Name:        name,
-					DisplayName: name,
-					Description: "(unable to load package info)",
-					Type:        models.PackageTypeFormula,
-				}
-				*s.packages = append(*s.packages, fallback)
-				tapPackages = append(tapPackages, fallback)
-			}
-		}
-	}
-
-	// Save ALL tap packages to cache (including already installed ones)
-	if len(tapPackages) > 0 {
-		_ = s.brewService.SaveTapPackagesToCache(tapPackages)
 	}
 }
 
@@ -221,4 +157,3 @@ func (s *AppService) installBrewfileTapsAtStartup() {
 		s.layout.GetNotifier().ShowSuccess("All taps installed")
 	})
 }
-

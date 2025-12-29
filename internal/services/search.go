@@ -22,46 +22,8 @@ func (s *AppService) search(searchText string, scrollToTop bool) {
 		sourceList = s.brewfilePackages
 	}
 
-	// Apply filters on the base source list (either all packages or Brewfile packages)
-	if s.showOnlyInstalled && !s.showOnlyOutdated {
-		filteredSource := &[]models.Package{}
-		for _, info := range *sourceList {
-			if info.LocallyInstalled {
-				*filteredSource = append(*filteredSource, info)
-			}
-		}
-		sourceList = filteredSource
-	}
-
-	if s.showOnlyOutdated {
-		filteredSource := &[]models.Package{}
-		for _, info := range *sourceList {
-			if info.LocallyInstalled && info.Outdated {
-				*filteredSource = append(*filteredSource, info)
-			}
-		}
-		sourceList = filteredSource
-	}
-
-	if s.showOnlyLeaves {
-		filteredSource := &[]models.Package{}
-		for _, info := range *sourceList {
-			if info.LocallyInstalled && info.InstalledOnRequest {
-				*filteredSource = append(*filteredSource, info)
-			}
-		}
-		sourceList = filteredSource
-	}
-
-	if s.showOnlyCasks {
-		filteredSource := &[]models.Package{}
-		for _, info := range *sourceList {
-			if info.Type == models.PackageTypeCask {
-				*filteredSource = append(*filteredSource, info)
-			}
-		}
-		sourceList = filteredSource
-	}
+	// Apply active filter on the source list
+	sourceList = s.applyFilter(sourceList)
 
 	if searchText == "" {
 		// Reset to the appropriate list when the search string is empty
@@ -93,6 +55,32 @@ func (s *AppService) search(searchText string, scrollToTop bool) {
 
 	*s.filteredPackages = filteredList
 	s.setResults(s.filteredPackages, scrollToTop)
+}
+
+// applyFilter filters packages based on the active filter type.
+func (s *AppService) applyFilter(sourceList *[]models.Package) *[]models.Package {
+	if s.activeFilter == FilterNone {
+		return sourceList
+	}
+
+	filteredSource := &[]models.Package{}
+	for _, info := range *sourceList {
+		include := false
+		switch s.activeFilter {
+		case FilterInstalled:
+			include = info.LocallyInstalled
+		case FilterOutdated:
+			include = info.LocallyInstalled && info.Outdated
+		case FilterLeaves:
+			include = info.LocallyInstalled && info.InstalledOnRequest
+		case FilterCasks:
+			include = info.Type == models.PackageTypeCask
+		}
+		if include {
+			*filteredSource = append(*filteredSource, info)
+		}
+	}
+	return filteredSource
 }
 
 // forceRefreshResults forces a refresh of the Homebrew formulae and cask data and updates the results in the UI.

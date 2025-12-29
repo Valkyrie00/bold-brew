@@ -8,10 +8,12 @@ import (
 	"github.com/gdamore/tcell/v2"
 )
 
+// FilterType represents the active package filter state.
 type FilterType int
 
 const (
-	FilterInstalled FilterType = iota
+	FilterNone FilterType = iota
+	FilterInstalled
 	FilterOutdated
 	FilterLeaves
 	FilterCasks
@@ -217,22 +219,13 @@ func (s *InputService) handleHelpEvent() {
 	s.appService.GetApp().SetRoot(helpPages, true)
 }
 
-// handleFilterEvent toggles the filter for installed or outdated packages based on the provided filter type.
+// handleFilterEvent toggles the filter for packages based on the provided filter type.
 func (s *InputService) handleFilterEvent(filterType FilterType) {
-	s.layout.GetLegend().SetLegend(s.legendEntries, "")
-
-	// Get current state of the target filter
-	isCurrentlyActive := s.isFilterActive(filterType)
-
-	// Reset all filters
-	s.appService.showOnlyInstalled = false
-	s.appService.showOnlyOutdated = false
-	s.appService.showOnlyLeaves = false
-	s.appService.showOnlyCasks = false
-
-	// If target wasn't active, activate it (otherwise it stays off = toggle off)
-	if !isCurrentlyActive {
-		s.setFilterActive(filterType, true)
+	// Toggle: if same filter is active, turn it off; otherwise switch to new filter
+	if s.appService.activeFilter == filterType {
+		s.appService.activeFilter = FilterNone
+	} else {
+		s.appService.activeFilter = filterType
 	}
 
 	// Update UI based on active filter
@@ -240,67 +233,37 @@ func (s *InputService) handleFilterEvent(filterType FilterType) {
 	s.appService.search(s.layout.GetSearch().Field().GetText(), true)
 }
 
-// isFilterActive checks if a specific filter is currently active.
-func (s *InputService) isFilterActive(filterType FilterType) bool {
-	switch filterType {
-	case FilterInstalled:
-		return s.appService.showOnlyInstalled
-	case FilterOutdated:
-		return s.appService.showOnlyOutdated
-	case FilterLeaves:
-		return s.appService.showOnlyLeaves
-	case FilterCasks:
-		return s.appService.showOnlyCasks
-	}
-	return false
-}
-
-// setFilterActive sets a specific filter's active state.
-func (s *InputService) setFilterActive(filterType FilterType, active bool) {
-	switch filterType {
-	case FilterInstalled:
-		s.appService.showOnlyInstalled = active
-	case FilterOutdated:
-		s.appService.showOnlyOutdated = active
-	case FilterLeaves:
-		s.appService.showOnlyLeaves = active
-	case FilterCasks:
-		s.appService.showOnlyCasks = active
-	}
-}
-
 // updateFilterUI updates the search label and legend based on the current filter state.
 func (s *InputService) updateFilterUI() {
+	s.layout.GetLegend().SetLegend(s.legendEntries, "")
+
+	// Map filter types to their display config
+	filterConfig := map[FilterType]struct {
+		suffix  string
+		keySlug string
+	}{
+		FilterInstalled: {"Installed", s.ActionFilterInstalled.KeySlug},
+		FilterOutdated:  {"Outdated", s.ActionFilterOutdated.KeySlug},
+		FilterLeaves:    {"Leaves", s.ActionFilterLeaves.KeySlug},
+		FilterCasks:     {"Casks", s.ActionFilterCasks.KeySlug},
+	}
+
 	baseLabel := "Search"
 	if s.appService.IsBrewfileMode() {
 		baseLabel = "Search (Brewfile"
 	}
 
-	// Map filter states to their labels and legend keys
-	filterConfig := []struct {
-		active  bool
-		suffix  string
-		keySlug string
-	}{
-		{s.appService.showOnlyInstalled, "Installed", s.ActionFilterInstalled.KeySlug},
-		{s.appService.showOnlyOutdated, "Outdated", s.ActionFilterOutdated.KeySlug},
-		{s.appService.showOnlyLeaves, "Leaves", s.ActionFilterLeaves.KeySlug},
-		{s.appService.showOnlyCasks, "Casks", s.ActionFilterCasks.KeySlug},
-	}
-
-	for _, cfg := range filterConfig {
-		if cfg.active {
-			if s.appService.IsBrewfileMode() {
-				s.layout.GetSearch().Field().SetLabel(baseLabel + " - " + cfg.suffix + "): ")
-			} else {
-				s.layout.GetSearch().Field().SetLabel("Search (" + cfg.suffix + "): ")
-			}
-			s.layout.GetLegend().SetLegend(s.legendEntries, cfg.keySlug)
-			return
+	if cfg, exists := filterConfig[s.appService.activeFilter]; exists {
+		if s.appService.IsBrewfileMode() {
+			s.layout.GetSearch().Field().SetLabel(baseLabel + " - " + cfg.suffix + "): ")
+		} else {
+			s.layout.GetSearch().Field().SetLabel("Search (" + cfg.suffix + "): ")
 		}
+		s.layout.GetLegend().SetLegend(s.legendEntries, cfg.keySlug)
+		return
 	}
 
-	// No filter active
+	// No filter active (FilterNone)
 	if s.appService.IsBrewfileMode() {
 		s.layout.GetSearch().Field().SetLabel(baseLabel + "): ")
 	} else {

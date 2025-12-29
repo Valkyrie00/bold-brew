@@ -34,13 +34,10 @@ type AppService struct {
 	theme  *theme.Theme
 	layout ui.LayoutInterface
 
-	packages          *[]models.Package
-	filteredPackages  *[]models.Package
-	showOnlyInstalled bool
-	showOnlyOutdated  bool
-	showOnlyLeaves    bool
-	showOnlyCasks     bool
-	brewVersion       string
+	packages         *[]models.Package
+	filteredPackages *[]models.Package
+	activeFilter     FilterType
+	brewVersion      string
 
 	// Brewfile support
 	brewfilePath     string
@@ -64,13 +61,10 @@ var NewAppService = func() AppServiceInterface {
 		theme:  themeService,
 		layout: layout,
 
-		packages:          new([]models.Package),
-		filteredPackages:  new([]models.Package),
-		showOnlyInstalled: false,
-		showOnlyOutdated:  false,
-		showOnlyLeaves:    false,
-		showOnlyCasks:     false,
-		brewVersion:       "-",
+		packages:         new([]models.Package),
+		filteredPackages: new([]models.Package),
+		activeFilter:     FilterNone,
+		brewVersion:      "-",
 
 		brewfilePath:     "",
 		brewfilePackages: new([]models.Package),

@@ -126,11 +126,16 @@ setup_brew_env() {
 
 # Install Homebrew
 install_homebrew() {
+    # On Linux, ensure dependencies are installed first
+    if [ "$OS_TYPE" = "linux" ]; then
+        install_linux_deps
+    fi
+    
     info "Installing Homebrew..."
     echo ""
     
     # Use Homebrew's official installer
-    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+    NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
     
     # Setup environment after installation
     local brew_bin
@@ -187,13 +192,6 @@ main() {
     # Check for curl
     if ! command_exists curl; then
         error "curl is required but not installed. Please install curl first."
-    fi
-    
-    # Install Linux dependencies if needed
-    if [ "$OS_TYPE" = "linux" ]; then
-        if ! command_exists git || ! command_exists gcc; then
-            install_linux_deps
-        fi
     fi
     
     # Check/Install Homebrew

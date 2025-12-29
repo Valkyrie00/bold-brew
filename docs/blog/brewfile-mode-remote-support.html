@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Brewfile Mode: Curated Package Collections &amp; Remote URL Support</title>
+    <meta name="description" content="Bold Brew now supports Brewfile mode for curated package collections, plus the ability to load Brewfiles directly from HTTPS URLs. Perfect for team configurations and themed installers.">
+    <meta name="keywords" content="Brewfile mode, remote Brewfile, HTTPS URL, curated packages, team configuration, Homebrew TUI, package collections, IDE installer, dev tools, Bold Brew">
+    <meta name="author" content="Valkyrie00">
+    <meta name="robots" content="index, follow, max-image-preview:large">
+    <meta name="theme-color" content="#1a1a1a">
+
+    <!-- DNS Prefetch & Preconnect for Performance -->
+    <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+    <link rel="dns-prefetch" href="https://www.googletagmanager.com">
+    <link rel="preconnect" href="https://www.googletagmanager.com" crossorigin>
+
+    <!-- OpenGraph Tags -->
+    <meta property="og:title" content="Brewfile Mode: Curated Package Collections &amp; Remote URL Support">
+    <meta property="og:description" content="Bold Brew now supports Brewfile mode for curated package collections, plus the ability to load Brewfiles directly from HTTPS URLs. Perfect for team configurations and themed installers.">
+    <meta property="og:image" content="https://bold-brew.com/assets/logo/bbrew-logo-rounded.png">
+    <meta property="og:image:width" content="200">
+    <meta property="og:image:height" content="200">
+    <meta property="og:image:alt" content="Bold Brew Logo">
+    <meta property="og:url" content="https://bold-brew.com/blog/brewfile-mode-remote-support.html">
+    <meta property="og:type" content="article">
+    <meta property="og:site_name" content="Bold Brew">
+
+    <!-- Twitter Card Tags -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Brewfile Mode: Curated Package Collections &amp; Remote URL Support">
+    <meta name="twitter:description" content="Bold Brew now supports Brewfile mode for curated package collections, plus the ability to load Brewfiles directly from HTTPS URLs. Perfect for team configurations and themed installers.">
+    <meta name="twitter:image" content="https://bold-brew.com/assets/logo/bbrew-logo-rounded.png">
+    <meta name="twitter:image:alt" content="Bold Brew Logo">
+    <meta name="twitter:creator" content="@Valkyrie00">
+    <meta name="twitter:site" content="@Valkyrie00">
+
+    <!-- Additional SEO Meta Tags -->
+    <meta name="application-name" content="Bold Brew">
+    <meta name="apple-mobile-web-app-title" content="Bold Brew">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="format-detection" content="telephone=no">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="msapplication-TileColor" content="#1a1a1a">
+    <meta name="msapplication-config" content="none">
+
+    <link rel="canonical" href="https://bold-brew.com/blog/brewfile-mode-remote-support.html">
+    <link rel="alternate" hreflang="en" href="https://bold-brew.com/blog/brewfile-mode-remote-support.html">
+    <link rel="alternate" hreflang="x-default" href="https://bold-brew.com/blog/brewfile-mode-remote-support.html">
+    
+    <!-- Stylesheets -->
+    <link rel="preload" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" as="stylesheet">
+    <link rel="preload" href="/assets/css/styles.css" as="stylesheet">
+    <link rel="preload" href="/assets/bbrew-logo-nobg.png" as="image">
+    
+    <!-- Stylesheets -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/assets/css/styles.css" rel="stylesheet">
+    
+    <!-- Favicons -->
+    <link rel="icon" href="/assets/ico/bbrew-16.ico" sizes="16x16" type="image/x-icon">
+    <link rel="icon" href="/assets/ico/bbrew-24.ico" sizes="24x24" type="image/x-icon">
+    <link rel="icon" href="/assets/ico/bbrew-32.ico" sizes="32x32" type="image/x-icon">
+    <link rel="icon" href="/assets/ico/bbrew-48.ico" sizes="48x48" type="image/x-icon">
+    <link rel="manifest" href="/manifest.json">
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" defer></script>
+    
+    <!-- Schema.org Markup -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "Bold Brew (bbrew)",
+      "operatingSystem": ["macOS", "Linux"],
+      "applicationCategory": "DeveloperApplication",
+      "description": "Bold Brew: A modern TUI interface for managing Homebrew packages and casks on macOS and Linux. Effortlessly install, search, update, and remove packages with an elegant and intuitive interface.",
+      "url": "https://bold-brew.com",
+      "author": {
+        "@type": "Person",
+        "name": "Valkyrie00"
+      },
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      }
+    }
+    </script>
+
+    <!-- Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-MM4FCW9XZM"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-MM4FCW9XZM');
+    </script>
+</head>
+<body>
+    <header>
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <img src="/assets/bbrew-logo-nobg.png" alt="Bold Brew Logo" width="32" height="32">
+                <span>Bold Brew</span>
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/#features">Features</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/#install">Install</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/#about">About</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/blog/">Blog</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="https://github.com/Valkyrie00/bold-brew" target="_blank" rel="noopener noreferrer">GitHub</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+</header>
+
+    <main class="container my-5">
+    
+        <div class="container my-4">
+    <nav aria-label="breadcrumb">
+        <div class="breadcrumb">
+            
+                <div class="breadcrumb-item ">
+                    
+                        <a href="/">Home</a>
+                    
+                </div>
+            
+                <div class="breadcrumb-item ">
+                    
+                        <a href="/blog/">Blog</a>
+                    
+                </div>
+            
+                <div class="breadcrumb-item active">
+                    
+                        Brewfile Mode: Curated Package Collections &amp; Remote URL Support
+                    
+                </div>
+            
+        </div>
+    </nav>
+</div> 
+    
+
+    <article>
+        <header class="mb-5">
+            <h1>Brewfile Mode: Curated Package Collections &amp; Remote URL Support</h1>
+            <div class="meta">
+                <span class="date">2025-12-29</span>
+                <span class="author">By Valkyrie00</span>
+            </div>
+        </header>
+
+        <div class="content">
+            <h1>Brewfile Mode: Curated Package Collections &amp; Remote URL Support</h1>
+<p>We&#39;re excited to announce a major new capability in Bold Brew: <strong>Brewfile Mode</strong> with full support for <strong>remote Brewfiles via HTTPS URLs</strong>. This feature transforms how teams and individuals manage their Homebrew package collections.</p>
+<h2>🎯 What is Brewfile Mode?</h2>
+<p>Brewfile Mode allows you to launch Bold Brew with a curated list of packages instead of the full Homebrew catalog. This is perfect for:</p>
+<ul>
+<li><strong>Themed installers</strong> (IDE tools, AI/ML packages, DevOps tools)</li>
+<li><strong>Team onboarding</strong> (share your team&#39;s essential tools)</li>
+<li><strong>Project-specific setups</strong> (install only what a project needs)</li>
+<li><strong>Personal collections</strong> (your favorite tools in one place)</li>
+</ul>
+<h3>How It Works</h3>
+<pre><code class="language-bash"># Local Brewfile
+bbrew -f ~/Brewfile
+
+# Remote Brewfile (NEW!)
+bbrew -f https://raw.githubusercontent.com/your-org/configs/main/dev-tools.Brewfile
+</code></pre>
+<p>When you launch in Brewfile mode, Bold Brew shows <strong>only</strong> the packages defined in that Brewfile. You get the full Bold Brew experience—search, filters, install/remove—but focused on your curated selection.</p>
+<h2>🌐 Remote Brewfiles via HTTPS</h2>
+<p>The latest update adds support for loading Brewfiles directly from URLs. This opens up exciting possibilities:</p>
+<h3>Share Team Configurations</h3>
+<pre><code class="language-bash"># Everyone on the team uses the same dev tools
+bbrew -f https://github.com/acme-corp/dotfiles/raw/main/Brewfile
+</code></pre>
+<h3>Create Themed Installers</h3>
+<pre><code class="language-bash"># AI/ML development environment
+bbrew -f https://example.com/brewfiles/ai-ml-toolkit.Brewfile
+
+# Kubernetes tools collection
+bbrew -f https://example.com/brewfiles/k8s-essentials.Brewfile
+
+# Frontend development stack
+bbrew -f https://example.com/brewfiles/frontend-dev.Brewfile
+</code></pre>
+<h3>Quick Setup for New Machines</h3>
+<p>Share a single URL with colleagues or include it in your README:</p>
+<pre><code class="language-markdown">## Development Setup
+
+Install our recommended tools:
+\`\`\`bash
+brew install Valkyrie00/homebrew-bbrew/bbrew
+bbrew -f https://our-company.com/dev-setup.Brewfile
+\`\`\`
+</code></pre>
+<h2>📦 Third-Party Tap Support</h2>
+<p>Brewfile Mode also includes full support for <strong>third-party taps</strong>. Your Brewfile can include packages from any Homebrew tap:</p>
+<pre><code class="language-ruby"># Brewfile example
+tap &quot;homebrew/cask-fonts&quot;
+tap &quot;ublue-os/homebrew-tap&quot;
+
+# Core tools
+brew &quot;git&quot;
+brew &quot;gh&quot;
+brew &quot;jq&quot;
+
+# Fonts
+cask &quot;font-fira-code&quot;
+cask &quot;font-jetbrains-mono&quot;
+
+# From third-party tap
+cask &quot;some-custom-package&quot;
+</code></pre>
+<p>Bold Brew automatically:</p>
+<ol>
+<li><strong>Installs missing taps</strong> at startup</li>
+<li><strong>Caches tap package info</strong> for faster subsequent loads</li>
+<li><strong>Shows real-time progress</strong> during tap installation</li>
+</ol>
+<h2>🔒 Security First</h2>
+<p>Remote Brewfiles are loaded securely:</p>
+<ul>
+<li><strong>HTTPS only</strong> — HTTP URLs are rejected for security</li>
+<li><strong>Temporary storage</strong> — Downloaded files are automatically cleaned up</li>
+<li><strong>No persistence</strong> — Remote content isn&#39;t cached between sessions</li>
+</ul>
+<h2>🎨 Use Cases</h2>
+<h3>1. IDE Chooser for Teams</h3>
+<p>Create a Brewfile with all supported IDEs and let developers pick:</p>
+<pre><code class="language-ruby"># ide-chooser.Brewfile
+cask &quot;visual-studio-code&quot;
+cask &quot;sublime-text&quot;
+cask &quot;jetbrains-toolbox&quot;
+cask &quot;zed&quot;
+cask &quot;cursor&quot;
+</code></pre>
+<pre><code class="language-bash">bbrew -f https://team.example.com/ide-chooser.Brewfile
+</code></pre>
+<h3>2. Project Onboarding</h3>
+<p>Include a Brewfile in your project repo:</p>
+<pre><code class="language-ruby"># project/.Brewfile
+brew &quot;node&quot;
+brew &quot;pnpm&quot;
+brew &quot;docker&quot;
+cask &quot;docker&quot;
+</code></pre>
+<p>New contributors run one command to get all dependencies.</p>
+<h3>3. Personal Dotfiles</h3>
+<p>Keep your Brewfile in your dotfiles repo and access it from anywhere:</p>
+<pre><code class="language-bash">bbrew -f https://github.com/username/dotfiles/raw/main/Brewfile
+</code></pre>
+<h2>📋 Example Brewfiles</h2>
+<p>Bold Brew includes example Brewfiles in the <code>examples/</code> directory:</p>
+<ul>
+<li><strong><code>all.brewfile</code></strong> — Comprehensive package collection</li>
+<li><strong><code>ide.Brewfile</code></strong> — Popular IDEs and editors</li>
+</ul>
+<p>Check them out for inspiration!</p>
+<h2>🚀 Getting Started</h2>
+<ol>
+<li><p><strong>Update Bold Brew</strong> to the latest version:</p>
+<pre><code class="language-bash">brew upgrade bbrew
+</code></pre>
+</li>
+<li><p><strong>Try a local Brewfile</strong>:</p>
+<pre><code class="language-bash">bbrew -f ~/path/to/Brewfile
+</code></pre>
+</li>
+<li><p><strong>Try a remote Brewfile</strong>:</p>
+<pre><code class="language-bash">bbrew -f https://raw.githubusercontent.com/Valkyrie00/bold-brew/main/examples/all.brewfile
+</code></pre>
+</li>
+</ol>
+<h2>🎹 Brewfile Mode Shortcuts</h2>
+<p>When running in Brewfile mode, you get additional keyboard shortcuts:</p>
+<table>
+<thead>
+<tr>
+<th>Key</th>
+<th>Action</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>Ctrl+A</code></td>
+<td>Install all packages from Brewfile</td>
+</tr>
+<tr>
+<td><code>Ctrl+R</code></td>
+<td>Remove all packages from Brewfile</td>
+</tr>
+</tbody></table>
+<p>All standard shortcuts (search, filters, individual install/remove) work exactly as expected.</p>
+<h2>💡 Tips &amp; Best Practices</h2>
+<ol>
+<li><strong>Version your Brewfiles</strong> — Keep them in git for change tracking</li>
+<li><strong>Use comments</strong> — Document why each package is included</li>
+<li><strong>Organize by category</strong> — Group related packages together</li>
+<li><strong>Test before sharing</strong> — Verify packages exist and install correctly</li>
+</ol>
+<h2>🔗 Resources</h2>
+<ul>
+<li><a href="https://github.com/Homebrew/homebrew-bundle">Homebrew Brewfile documentation</a></li>
+<li><a href="https://github.com/Valkyrie00/bold-brew">Bold Brew on GitHub</a></li>
+<li><a href="https://github.com/Valkyrie00/bold-brew/tree/main/examples">Example Brewfiles</a></li>
+</ul>
+<hr>
+<p><strong>Happy brewing with curated collections! 🍺</strong></p>
+<p><em>The Bold Brew Team</em></p>
+
+        </div>
+
+        <footer class="mt-5">
+            <div class="tags">
+                <span class="tag">Homebrew</span>
+                <span class="tag">macOS</span>
+                <span class="tag">Command Line</span>
+                <span class="tag">Development Tools</span>
+            </div>
+        </footer>
+    </article>
+</main>
+
+    <footer>
+    <div class="container">
+        <p>&copy; 2025 Bold Brew | <a href="https://github.com/Valkyrie00/bold-brew" target="_blank" rel="noopener noreferrer">GitHub</a></p>
+    </div>
+</footer>
+
+    <!-- Back to top button -->
+    <button class="back-to-top" aria-label="Torna in alto">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18" />
+        </svg>
+    </button>
+
+    <!-- Scripts -->
+    <script>
+        function copyToClipboard(button) {
+            const preEl = button.parentElement.querySelector('pre');
+            const codeText = preEl.textContent;
+            const cleanText = codeText.replace(/^>\s/, '');
+        
+            navigator.clipboard.writeText(cleanText).then(() => {
+                const copyText = button.querySelector('.copy-text');
+                copyText.textContent = 'Copied!';
+        
+                setTimeout(() => {
+                    copyText.textContent = 'Copy';
+                }, 2000);
+            });
+        }
+
+        // Chiudi il menu mobile quando si clicca su un link
+        document.addEventListener('DOMContentLoaded', function() {
+            const navLinks = document.querySelectorAll('.navbar-nav .nav-link');
+            const menuToggle = document.getElementById('navbarNav');
+            const bsCollapse = new bootstrap.Collapse(menuToggle, {toggle: false});
+
+            navLinks.forEach(link => {
+                link.addEventListener('click', () => {
+                    if (window.innerWidth < 992) { // Solo su mobile
+                        bsCollapse.hide();
+                    }
+                });
+            });
+
+            // Gestione del pulsante back-to-top
+            const backToTop = document.querySelector('.back-to-top');
+            
+            window.addEventListener('scroll', () => {
+                if (window.scrollY > 300) {
+                    backToTop.classList.add('visible');
+                } else {
+                    backToTop.classList.remove('visible');
+                }
+            });
+
+            backToTop.addEventListener('click', () => {
+                window.scrollTo({
+                    top: 0,
+                    behavior: 'smooth'
+                });
+            });
+        });
+    </script>
+
+</body>
+</html> 

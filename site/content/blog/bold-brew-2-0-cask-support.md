@@ -143,11 +143,12 @@ Bold Brew 2.0 provides excellent support across platforms:
 ## 🎯 What's Next
 
 We're not stopping here! Future plans include:
-- **Tap management** - Add and manage custom Homebrew taps
 - **Formulae pinning** - Pin specific package versions
 - **Backup/restore** - Export and import your package lists
 - **Themes** - Customizable color schemes
 - **Plugin system** - Extend Bold Brew with custom functionality
+
+> **Update:** Tap management and Brewfile Mode with remote URL support are now available! [Read more](/blog/brewfile-mode-remote-support.html)
 
 ## 🙏 Acknowledgments
 

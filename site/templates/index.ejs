@@ -175,6 +175,20 @@
                         <p>Intuitive keybindings for all operations. Navigate and manage packages without touching the mouse.</p>
                     </div>
                 </div>
+                <div class="col-md-4">
+                    <div class="feature-card">
+                        <i class="fas fa-file-alt"></i>
+                        <h3>Brewfile Mode</h3>
+                        <p>Load curated package collections from local or remote Brewfiles. Perfect for team configs and themed installers.</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="feature-card">
+                        <i class="fas fa-link"></i>
+                        <h3>Remote Brewfiles</h3>
+                        <p>Load Brewfiles directly from HTTPS URLs. Share configurations via GitHub, team repos, or any web server.</p>
+                    </div>
+                </div>
             </div>
         </div>
     </section>
@@ -215,6 +229,7 @@
                     <h3>Key Benefits for Developers</h3>
                     <ul>
                         <li><strong>Complete package management</strong> for both CLI tools and GUI applications</li>
+                        <li><strong>Brewfile Mode</strong> for curated package collections from local or remote URLs</li>
                         <li><strong>Smart filtering</strong> by installed, outdated, leaves, or casks</li>
                         <li><strong>Faster package discovery</strong> with fuzzy search and analytics</li>
                         <li><strong>XDG Base Directory compliance</strong> for clean cache management</li>
@@ -343,6 +358,19 @@
                             </div>
                             <div id="faq7" class="faq-answer collapse" data-bs-parent="#faqAccordion">
                                 <p>Version 2.0 introduces full Homebrew Casks support (GUI applications), a Leaves filter (explicitly installed packages), XDG Base Directory compliance, enhanced security scanning, and many performance improvements. <a href="blog/bold-brew-2-0-cask-support.html">Read the full announcement</a>.</p>
+                            </div>
+                        </div>
+
+                        <div class="faq-item">
+                            <div class="faq-question" data-bs-toggle="collapse" data-bs-target="#faq8">
+                                <h3>What is Brewfile Mode?</h3>
+                                <div class="faq-icon">
+                                    <span class="plus">+</span>
+                                    <span class="minus">−</span>
+                                </div>
+                            </div>
+                            <div id="faq8" class="faq-answer collapse" data-bs-parent="#faqAccordion">
+                                <p>Brewfile Mode lets you launch Bold Brew with a curated list of packages instead of the full catalog. Use <code>bbrew -f /path/to/Brewfile</code> for local files or <code>bbrew -f https://...</code> for remote URLs. Perfect for team configurations, themed installers, and project-specific setups. <a href="blog/brewfile-mode-remote-support.html">Learn more</a>.</p>
                             </div>
                         </div>
 

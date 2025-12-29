@@ -1,7 +1,7 @@
 {
     "name": "Bold Brew",
     "short_name": "bbrew",
-    "description": "Modern Homebrew TUI Manager for macOS",
+    "description": "Modern Homebrew TUI Manager for macOS and Linux",
     "start_url": "/",
     "display": "standalone",
     "background_color": "#1a1a1a",

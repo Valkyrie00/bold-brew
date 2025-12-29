@@ -21,10 +21,21 @@ jobs:
 
       - name: Ensure clean state (no Homebrew)
         run: |
-          if command -v brew &> /dev/null; then
+          # Check both PATH and direct path
+          if command -v brew &> /dev/null || [ -d /home/linuxbrew/.linuxbrew ]; then
             echo "Removing existing Homebrew..."
-            /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/uninstall.sh)" -- --force || true
+            # Try official uninstaller first
+            if [ -x /home/linuxbrew/.linuxbrew/bin/brew ]; then
+              NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/uninstall.sh)" || true
+            fi
+            # Force remove directories
             sudo rm -rf /home/linuxbrew/.linuxbrew
+            sudo rm -rf /home/linuxbrew
+          fi
+          # Verify clean
+          if [ -d /home/linuxbrew ]; then
+            echo "ERROR: Failed to remove Homebrew"
+            exit 1
           fi
           echo "✓ Clean state confirmed"
 
@@ -52,10 +63,16 @@ jobs:
 
       - name: Ensure clean state (no Homebrew)
         run: |
-          if command -v brew &> /dev/null; then
+          if command -v brew &> /dev/null || [ -d /opt/homebrew ]; then
             echo "Removing existing Homebrew..."
-            /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/uninstall.sh)" -- --force || true
+            if [ -x /opt/homebrew/bin/brew ]; then
+              NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/uninstall.sh)" || true
+            fi
             sudo rm -rf /opt/homebrew
+          fi
+          if [ -d /opt/homebrew ]; then
+            echo "ERROR: Failed to remove Homebrew"
+            exit 1
           fi
           echo "✓ Clean state confirmed"
 
@@ -83,12 +100,19 @@ jobs:
 
       - name: Ensure clean state (no Homebrew)
         run: |
-          if command -v brew &> /dev/null; then
+          if command -v brew &> /dev/null || [ -d /usr/local/Homebrew ]; then
             echo "Removing existing Homebrew..."
-            /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/uninstall.sh)" -- --force || true
+            if [ -x /usr/local/bin/brew ]; then
+              NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/uninstall.sh)" || true
+            fi
             sudo rm -rf /usr/local/Homebrew
             sudo rm -rf /usr/local/Cellar
-            sudo rm -rf /usr/local/bin/brew
+            sudo rm -rf /usr/local/Caskroom
+            sudo rm -f /usr/local/bin/brew
+          fi
+          if [ -d /usr/local/Homebrew ]; then
+            echo "ERROR: Failed to remove Homebrew"
+            exit 1
           fi
           echo "✓ Clean state confirmed"
 

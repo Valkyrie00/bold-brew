@@ -36,10 +36,8 @@ type DataProviderInterface interface {
 	// Setup and retrieval
 	SetupData(forceDownload bool) error
 	GetPackages() *[]models.Package
-	GetFormulae() *[]models.Formula
 
 	// Installation status checks
-	IsPackageInstalled(name string, isCask bool) bool
 	GetInstalledCaskNames() map[string]bool
 	GetInstalledFormulaNames() map[string]bool
 
@@ -51,13 +49,11 @@ type DataProviderInterface interface {
 // It is the central repository for all Homebrew package data.
 type DataProvider struct {
 	// Formula lists
-	allFormulae       *[]models.Formula
 	installedFormulae *[]models.Formula
 	remoteFormulae    *[]models.Formula
 	formulaeAnalytics map[string]models.AnalyticsItem
 
 	// Cask lists
-	allCasks       *[]models.Cask
 	installedCasks *[]models.Cask
 	remoteCasks    *[]models.Cask
 	caskAnalytics  map[string]models.AnalyticsItem
@@ -71,10 +67,8 @@ type DataProvider struct {
 // NewDataProvider creates a new DataProvider instance with initialized data structures.
 func NewDataProvider() *DataProvider {
 	return &DataProvider{
-		allFormulae:       new([]models.Formula),
 		installedFormulae: new([]models.Formula),
 		remoteFormulae:    new([]models.Formula),
-		allCasks:          new([]models.Cask),
 		installedCasks:    new([]models.Cask),
 		remoteCasks:       new([]models.Cask),
 		allPackages:       new([]models.Package),
@@ -570,37 +564,6 @@ func (d *DataProvider) SetupData(forceDownload bool) error {
 	return nil
 }
 
-// GetFormulae retrieves all formulae, merging remote and installed packages.
-func (d *DataProvider) GetFormulae() *[]models.Formula {
-	packageMap := make(map[string]models.Formula)
-
-	for _, formula := range *d.remoteFormulae {
-		if _, exists := packageMap[formula.Name]; !exists {
-			packageMap[formula.Name] = formula
-		}
-	}
-
-	for _, formula := range *d.installedFormulae {
-		packageMap[formula.Name] = formula
-	}
-
-	*d.allFormulae = make([]models.Formula, 0, len(packageMap))
-	for _, formula := range packageMap {
-		if a, exists := d.formulaeAnalytics[formula.Name]; exists && a.Number > 0 {
-			downloads, _ := strconv.Atoi(strings.ReplaceAll(a.Count, ",", ""))
-			formula.Analytics90dRank = a.Number
-			formula.Analytics90dDownloads = downloads
-		}
-		*d.allFormulae = append(*d.allFormulae, formula)
-	}
-
-	sort.Slice(*d.allFormulae, func(i, j int) bool {
-		return (*d.allFormulae)[i].Name < (*d.allFormulae)[j].Name
-	})
-
-	return d.allFormulae
-}
-
 // GetPackages retrieves all packages (formulae + casks), merging remote and installed.
 func (d *DataProvider) GetPackages() *[]models.Package {
 	packageMap := make(map[string]models.Package)
@@ -665,48 +628,28 @@ func (d *DataProvider) GetPackages() *[]models.Package {
 	return d.allPackages
 }
 
-// IsPackageInstalled checks if a package (formula or cask) is installed by name.
-func (d *DataProvider) IsPackageInstalled(name string, isCask bool) bool {
-	var cmd *exec.Cmd
-	if isCask {
-		cmd = exec.Command("brew", "list", "--cask", name)
-	} else {
-		cmd = exec.Command("brew", "list", "--formula", name)
+// getInstalledNames returns a map of installed package names for the given type.
+func (d *DataProvider) getInstalledNames(packageType string) map[string]bool {
+	result := make(map[string]bool)
+	cmd := exec.Command("brew", "list", packageType)
+	output, err := cmd.Output()
+	if err != nil {
+		return result
 	}
-	err := cmd.Run()
-	return err == nil
+	for _, name := range strings.Split(strings.TrimSpace(string(output)), "\n") {
+		if name != "" {
+			result[name] = true
+		}
+	}
+	return result
 }
 
 // GetInstalledCaskNames returns a map of installed cask names for quick lookup.
 func (d *DataProvider) GetInstalledCaskNames() map[string]bool {
-	result := make(map[string]bool)
-	cmd := exec.Command("brew", "list", "--cask")
-	output, err := cmd.Output()
-	if err != nil {
-		return result
-	}
-	names := strings.Split(strings.TrimSpace(string(output)), "\n")
-	for _, name := range names {
-		if name != "" {
-			result[name] = true
-		}
-	}
-	return result
+	return d.getInstalledNames("--cask")
 }
 
 // GetInstalledFormulaNames returns a map of installed formula names for quick lookup.
 func (d *DataProvider) GetInstalledFormulaNames() map[string]bool {
-	result := make(map[string]bool)
-	cmd := exec.Command("brew", "list", "--formula")
-	output, err := cmd.Output()
-	if err != nil {
-		return result
-	}
-	names := strings.Split(strings.TrimSpace(string(output)), "\n")
-	for _, name := range names {
-		if name != "" {
-			result[name] = true
-		}
-	}
-	return result
+	return d.getInstalledNames("--formula")
 }

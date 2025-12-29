@@ -21,8 +21,6 @@ type BrewServiceInterface interface {
 	UpdatePackage(info models.Package, app *tview.Application, outputView *tview.TextView) error
 	RemovePackage(info models.Package, app *tview.Application, outputView *tview.TextView) error
 	InstallPackage(info models.Package, app *tview.Application, outputView *tview.TextView) error
-	InstallAllPackages(packages []models.Package, app *tview.Application, outputView *tview.TextView) error
-	RemoveAllPackages(packages []models.Package, app *tview.Application, outputView *tview.TextView) error
 
 	// Tap support
 	InstallTap(tapName string, app *tview.Application, outputView *tview.TextView) error

@@ -73,64 +73,6 @@ func (s *BrewService) IsTapInstalled(tapName string) bool {
 	return false
 }
 
-// InstallAllPackages installs a list of packages sequentially.
-func (s *BrewService) InstallAllPackages(packages []models.Package, app *tview.Application, outputView *tview.TextView) error {
-	for _, pkg := range packages {
-		if pkg.LocallyInstalled {
-			app.QueueUpdateDraw(func() {
-				fmt.Fprintf(outputView, "[SKIP] %s (already installed)\n", pkg.Name)
-			})
-			continue
-		}
-
-		app.QueueUpdateDraw(func() {
-			fmt.Fprintf(outputView, "\n[INSTALL] Installing %s...\n", pkg.Name)
-		})
-
-		if err := s.InstallPackage(pkg, app, outputView); err != nil {
-			app.QueueUpdateDraw(func() {
-				fmt.Fprintf(outputView, "[ERROR] Failed to install %s: %v\n", pkg.Name, err)
-			})
-			continue
-		}
-
-		app.QueueUpdateDraw(func() {
-			fmt.Fprintf(outputView, "[SUCCESS] %s installed successfully\n", pkg.Name)
-		})
-	}
-
-	return nil
-}
-
-// RemoveAllPackages removes a list of packages sequentially.
-func (s *BrewService) RemoveAllPackages(packages []models.Package, app *tview.Application, outputView *tview.TextView) error {
-	for _, pkg := range packages {
-		if !pkg.LocallyInstalled {
-			app.QueueUpdateDraw(func() {
-				fmt.Fprintf(outputView, "[SKIP] %s (not installed)\n", pkg.Name)
-			})
-			continue
-		}
-
-		app.QueueUpdateDraw(func() {
-			fmt.Fprintf(outputView, "\n[REMOVE] Removing %s...\n", pkg.Name)
-		})
-
-		if err := s.RemovePackage(pkg, app, outputView); err != nil {
-			app.QueueUpdateDraw(func() {
-				fmt.Fprintf(outputView, "[ERROR] Failed to remove %s: %v\n", pkg.Name, err)
-			})
-			continue
-		}
-
-		app.QueueUpdateDraw(func() {
-			fmt.Fprintf(outputView, "[SUCCESS] %s removed successfully\n", pkg.Name)
-		})
-	}
-
-	return nil
-}
-
 // executeCommand runs a command and captures its output, updating the provided TextView.
 func (s *BrewService) executeCommand(
 	app *tview.Application,
@@ -212,4 +154,3 @@ func (s *BrewService) executeCommand(
 
 	return <-cmdErrCh
 }
-

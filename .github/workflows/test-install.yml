@@ -1,0 +1,131 @@
+name: Test Install Script
+
+on:
+  push:
+    paths:
+      - 'install.sh'
+      - '.github/workflows/test-install.yml'
+  pull_request:
+    paths:
+      - 'install.sh'
+      - '.github/workflows/test-install.yml'
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  test-linux:
+    name: Test on Linux (Ubuntu)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Ensure clean state (no Homebrew)
+        run: |
+          if command -v brew &> /dev/null; then
+            echo "Removing existing Homebrew..."
+            /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/uninstall.sh)" -- --force || true
+            sudo rm -rf /home/linuxbrew/.linuxbrew
+          fi
+          echo "✓ Clean state confirmed"
+
+      - name: Run install script
+        run: |
+          chmod +x install.sh
+          ./install.sh
+
+      - name: Verify installation
+        run: |
+          eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+          echo "==> Checking brew..."
+          brew --version
+          echo "==> Checking bbrew..."
+          bbrew --version
+          echo "✓ All checks passed!"
+
+  test-macos-arm:
+    name: Test on macOS (Apple Silicon)
+    runs-on: macos-14  # M1 runner
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Ensure clean state (no Homebrew)
+        run: |
+          if command -v brew &> /dev/null; then
+            echo "Removing existing Homebrew..."
+            /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/uninstall.sh)" -- --force || true
+            sudo rm -rf /opt/homebrew
+          fi
+          echo "✓ Clean state confirmed"
+
+      - name: Run install script
+        run: |
+          chmod +x install.sh
+          ./install.sh
+
+      - name: Verify installation
+        run: |
+          eval "$(/opt/homebrew/bin/brew shellenv)"
+          echo "==> Checking brew..."
+          brew --version
+          echo "==> Checking bbrew..."
+          bbrew --version
+          echo "✓ All checks passed!"
+
+  test-macos-intel:
+    name: Test on macOS (Intel)
+    runs-on: macos-13  # Intel runner
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Ensure clean state (no Homebrew)
+        run: |
+          if command -v brew &> /dev/null; then
+            echo "Removing existing Homebrew..."
+            /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/uninstall.sh)" -- --force || true
+            sudo rm -rf /usr/local/Homebrew
+            sudo rm -rf /usr/local/Cellar
+            sudo rm -rf /usr/local/bin/brew
+          fi
+          echo "✓ Clean state confirmed"
+
+      - name: Run install script
+        run: |
+          chmod +x install.sh
+          ./install.sh
+
+      - name: Verify installation
+        run: |
+          eval "$(/usr/local/bin/brew shellenv)"
+          echo "==> Checking brew..."
+          brew --version
+          echo "==> Checking bbrew..."
+          bbrew --version
+          echo "✓ All checks passed!"
+
+  test-already-installed:
+    name: Test upgrade path (Homebrew already installed)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Pre-install Homebrew
+        run: |
+          NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+          eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+          brew --version
+          echo "✓ Homebrew pre-installed"
+
+      - name: Run install script (should detect existing install)
+        run: |
+          chmod +x install.sh
+          ./install.sh
+
+      - name: Verify bbrew installed
+        run: |
+          eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+          bbrew --version
+          echo "✓ Upgrade path works!"
+

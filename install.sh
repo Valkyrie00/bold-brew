@@ -84,6 +84,27 @@ command_exists() {
     command -v "$1" &> /dev/null
 }
 
+# Install Linux dependencies required by Homebrew
+install_linux_deps() {
+    info "Installing required dependencies..."
+    
+    if command_exists apt-get; then
+        # Debian/Ubuntu
+        apt-get update -qq
+        apt-get install -y -qq build-essential procps curl file git > /dev/null
+    elif command_exists dnf; then
+        # Fedora/RHEL
+        dnf install -y -q procps-ng curl file git gcc make > /dev/null
+    elif command_exists pacman; then
+        # Arch
+        pacman -Sy --noconfirm --quiet base-devel procps-ng curl file git > /dev/null
+    else
+        warn "Could not detect package manager. Please install: git, curl, build-essential"
+    fi
+    
+    success "Dependencies installed"
+}
+
 # Get Homebrew binary path
 get_brew_path() {
     if [ -x "$BREW_PREFIX/bin/brew" ]; then
@@ -166,6 +187,13 @@ main() {
     # Check for curl
     if ! command_exists curl; then
         error "curl is required but not installed. Please install curl first."
+    fi
+    
+    # Install Linux dependencies if needed
+    if [ "$OS_TYPE" = "linux" ]; then
+        if ! command_exists git || ! command_exists gcc; then
+            install_linux_deps
+        fi
     fi
     
     # Check/Install Homebrew

@@ -88,16 +88,22 @@ command_exists() {
 install_linux_deps() {
     info "Installing required dependencies..."
     
+    # Use sudo if available and not root
+    SUDO=""
+    if [ "$(id -u)" -ne 0 ] && command_exists sudo; then
+        SUDO="sudo"
+    fi
+    
     if command_exists apt-get; then
         # Debian/Ubuntu
-        apt-get update -qq
-        apt-get install -y -qq build-essential procps curl file git > /dev/null
+        $SUDO apt-get update -qq
+        $SUDO apt-get install -y -qq build-essential procps curl file git > /dev/null
     elif command_exists dnf; then
         # Fedora/RHEL
-        dnf install -y -q procps-ng curl file git gcc make > /dev/null
+        $SUDO dnf install -y -q procps-ng curl file git gcc make > /dev/null
     elif command_exists pacman; then
         # Arch
-        pacman -Sy --noconfirm --quiet base-devel procps-ng curl file git > /dev/null
+        $SUDO pacman -Sy --noconfirm --quiet base-devel procps-ng curl file git > /dev/null
     else
         warn "Could not detect package manager. Please install: git, curl, build-essential"
     fi

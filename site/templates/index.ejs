@@ -26,28 +26,28 @@
     <section class="install-section" id="install" aria-label="Installation">
         <div class="container">
             <h2>Installation</h2>
-            <p class="lead text-center mb-4">Get started with Bold Brew in just a few simple commands</p>
+            <p class="lead text-center mb-4">Get started with Bold Brew in just one command</p>
             <div class="row justify-content-center">
                 <div class="col-lg-8">
                     <div class="install-card">
                         <div class="install-step">
                             <div class="step-header">
-                                <div class="step-number">1</div>
-                                <h3>Install Bold Brew</h3>
+                                <div class="step-number">⚡</div>
+                                <h3>Quick Install</h3>
                             </div>
                             <div class="code-block">
-                                <pre><code><span class="prompt">></span> brew install Valkyrie00/homebrew-bbrew/bbrew</code></pre>
+                                <pre><code><span class="prompt">></span> /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Valkyrie00/bold-brew/main/install.sh)"</code></pre>
                                 <button class="copy-btn" onclick="copyToClipboard(this)" aria-label="Copy command">
                                     <span class="copy-icon">⧉</span>
                                     <span class="copy-text">Copy</span>
                                 </button>
                             </div>
-                            <p class="install-note"><i>This installs Bold Brew directly from the repository via Homebrew</i></p>
+                            <p class="install-note"><i>This installs Homebrew (if needed) + Bold Brew in one step</i></p>
                         </div>
 
                         <div class="install-step">
                             <div class="step-header">
-                                <div class="step-number">2</div>
+                                <div class="step-number">▶</div>
                                 <h3>Run Bold Brew</h3>
                             </div>
                             <div class="code-block">
@@ -64,7 +64,15 @@
                         <div class="divider">
                             <span>OR</span>
                         </div>
-                        <p class="text-center">Download the latest version directly from GitHub</p>
+                        <p class="text-center">Already have Homebrew? Install directly:</p>
+                        <div class="code-block" style="max-width: 500px; margin: 0 auto 1rem;">
+                            <pre><code><span class="prompt">></span> brew install Valkyrie00/homebrew-bbrew/bbrew</code></pre>
+                            <button class="copy-btn" onclick="copyToClipboard(this)" aria-label="Copy command">
+                                <span class="copy-icon">⧉</span>
+                                <span class="copy-text">Copy</span>
+                            </button>
+                        </div>
+                        <p class="text-center" style="margin-top: 1rem;">Or download from GitHub</p>
                         <div class="text-center">
                             <a class="btn-download" href="https://github.com/Valkyrie00/bold-brew/releases" target="_blank" rel="noopener noreferrer">
                                 <span class="download-icon">↓</span>

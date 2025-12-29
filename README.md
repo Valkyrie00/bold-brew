@@ -55,7 +55,14 @@ Bold Brew is the **official Terminal UI** for managing Homebrew in [**Project Bl
 
 ## 🛠️ Installation
 
+### Quick Install (Recommended)
+Install Homebrew + Bold Brew with a single command:
+```sh
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Valkyrie00/bold-brew/main/install.sh)"
+```
+
 ### Via Homebrew
+If you already have Homebrew installed:
 ```sh
 brew install Valkyrie00/homebrew-bbrew/bbrew
 ```

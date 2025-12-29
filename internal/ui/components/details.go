@@ -40,14 +40,10 @@ func (d *Details) SetContent(pkg *models.Package) {
 
 	// Installation status with colors
 	installedStatus := "[red]Not installed[-]"
-	installedIcon := "✗"
 	if pkg.LocallyInstalled {
 		installedStatus = "[green]Installed[-]"
-		installedIcon = "✓"
-
 		if pkg.Outdated {
 			installedStatus = "[orange]Update available[-]"
-			installedIcon = "⟳"
 		}
 	}
 
@@ -59,24 +55,28 @@ func (d *Details) SetContent(pkg *models.Package) {
 		typeLabel = "Cask"
 	}
 
+	// Section separator
+	separator := "[dim]────────────────────────[-]"
+
 	// Basic information with status
 	basicInfo := fmt.Sprintf(
-		"[yellow::b]%s %s[-]\n\n"+
+		"[yellow::b]%s[-]\n%s\n"+
 			"[blue]• Type:[-] %s %s\n"+
 			"[blue]• Name:[-] %s\n"+
 			"[blue]• Display Name:[-] %s\n"+
 			"[blue]• Version:[-] %s\n"+
-			"[blue]• Status:[-] %s\n\n"+
-			"[yellow::b]Description[-]\n%s\n\n"+
-			"[blue]• Homepage:[-] %s",
-		pkg.Name, installedIcon,
+			"[blue]• Status:[-] %s\n"+
+			"[blue]• Homepage:[-] %s\n\n"+
+			"[yellow::b]Description[-]\n%s\n%s",
+		pkg.Name, separator,
 		typeTag, typeLabel,
 		pkg.Name,
 		pkg.DisplayName,
 		pkg.Version,
 		installedStatus,
-		pkg.Description,
 		pkg.Homepage,
+		separator,
+		pkg.Description,
 	)
 
 	// Installation details
@@ -100,8 +100,10 @@ func (d *Details) SetContent(pkg *models.Package) {
 }
 
 func (d *Details) getPackageInstallationDetails(pkg *models.Package) string {
+	separator := "[dim]────────────────────────[-]"
+
 	if !pkg.LocallyInstalled {
-		return "[yellow::b]Installation[-]\nNot installed"
+		return fmt.Sprintf("[yellow::b]Installation[-]\n%s\nNot installed", separator)
 	}
 
 	// For formulae, show detailed installation info
@@ -119,11 +121,12 @@ func (d *Details) getPackageInstallationDetails(pkg *models.Package) string {
 		}
 
 		return fmt.Sprintf(
-			"[yellow::b]Installation Details[-]\n"+
+			"[yellow::b]Installation Details[-]\n%s\n"+
 				"[blue]• Path:[-] %s\n"+
 				"[blue]• Installed on request:[-] %s\n"+
 				"[blue]• Installed as dependency:[-] %s\n"+
 				"[blue]• Installed version:[-] %s",
+			separator,
 			packagePrefix,
 			installedOnRequest,
 			installedAsDependency,
@@ -139,18 +142,20 @@ func (d *Details) getPackageInstallationDetails(pkg *models.Package) string {
 		}
 
 		return fmt.Sprintf(
-			"[yellow::b]Installation Details[-]\n"+
-				"[blue]• Type:[-] macOS Application\n"+
+			"[yellow::b]Installation Details[-]\n%s\n"+
+				"[blue]• Type:[-] Desktop Application\n"+
 				"[blue]• Installed version:[-] %s",
+			separator,
 			installedVersion,
 		)
 	}
 
-	return "[yellow::b]Installation[-]\nInstalled"
+	return fmt.Sprintf("[yellow::b]Installation[-]\n%s\nInstalled", separator)
 }
 
 func (d *Details) getDependenciesInfo(info *models.Formula) string {
-	title := "[yellow::b]Dependencies[-]\n"
+	separator := "[dim]────────────────────────[-]"
+	title := fmt.Sprintf("[yellow::b]Dependencies[-]\n%s\n", separator)
 
 	if len(info.Dependencies) == 0 {
 		return title + "No dependencies"
@@ -173,14 +178,17 @@ func (d *Details) getDependenciesInfo(info *models.Formula) string {
 }
 
 func (d *Details) getAnalyticsInfo(pkg *models.Package) string {
-	title := "[yellow::b]Analytics[-]\n"
-
+	separator := "[dim]────────────────────────[-]"
 	p := message.NewPrinter(language.English)
 
-	title += fmt.Sprintf("[blue]• 90d Global Rank:[-] %s\n", p.Sprintf("%d", pkg.Analytics90dRank))
-	title += fmt.Sprintf("[blue]• 90d   Downloads:[-] %s\n", p.Sprintf("%d", pkg.Analytics90dDownloads))
-
-	return title
+	return fmt.Sprintf(
+		"[yellow::b]Analytics[-]\n%s\n"+
+			"[blue]• 90d Global Rank:[-] %s\n"+
+			"[blue]• 90d Downloads:[-] %s",
+		separator,
+		p.Sprintf("%d", pkg.Analytics90dRank),
+		p.Sprintf("%d", pkg.Analytics90dDownloads),
+	)
 }
 
 func (d *Details) View() *tview.TextView {

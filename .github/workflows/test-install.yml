@@ -39,7 +39,8 @@ jobs:
           echo "==> Checking brew..."
           brew --version
           echo "==> Checking bbrew..."
-          bbrew --version
+          which bbrew
+          bbrew --help | head -3
           echo "✓ All checks passed!"
 
   test-macos-arm:
@@ -69,7 +70,8 @@ jobs:
           echo "==> Checking brew..."
           brew --version
           echo "==> Checking bbrew..."
-          bbrew --version
+          which bbrew
+          bbrew --help | head -3
           echo "✓ All checks passed!"
 
   test-macos-intel:
@@ -101,7 +103,8 @@ jobs:
           echo "==> Checking brew..."
           brew --version
           echo "==> Checking bbrew..."
-          bbrew --version
+          which bbrew
+          bbrew --help | head -3
           echo "✓ All checks passed!"
 
   test-already-installed:
@@ -126,6 +129,7 @@ jobs:
       - name: Verify bbrew installed
         run: |
           eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
-          bbrew --version
+          which bbrew
+          bbrew --help | head -3
           echo "✓ Upgrade path works!"
 

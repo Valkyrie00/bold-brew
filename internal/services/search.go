@@ -104,12 +104,12 @@ func (s *AppService) forceRefreshResults() {
 	// If in Brewfile mode, load tap packages and verify installed status
 	if s.IsBrewfileMode() {
 		s.fetchTapPackages()
-		_ = s.loadBrewfilePackages() // Gets fresh installed status via GetInstalledCaskNames/FormulaNames
+		_ = s.loadBrewfilePackages() // Gets fresh installed status via FetchInstalledCaskNames/FormulaNames
 		*s.filteredPackages = *s.brewfilePackages
 	} else {
 		// For non-Brewfile mode, get fresh installed status
-		installedCasks := s.dataProvider.GetInstalledCaskNames()
-		installedFormulae := s.dataProvider.GetInstalledFormulaNames()
+		installedCasks := s.dataProvider.FetchInstalledCaskNames()
+		installedFormulae := s.dataProvider.FetchInstalledFormulaNames()
 		for i := range *s.packages {
 			pkg := &(*s.packages)[i]
 			if pkg.Type == models.PackageTypeCask {

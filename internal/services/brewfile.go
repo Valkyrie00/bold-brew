@@ -117,8 +117,8 @@ func (s *AppService) loadBrewfilePackages() error {
 	foundPackages := make(map[string]bool)
 
 	// Get actual installed packages (2 calls total, much faster than per-package checks)
-	installedCasks := s.dataProvider.GetInstalledCaskNames()
-	installedFormulae := s.dataProvider.GetInstalledFormulaNames()
+	installedCasks := s.dataProvider.FetchInstalledCaskNames()
+	installedFormulae := s.dataProvider.FetchInstalledFormulaNames()
 
 	// Filter packages to only include those in the Brewfile
 	*s.brewfilePackages = []models.Package{}
@@ -156,7 +156,7 @@ func (s *AppService) loadBrewfilePackages() error {
 		}
 
 		// Use DataProvider to load tap packages (from cache only at startup, no fetch)
-		tapPackages, _ := s.dataProvider.LoadTapPackages(tapEntries, existingPackages, false)
+		tapPackages, _ := s.dataProvider.GetTapPackages(tapEntries, existingPackages, false)
 
 		// Add tap packages to brewfilePackages, updating installed status (avoid duplicates)
 		for _, pkg := range tapPackages {
@@ -201,7 +201,7 @@ func (s *AppService) fetchTapPackages() {
 	}
 
 	// Use DataProvider to fetch all tap packages (force download to get fresh data)
-	tapPackages, _ := s.dataProvider.LoadTapPackages(result.Packages, existingPackages, true)
+	tapPackages, _ := s.dataProvider.GetTapPackages(result.Packages, existingPackages, true)
 
 	// Add tap packages to s.packages (avoiding duplicates)
 	for _, pkg := range tapPackages {

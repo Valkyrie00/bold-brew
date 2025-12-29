@@ -36,15 +36,15 @@ const (
 // DataProvider is the central repository for all Homebrew package data.
 type DataProviderInterface interface {
 	// Setup and retrieval
-	SetupData(forceDownload bool) error
+	SetupData(forceRefresh bool) error
 	GetPackages() *[]models.Package
 
-	// Installation status checks
-	GetInstalledCaskNames() map[string]bool
-	GetInstalledFormulaNames() map[string]bool
+	// Installation status checks (runs brew list command)
+	FetchInstalledCaskNames() map[string]bool
+	FetchInstalledFormulaNames() map[string]bool
 
-	// Tap packages - unified method that loads from cache or fetches via brew info
-	LoadTapPackages(entries []models.BrewfileEntry, existingPackages map[string]models.Package, forceDownload bool) ([]models.Package, error)
+	// Tap packages - gets from cache or fetches via brew info
+	GetTapPackages(entries []models.BrewfileEntry, existingPackages map[string]models.Package, forceRefresh bool) ([]models.Package, error)
 }
 
 // DataProvider implements DataProviderInterface.
@@ -102,13 +102,13 @@ func (d *DataProvider) getPrefixPath() string {
 	return d.prefixPath
 }
 
-// LoadInstalledFormulae retrieves installed formulae, optionally using cache.
-func (d *DataProvider) LoadInstalledFormulae(forceDownload bool) ([]models.Formula, error) {
+// GetInstalledFormulae retrieves installed formulae, optionally using cache.
+func (d *DataProvider) GetInstalledFormulae(forceRefresh bool) ([]models.Formula, error) {
 	if err := ensureCacheDir(); err != nil {
 		return nil, err
 	}
 
-	if !forceDownload {
+	if !forceRefresh {
 		if data := readCacheFile(cacheFileInstalled, 10); data != nil {
 			var formulae []models.Formula
 			if err := json.Unmarshal(data, &formulae); err == nil {
@@ -143,13 +143,13 @@ func (d *DataProvider) markFormulaeAsInstalled(formulae *[]models.Formula) {
 	}
 }
 
-// LoadInstalledCasks retrieves installed casks, optionally using cache.
-func (d *DataProvider) LoadInstalledCasks(forceDownload bool) ([]models.Cask, error) {
+// GetInstalledCasks retrieves installed casks, optionally using cache.
+func (d *DataProvider) GetInstalledCasks(forceRefresh bool) ([]models.Cask, error) {
 	if err := ensureCacheDir(); err != nil {
 		return nil, err
 	}
 
-	if !forceDownload {
+	if !forceRefresh {
 		if data := readCacheFile(cacheFileInstalledCasks, 10); data != nil {
 			var response struct {
 				Casks []models.Cask `json:"casks"`
@@ -201,13 +201,13 @@ func (d *DataProvider) markCasksAsInstalled(casks *[]models.Cask) {
 	}
 }
 
-// LoadRemoteFormulae retrieves remote formulae from API, optionally using cache.
-func (d *DataProvider) LoadRemoteFormulae(forceDownload bool) ([]models.Formula, error) {
+// GetRemoteFormulae retrieves remote formulae from API, optionally using cache.
+func (d *DataProvider) GetRemoteFormulae(forceRefresh bool) ([]models.Formula, error) {
 	if err := ensureCacheDir(); err != nil {
 		return nil, err
 	}
 
-	if !forceDownload {
+	if !forceRefresh {
 		if data := readCacheFile(cacheFileFormulae, 1000); data != nil {
 			var formulae []models.Formula
 			if err := json.Unmarshal(data, &formulae); err == nil && len(formulae) > 0 {
@@ -230,13 +230,13 @@ func (d *DataProvider) LoadRemoteFormulae(forceDownload bool) ([]models.Formula,
 	return formulae, nil
 }
 
-// LoadRemoteCasks retrieves remote casks from API, optionally using cache.
-func (d *DataProvider) LoadRemoteCasks(forceDownload bool) ([]models.Cask, error) {
+// GetRemoteCasks retrieves remote casks from API, optionally using cache.
+func (d *DataProvider) GetRemoteCasks(forceRefresh bool) ([]models.Cask, error) {
 	if err := ensureCacheDir(); err != nil {
 		return nil, err
 	}
 
-	if !forceDownload {
+	if !forceRefresh {
 		if data := readCacheFile(cacheFileCasks, 1000); data != nil {
 			var casks []models.Cask
 			if err := json.Unmarshal(data, &casks); err == nil && len(casks) > 0 {
@@ -259,13 +259,13 @@ func (d *DataProvider) LoadRemoteCasks(forceDownload bool) ([]models.Cask, error
 	return casks, nil
 }
 
-// LoadFormulaeAnalytics retrieves formulae analytics from API, optionally using cache.
-func (d *DataProvider) LoadFormulaeAnalytics(forceDownload bool) (map[string]models.AnalyticsItem, error) {
+// GetFormulaeAnalytics retrieves formulae analytics from API, optionally using cache.
+func (d *DataProvider) GetFormulaeAnalytics(forceRefresh bool) (map[string]models.AnalyticsItem, error) {
 	if err := ensureCacheDir(); err != nil {
 		return nil, err
 	}
 
-	if !forceDownload {
+	if !forceRefresh {
 		if data := readCacheFile(cacheFileAnalytics, 100); data != nil {
 			analytics := models.Analytics{}
 			if err := json.Unmarshal(data, &analytics); err == nil && len(analytics.Items) > 0 {
@@ -297,13 +297,13 @@ func (d *DataProvider) LoadFormulaeAnalytics(forceDownload bool) (map[string]mod
 	return result, nil
 }
 
-// LoadCaskAnalytics retrieves cask analytics from API, optionally using cache.
-func (d *DataProvider) LoadCaskAnalytics(forceDownload bool) (map[string]models.AnalyticsItem, error) {
+// GetCaskAnalytics retrieves cask analytics from API, optionally using cache.
+func (d *DataProvider) GetCaskAnalytics(forceRefresh bool) (map[string]models.AnalyticsItem, error) {
 	if err := ensureCacheDir(); err != nil {
 		return nil, err
 	}
 
-	if !forceDownload {
+	if !forceRefresh {
 		if data := readCacheFile(cacheFileCaskAnalytics, 100); data != nil {
 			analytics := models.Analytics{}
 			if err := json.Unmarshal(data, &analytics); err == nil && len(analytics.Items) > 0 {
@@ -339,12 +339,10 @@ func (d *DataProvider) LoadCaskAnalytics(forceDownload bool) (map[string]models.
 	return result, nil
 }
 
-// LoadTapPackages loads tap packages using a unified pattern:
-// 1. Load from cache (if not forceDownload)
-// 2. For packages not in cache or existingPackages, fetch via brew info
-// 3. Save all to cache
-// 4. Return all tap packages
-func (d *DataProvider) LoadTapPackages(entries []models.BrewfileEntry, existingPackages map[string]models.Package, forceDownload bool) ([]models.Package, error) {
+// GetTapPackages retrieves package info for third-party tap entries.
+// It checks cache first, then fetches missing packages via `brew info`.
+// Results are cached for faster subsequent lookups.
+func (d *DataProvider) GetTapPackages(entries []models.BrewfileEntry, existingPackages map[string]models.Package, forceRefresh bool) ([]models.Package, error) {
 	if len(entries) == 0 {
 		return nil, nil
 	}
@@ -352,9 +350,9 @@ func (d *DataProvider) LoadTapPackages(entries []models.BrewfileEntry, existingP
 	result := make([]models.Package, 0)
 	foundPackages := make(map[string]bool)
 
-	// 1. Load from cache (if not forceDownload)
+	// 1. Get from cache (if not forceRefresh)
 	cachedPackages := make(map[string]models.Package)
-	if !forceDownload {
+	if !forceRefresh {
 		if data := readCacheFile(cacheFileTapPackages, 10); data != nil {
 			var packages []models.Package
 			if err := json.Unmarshal(data, &packages); err == nil {
@@ -525,51 +523,47 @@ func (d *DataProvider) fetchSinglePackageInfo(name string, isCask bool) *models.
 	return &pkg
 }
 
-// =============================================================================
-// Data Setup and Retrieval Methods
-// =============================================================================
-
 // SetupData initializes the DataProvider by loading all package data.
-func (d *DataProvider) SetupData(forceDownload bool) error {
-	// Load installed formulae
-	installed, err := d.LoadInstalledFormulae(forceDownload)
+func (d *DataProvider) SetupData(forceRefresh bool) error {
+	// Get installed formulae
+	installed, err := d.GetInstalledFormulae(forceRefresh)
 	if err != nil {
-		return fmt.Errorf("failed to load installed formulae: %w", err)
+		return fmt.Errorf("failed to get installed formulae: %w", err)
 	}
 	*d.installedFormulae = installed
 
-	// Load remote formulae
-	remote, err := d.LoadRemoteFormulae(forceDownload)
+	// Get remote formulae
+	remote, err := d.GetRemoteFormulae(forceRefresh)
 	if err != nil {
-		return fmt.Errorf("failed to load remote formulae: %w", err)
+		return fmt.Errorf("failed to get remote formulae: %w", err)
 	}
 	*d.remoteFormulae = remote
 
-	// Load formulae analytics
-	analytics, err := d.LoadFormulaeAnalytics(forceDownload)
+	// Get formulae analytics
+	analytics, err := d.GetFormulaeAnalytics(forceRefresh)
 	if err != nil {
-		return fmt.Errorf("failed to load formulae analytics: %w", err)
+		return fmt.Errorf("failed to get formulae analytics: %w", err)
 	}
 	d.formulaeAnalytics = analytics
 
-	// Load installed casks
-	installedCasks, err := d.LoadInstalledCasks(forceDownload)
+	// Get installed casks
+	installedCasks, err := d.GetInstalledCasks(forceRefresh)
 	if err != nil {
-		return fmt.Errorf("failed to load installed casks: %w", err)
+		return fmt.Errorf("failed to get installed casks: %w", err)
 	}
 	*d.installedCasks = installedCasks
 
-	// Load remote casks
-	remoteCasks, err := d.LoadRemoteCasks(forceDownload)
+	// Get remote casks
+	remoteCasks, err := d.GetRemoteCasks(forceRefresh)
 	if err != nil {
-		return fmt.Errorf("failed to load remote casks: %w", err)
+		return fmt.Errorf("failed to get remote casks: %w", err)
 	}
 	*d.remoteCasks = remoteCasks
 
-	// Load cask analytics
-	caskAnalytics, err := d.LoadCaskAnalytics(forceDownload)
+	// Get cask analytics
+	caskAnalytics, err := d.GetCaskAnalytics(forceRefresh)
 	if err != nil {
-		return fmt.Errorf("failed to load cask analytics: %w", err)
+		return fmt.Errorf("failed to get cask analytics: %w", err)
 	}
 	d.caskAnalytics = caskAnalytics
 
@@ -640,8 +634,8 @@ func (d *DataProvider) GetPackages() *[]models.Package {
 	return d.allPackages
 }
 
-// getInstalledNames returns a map of installed package names for the given type.
-func (d *DataProvider) getInstalledNames(packageType string) map[string]bool {
+// fetchInstalledNames returns a map of installed package names for the given type.
+func (d *DataProvider) fetchInstalledNames(packageType string) map[string]bool {
 	result := make(map[string]bool)
 	cmd := exec.Command("brew", "list", packageType)
 	output, err := cmd.Output()
@@ -656,12 +650,14 @@ func (d *DataProvider) getInstalledNames(packageType string) map[string]bool {
 	return result
 }
 
-// GetInstalledCaskNames returns a map of installed cask names for quick lookup.
-func (d *DataProvider) GetInstalledCaskNames() map[string]bool {
-	return d.getInstalledNames("--cask")
+// FetchInstalledCaskNames returns a map of installed cask names for quick lookup.
+// Note: This runs `brew list --cask` each time it's called.
+func (d *DataProvider) FetchInstalledCaskNames() map[string]bool {
+	return d.fetchInstalledNames("--cask")
 }
 
-// GetInstalledFormulaNames returns a map of installed formula names for quick lookup.
-func (d *DataProvider) GetInstalledFormulaNames() map[string]bool {
-	return d.getInstalledNames("--formula")
+// FetchInstalledFormulaNames returns a map of installed formula names for quick lookup.
+// Note: This runs `brew list --formula` each time it's called.
+func (d *DataProvider) FetchInstalledFormulaNames() map[string]bool {
+	return d.fetchInstalledNames("--formula")
 }

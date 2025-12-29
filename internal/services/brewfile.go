@@ -99,7 +99,7 @@ func (s *AppService) loadBrewfilePackages() error {
 		}
 	}
 
-	// Track which packages were found in the main package list
+	// Track which packages were found (to avoid duplicates)
 	foundPackages := make(map[string]bool)
 
 	// Get actual installed packages (2 calls total, much faster than per-package checks)
@@ -110,6 +110,10 @@ func (s *AppService) loadBrewfilePackages() error {
 	*s.brewfilePackages = []models.Package{}
 	for _, pkg := range *s.packages {
 		if pkgType, exists := packageMap[pkg.Name]; exists && pkgType == pkg.Type {
+			// Skip if already added (prevent duplicates)
+			if foundPackages[pkg.Name] {
+				continue
+			}
 			// Verify installation status against actual installed lists
 			if pkgType == models.PackageTypeCask {
 				pkg.LocallyInstalled = installedCasks[pkg.Name]
@@ -140,14 +144,18 @@ func (s *AppService) loadBrewfilePackages() error {
 		// Use DataProvider to load tap packages (from cache only at startup, no fetch)
 		tapPackages, _ := s.dataProvider.LoadTapPackages(tapEntries, existingPackages, false)
 
-		// Add tap packages to brewfilePackages, updating installed status
+		// Add tap packages to brewfilePackages, updating installed status (avoid duplicates)
 		for _, pkg := range tapPackages {
+			if foundPackages[pkg.Name] {
+				continue // Already added
+			}
 			if pkg.Type == models.PackageTypeCask {
 				pkg.LocallyInstalled = installedCasks[pkg.Name]
 			} else {
 				pkg.LocallyInstalled = installedFormulae[pkg.Name]
 			}
 			*s.brewfilePackages = append(*s.brewfilePackages, pkg)
+			foundPackages[pkg.Name] = true
 		}
 	}
 

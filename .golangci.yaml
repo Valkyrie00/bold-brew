@@ -1,8 +1,8 @@
 version: "2"
 run:
   concurrency: 4
-  go: "1.20"
-  tests: false
+  go: "1.25"
+  tests: true
   allow-parallel-runners: true
 output:
   formats:

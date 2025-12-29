@@ -4,6 +4,8 @@ import (
 	"bbrew/internal/models"
 	"encoding/json"
 	"fmt"
+	"io"
+	"net/http"
 	"os/exec"
 	"path/filepath"
 	"sort"
@@ -73,6 +75,16 @@ func NewDataProvider() *DataProvider {
 		remoteCasks:       new([]models.Cask),
 		allPackages:       new([]models.Package),
 	}
+}
+
+// fetchFromAPI downloads data from a URL.
+func fetchFromAPI(url string) ([]byte, error) {
+	resp, err := http.Get(url)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	return io.ReadAll(resp.Body)
 }
 
 // getPrefixPath returns the Homebrew prefix path, caching it.

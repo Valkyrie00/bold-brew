@@ -1,8 +1,6 @@
 package services
 
 import (
-	"io"
-	"net/http"
 	"os"
 	"path/filepath"
 
@@ -43,14 +41,4 @@ func readCacheFile(filename string, minSize int64) []byte {
 func writeCacheFile(filename string, data []byte) {
 	cacheFile := filepath.Join(getCacheDir(), filename)
 	_ = os.WriteFile(cacheFile, data, 0600)
-}
-
-// fetchFromAPI downloads data from a URL.
-func fetchFromAPI(url string) ([]byte, error) {
-	resp, err := http.Get(url)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-	return io.ReadAll(resp.Body)
 }

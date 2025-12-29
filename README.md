@@ -16,7 +16,7 @@
 [![GitHub stars](https://img.shields.io/github/stars/Valkyrie00/bold-brew?style=social)](https://github.com/Valkyrie00/bold-brew/stargazers)
 [![GitHub forks](https://img.shields.io/github/forks/Valkyrie00/bold-brew?style=social)](https://github.com/Valkyrie00/bold-brew/network/members)
 
-[Website](https://bold-brew.com/) • [Docs](https://bold-brew.com/docs) • [Changelog](https://github.com/Valkyrie00/bold-brew/releases)
+[Website](https://bold-brew.com/) • [Changelog](https://github.com/Valkyrie00/bold-brew/releases)
 
 </div>
 
@@ -71,7 +71,7 @@ Launch the application to browse all Homebrew packages:
 bbrew
 ```
 
-### Brewfile Mode (New!)
+### Brewfile Mode
 Launch with a curated Brewfile to show only specific packages:
 ```sh
 bbrew -f /path/to/Brewfile
@@ -86,63 +86,56 @@ Perfect for creating themed collections like IDE choosers, dev tools, AI tools, 
 
 See the `examples/` directory for ready-to-use Brewfiles.
 
+### CLI Options
+
+```sh
+bbrew [options]
+
+Options:
+  -f <path>       Path to Brewfile (show only packages from this Brewfile)
+  -v, --version   Show version information
+  -h, --help      Show help message
+```
+
 ### Keyboard Shortcuts
 
 #### Navigation & Search
-- `/` - Search packages (fuzzy search)
+- `/` - Search packages
 - `↑/↓` or `j/k` - Navigate package list
 - `Enter` - View package details
-- `Esc` - Clear search / Close modals
+- `Esc` - Clear search / Back to table
+- `?` - Show help screen
 
 #### Filters
-- `F` - Filter installed packages
-- `O` - Filter outdated packages
-- `L` - Filter leaves (explicitly installed, no dependencies)
-- `C` - Filter casks only
+- `f` - Filter installed packages
+- `o` - Filter outdated packages
+- `l` - Filter leaves (explicitly installed)
+- `c` - Filter casks only
 
 #### Package Operations
-- `I` - Install selected package
-- `U` - Update selected package
-- `R` - Remove selected package
+- `i` - Install selected package
+- `u` - Update selected package
+- `r` - Remove selected package
 - `Ctrl+U` - Update all outdated packages
 
+#### Brewfile Mode Only
+- `Ctrl+A` - Install all packages from Brewfile
+- `Ctrl+R` - Remove all packages from Brewfile
+
 #### Other
-- `Ctrl+R` - Refresh package database
-- `Q` - Quit application
-
-## 📋 What's New in v2.0.0
-
-### 🎉 Major Features
-- **Homebrew Casks Support** - Full support for managing GUI applications and binaries
-- **Leaves Filter** - Show only explicitly installed packages (excluding dependencies)
-- **XDG Base Directory Support** - Cache follows platform standards (`~/.cache/bbrew` on Linux, `~/Library/Caches/bbrew` on macOS)
-- **Type Indicators** - Clear visual distinction between formulae `[F]` and casks `[C]`
-
-### 🔧 Technical Improvements
-- Updated to Go 1.25
-- Migrated to Podman and OCI-compliant Containerfile
-- Enhanced Makefile with 15+ new targets and help system
-- Integrated automated security scanning (govulncheck + gosec)
-- Fixed implicit memory aliasing issues
-- Improved error handling and logging
-
-### 🐛 Bug Fixes
-- Fixed cask analytics endpoint
-- Corrected installed casks detection
-- Fixed tview special character rendering for type tags
-- Improved directory permission handling (0750)
+- `q` - Quit application
 
 ## 🖼️ Screenshots
 
 <div align="center">
-  <img src="docs/assets/screenshots/bbrew-main-screenshot.png" alt="Main Screenshot" width="800">
-  <p><em>Main interface with package list and filters</em></p>
-  
-  <img src="docs/assets/screenshots/bbrew-installed-screenshot.png" alt="Install Screenshot" width="800">
+  <img src="docs/assets/screenshots/bbrew-installed-screenshot.png" alt="Installed Packages Screenshot" width="800">
   <p><em>Filtered view showing installed packages</em></p>
   
   <img src="docs/assets/screenshots/bbrew-search-screenshot.png" alt="Search Screenshot" width="800">
   <p><em>Fuzzy search in action</em></p>
+  
+  <img src="docs/assets/screenshots/bbrew-brewfile-screenshot.png" alt="Brewfile Mode Screenshot" width="800">
+  <p><em>Brewfile mode with curated package selection</em></p>
 </div>
 
 ## 📊 Platform Support
@@ -193,7 +186,7 @@ bold-brew/
 ├── cmd/bbrew/           # Main application entry point
 ├── internal/
 │   ├── models/          # Data models (Formula, Cask, Package)
-│   ├── services/        # Business logic (Brew, App, I/O)
+│   ├── services/        # Business logic (Brew, App, Search, Input, Brewfile)
 │   └── ui/              # TUI components and layout
 ├── .github/workflows/   # CI/CD pipelines
 └── Makefile             # Build automation

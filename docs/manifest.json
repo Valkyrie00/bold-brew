@@ -32,7 +32,7 @@
     "categories": ["developer tools", "utilities"],
     "screenshots": [
         {
-            "src": "assets/screenshots/bbrew-main-screenshot.png",
+            "src": "assets/screenshots/bbrew-brewfile-screenshot.png",
             "sizes": "400x300",
             "type": "image/png",
             "platform": "macOS",

@@ -127,8 +127,12 @@ func (s *AppService) setResults(data *[]models.Package, scrollToTop bool) {
 		}
 		typeCell := tview.NewTableCell(typeTag).SetSelectable(true).SetAlign(tview.AlignLeft)
 
-		// Version handling
+		// Version handling - truncate if too long
 		version := info.Version
+		const maxVersionLen = 15
+		if len(version) > maxVersionLen {
+			version = version[:maxVersionLen-1] + "…"
+		}
 
 		// Name cell
 		nameCell := tview.NewTableCell(info.Name).SetSelectable(true)

@@ -79,9 +79,9 @@ func (l *Layout) setupLayout() {
 		AddItem(l.details.View(), 0, 2, false).
 		AddItem(l.output.View(), 0, 1, false)
 
-	// Central content
+	// Central content (left 75%, right 25%)
 	mainContent := tview.NewFlex().SetDirection(tview.FlexColumn).
-		AddItem(leftColumn, 0, 2, false).
+		AddItem(leftColumn, 0, 3, false).
 		AddItem(rightColumn, 0, 1, false)
 
 	// Footer

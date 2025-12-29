@@ -50,7 +50,7 @@ type AppService struct {
 	brewService       BrewServiceInterface
 	dataProvider      DataProviderInterface // Direct access for Brewfile operations
 	selfUpdateService SelfUpdateServiceInterface
-	ioService         IOServiceInterface
+	inputService      InputServiceInterface
 }
 
 // NewAppService creates a new instance of AppService with initialized components.
@@ -79,7 +79,7 @@ var NewAppService = func() AppServiceInterface {
 	// Initialize services
 	s.dataProvider = NewDataProvider()
 	s.brewService = NewBrewService()
-	s.ioService = NewIOService(s, s.brewService)
+	s.inputService = NewInputService(s, s.brewService)
 	s.selfUpdateService = NewSelfUpdateService()
 
 	return s
@@ -147,7 +147,7 @@ func (s *AppService) BuildApp() {
 	if s.IsBrewfileMode() {
 		headerName = fmt.Sprintf("%s [Brewfile Mode]", AppName)
 		s.layout.GetSearch().Field().SetLabel("Search (Brewfile): ")
-		s.ioService.EnableBrewfileMode() // Add Install All action
+		s.inputService.EnableBrewfileMode() // Add Install All action
 	}
 	s.layout.GetHeader().Update(headerName, AppVersion, s.brewVersion)
 
@@ -191,7 +191,7 @@ func (s *AppService) BuildApp() {
 	s.layout.GetSearch().SetHandlers(inputDoneFunc, changedFunc)
 
 	// Add key event handler
-	s.app.SetInputCapture(s.ioService.HandleKeyEventInput)
+	s.app.SetInputCapture(s.inputService.HandleKeyEventInput)
 
 	// Set the root of the application to the layout's root and focus on the table view
 	s.app.SetRoot(s.layout.Root(), true)

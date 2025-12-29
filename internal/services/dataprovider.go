@@ -11,6 +11,14 @@ import (
 	"strings"
 )
 
+// API URLs for Homebrew data
+const (
+	formulaeAPIURL      = "https://formulae.brew.sh/api/formula.json"
+	caskAPIURL          = "https://formulae.brew.sh/api/cask.json"
+	analyticsAPIURL     = "https://formulae.brew.sh/api/analytics/install-on-request/90d.json"
+	caskAnalyticsAPIURL = "https://formulae.brew.sh/api/analytics/cask-install/90d.json"
+)
+
 // Cache file names
 const (
 	cacheFileInstalled      = "installed.json"
@@ -19,7 +27,7 @@ const (
 	cacheFileCasks          = "cask.json"
 	cacheFileAnalytics      = "analytics.json"
 	cacheFileCaskAnalytics  = "cask-analytics.json"
-	cacheFileTapPackages    = "tap_packages.json"
+	cacheFileTapPackages    = "tap-packages.json"
 )
 
 // DataProviderInterface defines the contract for data operations.
@@ -202,7 +210,7 @@ func (d *DataProvider) LoadRemoteFormulae(forceDownload bool) ([]models.Formula,
 		}
 	}
 
-	body, err := fetchFromAPI(FormulaeAPIURL)
+	body, err := fetchFromAPI(formulaeAPIURL)
 	if err != nil {
 		return nil, err
 	}
@@ -231,7 +239,7 @@ func (d *DataProvider) LoadRemoteCasks(forceDownload bool) ([]models.Cask, error
 		}
 	}
 
-	body, err := fetchFromAPI(CaskAPIURL)
+	body, err := fetchFromAPI(caskAPIURL)
 	if err != nil {
 		return nil, err
 	}
@@ -264,7 +272,7 @@ func (d *DataProvider) LoadFormulaeAnalytics(forceDownload bool) (map[string]mod
 		}
 	}
 
-	body, err := fetchFromAPI(AnalyticsAPIURL)
+	body, err := fetchFromAPI(analyticsAPIURL)
 	if err != nil {
 		return nil, err
 	}
@@ -304,7 +312,7 @@ func (d *DataProvider) LoadCaskAnalytics(forceDownload bool) (map[string]models.
 		}
 	}
 
-	body, err := fetchFromAPI(CaskAnalyticsAPIURL)
+	body, err := fetchFromAPI(caskAnalyticsAPIURL)
 	if err != nil {
 		return nil, err
 	}

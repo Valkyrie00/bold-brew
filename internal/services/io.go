@@ -61,11 +61,11 @@ type IOService struct {
 	ActionQuit            *IOAction
 }
 
-var NewIOService = func(appService *AppService) IOServiceInterface {
+var NewIOService = func(appService *AppService, brewService BrewServiceInterface) IOServiceInterface {
 	s := &IOService{
 		appService:  appService,
 		layout:      appService.GetLayout(),
-		brewService: NewBrewService(),
+		brewService: brewService,
 	}
 
 	// Initialize key actions with their respective keys, runes, and names.

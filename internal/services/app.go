@@ -79,9 +79,9 @@ var NewAppService = func() AppServiceInterface {
 	}
 
 	// Initialize services
-	s.ioService = NewIOService(s)
 	s.dataProvider = NewDataProvider()
 	s.brewService = NewBrewService()
+	s.ioService = NewIOService(s, s.brewService)
 	s.selfUpdateService = NewSelfUpdateService()
 
 	return s

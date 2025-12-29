@@ -5,7 +5,14 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+
+	"github.com/adrg/xdg"
 )
+
+// getCacheDir returns the cache directory following XDG Base Directory Specification.
+func getCacheDir() string {
+	return filepath.Join(xdg.CacheHome, "bbrew")
+}
 
 // ensureCacheDir creates the cache directory if it doesn't exist.
 func ensureCacheDir() error {

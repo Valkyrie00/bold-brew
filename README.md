@@ -43,7 +43,7 @@ Bold Brew is the **official Terminal UI** for managing Homebrew in [**Project Bl
 
 - 🚀 **Modern TUI Interface** - Clean and responsive terminal user interface
 - 📦 **Complete Package Management** - Manage both Homebrew formulae and casks
-- 📋 **Brewfile Mode** - Curated package collections from Brewfiles (perfect for themed installers)
+- 📋 **Brewfile Mode** - Curated package collections from local or remote Brewfiles
 - 🔍 **Advanced Search** - Fast fuzzy search across all packages
 - 🎯 **Smart Filters** - Filter by installed, outdated, leaves, or casks
 - 📊 **Analytics Integration** - See popular packages based on 90-day download stats
@@ -74,13 +74,18 @@ bbrew
 ### Brewfile Mode
 Launch with a curated Brewfile to show only specific packages:
 ```sh
+# Local Brewfile
 bbrew -f /path/to/Brewfile
+
+# Remote Brewfile (HTTPS)
+bbrew -f https://raw.githubusercontent.com/user/repo/main/Brewfile
 ```
 
 In Brewfile mode, you can:
 - View only packages from the Brewfile
 - Pick and choose what to install individually
 - Use all standard features (search, filters, etc.)
+- Load Brewfiles directly from URLs (great for sharing configurations!)
 
 Perfect for creating themed collections like IDE choosers, dev tools, AI tools, K8s tools, etc.
 
@@ -92,7 +97,7 @@ See the `examples/` directory for ready-to-use Brewfiles.
 bbrew [options]
 
 Options:
-  -f <path>       Path to Brewfile (show only packages from this Brewfile)
+  -f <path|url>   Path or URL to Brewfile (local file or HTTPS URL)
   -v, --version   Show version information
   -h, --help      Show help message
 ```

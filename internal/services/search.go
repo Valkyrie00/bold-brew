@@ -117,7 +117,7 @@ func (s *AppService) forceRefreshResults() {
 // setResults updates the results table with the provided data and optionally scrolls to the top.
 func (s *AppService) setResults(data *[]models.Package, scrollToTop bool) {
 	s.layout.GetTable().Clear()
-	s.layout.GetTable().SetTableHeaders("Type", "Name", "Version", "Description", "↓ (90d)")
+	s.layout.GetTable().SetTableHeaders("Type", "Name", "Version", "Description", "Downloads")
 
 	for i, info := range *data {
 		// Type cell with escaped brackets

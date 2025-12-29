@@ -1,3 +1,25 @@
+// Package services provides Brewfile support for Bold Brew.
+//
+// This file handles parsing Brewfile entries (taps, formulae, casks),
+// loading packages from third-party taps, and installing missing taps
+// at application startup.
+//
+// NOTE: These methods are only active in Brewfile mode (bbrew -f <file>).
+// In normal mode, these functions are not called.
+//
+// Execution sequence (Brewfile mode only):
+//
+//  1. Boot() → loadBrewfilePackages()
+//     Initial load using cached tap data for fast startup.
+//
+//  2. BuildApp() → goroutine:
+//     a) installBrewfileTapsAtStartup()
+//     Installs any missing taps from the Brewfile.
+//     b) updateHomeBrew() → forceRefreshResults()
+//     Refreshes Homebrew data and reloads packages.
+//
+//  3. forceRefreshResults() → fetchTapPackages() + loadBrewfilePackages()
+//     Fetches fresh tap package info and rebuilds the package list.
 package services
 
 import (
@@ -7,10 +29,6 @@ import (
 	"sort"
 	"strings"
 )
-
-// =============================================================================
-// Brewfile Parsing Functions (standalone, no state needed)
-// =============================================================================
 
 // parseBrewfileWithTaps parses a Brewfile and returns taps and packages separately.
 func parseBrewfileWithTaps(filepath string) (*models.BrewfileResult, error) {
@@ -73,10 +91,6 @@ func parseBrewfileWithTaps(filepath string) (*models.BrewfileResult, error) {
 
 	return result, nil
 }
-
-// =============================================================================
-// AppService Brewfile Methods
-// =============================================================================
 
 // loadBrewfilePackages parses the Brewfile and creates a filtered package list.
 // Uses the DataProvider to load tap packages from cache or fetch via brew info.

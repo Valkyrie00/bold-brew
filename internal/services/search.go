@@ -85,8 +85,8 @@ func (s *AppService) applyFilter(sourceList *[]models.Package) *[]models.Package
 
 // forceRefreshResults forces a refresh of the Homebrew formulae and cask data and updates the results in the UI.
 func (s *AppService) forceRefreshResults() {
-	// Use cached API data (fast) - only installed status needs refresh
-	_ = s.dataProvider.SetupData(false)
+	// Force refresh all data to get up-to-date versions and installed status
+	_ = s.dataProvider.SetupData(true)
 	s.packages = s.dataProvider.GetPackages()
 
 	// If in Brewfile mode, load tap packages and verify installed status

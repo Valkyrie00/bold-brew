@@ -57,6 +57,8 @@ type InputService struct {
 	ActionRemoveAll       *InputAction
 	ActionHelp            *InputAction
 	ActionBack            *InputAction
+	ActionSortType        *InputAction
+	ActionOpenHomepage    *InputAction
 	ActionQuit            *InputAction
 }
 
@@ -73,19 +75,19 @@ var NewInputService = func(appService *AppService, brewService BrewServiceInterf
 		Action: s.handleSearchFieldEvent,
 	}
 	s.ActionFilterInstalled = &InputAction{
-		Key: tcell.KeyRune, Rune: 'f', KeySlug: "f", Name: "Installed",
+		Key: tcell.KeyRune, Rune: 'F', KeySlug: "F", Name: "Installed",
 		Action: s.handleFilterPackagesEvent,
 	}
 	s.ActionFilterOutdated = &InputAction{
-		Key: tcell.KeyRune, Rune: 'o', KeySlug: "o", Name: "Outdated",
+		Key: tcell.KeyRune, Rune: 'O', KeySlug: "O", Name: "Outdated",
 		Action: s.handleFilterOutdatedPackagesEvent, HideFromLegend: true,
 	}
 	s.ActionFilterLeaves = &InputAction{
-		Key: tcell.KeyRune, Rune: 'l', KeySlug: "l", Name: "Leaves",
+		Key: tcell.KeyRune, Rune: 'L', KeySlug: "L", Name: "Leaves",
 		Action: s.handleFilterLeavesEvent, HideFromLegend: true,
 	}
 	s.ActionFilterCasks = &InputAction{
-		Key: tcell.KeyRune, Rune: 'c', KeySlug: "c", Name: "Casks",
+		Key: tcell.KeyRune, Rune: 'C', KeySlug: "C", Name: "Casks",
 		Action: s.handleFilterCasksEvent, HideFromLegend: true,
 	}
 	s.ActionInstall = &InputAction{
@@ -116,6 +118,14 @@ var NewInputService = func(appService *AppService, brewService BrewServiceInterf
 		Key: tcell.KeyRune, Rune: '?', KeySlug: "?", Name: "Help",
 		Action: s.handleHelpEvent,
 	}
+	s.ActionSortType = &InputAction{
+		Key: tcell.KeyRune, Rune: 'T', KeySlug: "T", Name: "Sort Types",
+		Action: s.handleSortTypeEvent,
+	}
+	s.ActionOpenHomepage = &InputAction{
+		Key: tcell.KeyRune, Rune: 'o', KeySlug: "o", Name: "Open Homepage",
+		Action: s.handleOpenHomepageEvent,
+	}
 	s.ActionBack = &InputAction{
 		Key: tcell.KeyEsc, Rune: 0, KeySlug: "esc", Name: "Back to Table",
 		Action: s.handleBack, HideFromLegend: true,
@@ -130,6 +140,7 @@ var NewInputService = func(appService *AppService, brewService BrewServiceInterf
 		s.ActionSearch, s.ActionFilterInstalled, s.ActionFilterOutdated,
 		s.ActionFilterLeaves, s.ActionFilterCasks, s.ActionInstall,
 		s.ActionUpdate, s.ActionRemove, s.ActionUpdateAll,
+		s.ActionSortType, s.ActionOpenHomepage,
 		s.ActionHelp, s.ActionBack, s.ActionQuit,
 	}
 
@@ -494,4 +505,31 @@ func (s *InputService) handleRemoveAllPackagesEvent() {
 			return s.brewService.RemovePackage(pkg, s.appService.app, s.layout.GetOutput().View())
 		},
 	})
+}
+
+// handleSortTypeEvent toggles the sort mode between default and type-based.
+func (s *InputService) handleSortTypeEvent() {
+	s.appService.sortByType = !s.appService.sortByType
+	s.appService.search(s.layout.GetSearch().Field().GetText(), true)
+	if s.appService.sortByType {
+		s.layout.GetNotifier().ShowSuccess("Sorting by Type")
+	} else {
+		s.layout.GetNotifier().ShowSuccess("Sorting by Name (Default)")
+	}
+}
+
+// handleOpenHomepageEvent opens the homepage of the selected package.
+func (s *InputService) handleOpenHomepageEvent() {
+	row, _ := s.layout.GetTable().View().GetSelection()
+	if row > 0 {
+		info := (*s.appService.filteredPackages)[row-1]
+		if info.Homepage != "" {
+			s.layout.GetNotifier().ShowSuccess(fmt.Sprintf("Opening homepage for %s...", info.Name))
+			if err := OpenBrowser(info.Homepage); err != nil {
+				s.layout.GetNotifier().ShowError(fmt.Sprintf("Failed to open browser: %v", err))
+			}
+		} else {
+			s.layout.GetNotifier().ShowWarning("No homepage available for this package")
+		}
+	}
 }

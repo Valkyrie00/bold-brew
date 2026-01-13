@@ -140,7 +140,7 @@ func (s *AppService) BuildApp() {
 	headerName := AppName
 	if s.IsBrewfileMode() {
 		headerName = fmt.Sprintf("%s [Brewfile Mode]", AppName)
-		s.layout.GetSearch().Field().SetLabel("Search (Brewfile): ")
+		s.layout.GetSearch().Field().SetTitle("Search (Brewfile)")
 		s.inputService.EnableBrewfileMode() // Add Install All action
 	}
 	s.layout.GetHeader().Update(headerName, AppVersion, s.brewVersion)

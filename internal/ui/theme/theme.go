@@ -21,7 +21,9 @@ type Theme struct {
 	ModalBgColor     tcell.Color
 	LegendColor      tcell.Color
 	TableHeaderColor tcell.Color
-	SearchLabelColor tcell.Color
+	SearchLabelColor       tcell.Color
+	SearchBorderColor      tcell.Color
+	SearchFocusBorderColor tcell.Color
 
 	// tview global styles (mapped to tview.Styles)
 	PrimitiveBackgroundColor    tcell.Color
@@ -56,7 +58,9 @@ func NewTheme() *Theme {
 		ModalBgColor:     tcell.ColorDefault,
 		LegendColor:      tcell.ColorDefault,
 		TableHeaderColor: tcell.ColorBlue,
-		SearchLabelColor: tcell.ColorPurple,
+		SearchLabelColor:       tcell.ColorPurple,
+		SearchBorderColor:      tcell.ColorWhite,
+		SearchFocusBorderColor: tcell.ColorGreen,
 
 		// tview global styles - use terminal default colors for better compatibility
 		// By default, tview uses hardcoded colors (like tcell.ColorBlack) which don't

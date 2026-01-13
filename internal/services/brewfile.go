@@ -114,10 +114,13 @@ func parseBrewfileWithTaps(filepath string) (*models.BrewfileResult, error) {
 		// Parse tap entries: tap "user/repo"
 		if strings.HasPrefix(line, "tap ") {
 			start := strings.Index(line, "\"")
-			end := strings.LastIndex(line, "\"")
-			if start != -1 && end != -1 && start < end {
-				tapName := line[start+1 : end]
-				result.Taps = append(result.Taps, tapName)
+			if start != -1 {
+				// Find closing quote for the name
+				end := strings.Index(line[start+1:], "\"")
+				if end != -1 {
+					tapName := line[start+1 : start+1+end]
+					result.Taps = append(result.Taps, tapName)
+				}
 			}
 		}
 
@@ -153,7 +156,9 @@ func parseBrewfileWithTaps(filepath string) (*models.BrewfileResult, error) {
 
 // loadBrewfilePackages parses the Brewfile and creates a filtered package list.
 // Uses the DataProvider to load tap packages from cache or fetch via brew info.
-func (s *AppService) loadBrewfilePackages() error {
+// If usePlaceholders is true, it will not fetch info for tap packages but instead return
+// placeholders with "Waiting for tap..." description.
+func (s *AppService) loadBrewfilePackages(usePlaceholders bool) error {
 	result, err := parseBrewfileWithTaps(s.brewfilePath)
 	if err != nil {
 		return err
@@ -206,16 +211,39 @@ func (s *AppService) loadBrewfilePackages() error {
 		}
 	}
 
-	// Load tap packages from cache (fast startup)
+	// Load tap packages
 	if len(tapEntries) > 0 {
-		// Build existing packages map
-		existingPackages := make(map[string]models.Package)
-		for _, pkg := range *s.packages {
-			existingPackages[pkg.Name] = pkg
-		}
+		var tapPackages []models.Package
 
-		// Use DataProvider to load tap packages (from cache only at startup, no fetch)
-		tapPackages, _ := s.dataProvider.GetTapPackages(tapEntries, existingPackages, false)
+		if usePlaceholders {
+			// Create placeholders immediately without fetching
+			for _, entry := range tapEntries {
+				desc := "Waiting for tap installation..."
+				pkgType := models.PackageTypeFormula
+				if entry.IsCask {
+					pkgType = models.PackageTypeCask
+				}
+				tapPackages = append(tapPackages, models.Package{
+					Name:             entry.Name,
+					DisplayName:      entry.Name,
+					Description:      desc,
+					Type:             pkgType,
+					LocallyInstalled: false, // Unknown yet
+				})
+			}
+		} else {
+			// Build existing packages map
+			existingPackages := make(map[string]models.Package)
+			for _, pkg := range *s.packages {
+				existingPackages[pkg.Name] = pkg
+			}
+
+			// Use DataProvider to load tap packages (from cache only at startup, no fetch)
+			// But if this is the second pass (usePlaceholders=false), we want to force refresh?
+			// Actually, fetchTapPackages() is called explicitly before this in App.go, so
+			// the data should be in s.packages now.
+			tapPackages, _ = s.dataProvider.GetTapPackages(tapEntries, existingPackages, false)
+		}
 
 		// Add tap packages to brewfilePackages, updating installed status (avoid duplicates)
 		for _, pkg := range tapPackages {
@@ -303,6 +331,8 @@ func (s *AppService) installBrewfileTapsAtStartup() {
 				s.layout.GetNotifier().ShowSuccess(fmt.Sprintf("Tap %s installed", tap))
 				fmt.Fprintf(s.layout.GetOutput().View(), "[SUCCESS] tap %s installed\n", tap)
 			})
+			// Track successful installation for cleanup
+			s.installedTaps = append(s.installedTaps, tap)
 		}
 	}
 

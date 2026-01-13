@@ -43,6 +43,7 @@ type AppService struct {
 	brewfilePath     string
 	brewfilePackages *[]models.Package
 	brewfileTaps     []string // Taps required by the Brewfile
+	installedTaps    []string // Taps installed by this session (for cleanup)
 
 	brewService       BrewServiceInterface
 	dataProvider      DataProviderInterface // Direct access for Brewfile operations
@@ -85,6 +86,18 @@ func (s *AppService) SetBrewfilePath(path string)            { s.brewfilePath = 
 func (s *AppService) IsBrewfileMode() bool                   { return s.brewfilePath != "" }
 func (s *AppService) GetBrewfilePackages() *[]models.Package { return s.brewfilePackages }
 
+// Cleanup performs cleanup operations like removing temporary files and taps.
+func (s *AppService) Cleanup() {
+	if len(s.installedTaps) > 0 {
+		fmt.Printf("Cleaning up installed taps: %v\n", s.installedTaps)
+		// For now, we print. Later we might automate based on user pref.
+		// To actually cleanup:
+		// for _, tap := range s.installedTaps {
+		// 	exec.Command("brew", "untap", tap).Run()
+		// }
+	}
+}
+
 // Boot initializes the application by setting up Homebrew and loading formulae data.
 func (s *AppService) Boot() (err error) {
 	if s.brewVersion, err = s.brewService.GetBrewVersion(); err != nil {
@@ -104,10 +117,14 @@ func (s *AppService) Boot() (err error) {
 	*s.filteredPackages = *s.packages
 
 	// If Brewfile is specified, parse it and filter packages
+	// If Brewfile is specified, parse it to get taps (needed for BuildApp)
+	// We do NOT load packages here to avoid blocking startup with "brew info" calls
 	if s.IsBrewfileMode() {
-		if err = s.loadBrewfilePackages(); err != nil {
-			return fmt.Errorf("failed to load Brewfile: %v", err)
+		result, err := parseBrewfileWithTaps(s.brewfilePath)
+		if err != nil {
+			return fmt.Errorf("failed to parse Brewfile: %v", err)
 		}
+		s.brewfileTaps = result.Taps
 	}
 
 	return nil
@@ -192,11 +209,51 @@ func (s *AppService) BuildApp() {
 	s.app.SetFocus(s.layout.GetTable().View())
 
 	// Start background tasks: install taps first (if Brewfile mode), then update Homebrew
+
 	go func() {
-		// In Brewfile mode, install missing taps first
-		if s.IsBrewfileMode() && len(s.brewfileTaps) > 0 {
-			s.installBrewfileTapsAtStartup()
+		// In Brewfile mode, load packages progressively
+		if s.IsBrewfileMode() {
+			s.app.QueueUpdateDraw(func() {
+				s.layout.GetNotifier().ShowWarning("Loading Brewfile packages...")
+			})
+
+			// 1. Initial Load: Get core packages + placeholders for tap packages
+			// This is fast and gives immediate feedback
+			if err := s.loadBrewfilePackages(true); err != nil {
+				s.app.QueueUpdateDraw(func() {
+					s.layout.GetNotifier().ShowError(fmt.Sprintf("Failed to load Brewfile: %v", err))
+				})
+			} else {
+				s.app.QueueUpdateDraw(func() {
+					*s.filteredPackages = *s.brewfilePackages
+					s.setResults(s.brewfilePackages, true)
+					s.layout.GetNotifier().ShowSuccess("Brewfile loaded (installing taps...)")
+				})
+			}
+
+			// 2. Install Taps (if needed)
+			if len(s.brewfileTaps) > 0 {
+				s.installBrewfileTapsAtStartup()
+			}
+
+			// 3. Final Load: Refresh to get actual details for tap packages
+			s.app.QueueUpdateDraw(func() {
+				s.layout.GetNotifier().ShowWarning("Refreshing tap packages...")
+			})
+			
+			// Force refresh of tap packages now that taps are installed
+			s.fetchTapPackages()
+			
+			// Reload everything to populates details
+			if err := s.loadBrewfilePackages(false); err == nil {
+				s.app.QueueUpdateDraw(func() {
+					*s.filteredPackages = *s.brewfilePackages
+					s.setResults(s.brewfilePackages, true)
+					s.layout.GetNotifier().ShowSuccess("All packages loaded")
+				})
+			}
 		}
+
 		// Then update Homebrew (which will reload all data including new taps)
 		s.updateHomeBrew()
 	}()

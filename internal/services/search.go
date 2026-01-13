@@ -92,7 +92,7 @@ func (s *AppService) forceRefreshResults() {
 	// If in Brewfile mode, load tap packages and verify installed status
 	if s.IsBrewfileMode() {
 		s.fetchTapPackages()
-		_ = s.loadBrewfilePackages() // Gets fresh installed status via FetchInstalledCaskNames/FormulaNames
+		_ = s.loadBrewfilePackages(false) // Gets fresh installed status via FetchInstalledCaskNames/FormulaNames
 		*s.filteredPackages = *s.brewfilePackages
 	} else {
 		// For non-Brewfile mode, get fresh installed status

@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"sort"
 	"strconv"
 	"strings"
@@ -574,7 +575,37 @@ func (d *DataProvider) SetupData(forceRefresh bool) error {
 func (d *DataProvider) GetPackages() *[]models.Package {
 	packageMap := make(map[string]models.Package)
 
+	isLinux := runtime.GOOS == "linux"
+
 	for _, formula := range *d.remoteFormulae {
+		if isLinux {
+			// Check requirements for macos
+			hasMacosReq := false
+			for _, req := range formula.Requirements {
+				if req.Name == "macos" {
+					hasMacosReq = true
+					break
+				}
+			}
+			if hasMacosReq {
+				continue
+			}
+
+			// Check bottles: if bottles exist but none are for linux, skip
+			if len(formula.Bottle.Stable.Files) > 0 {
+				hasLinuxBottle := false
+				for key := range formula.Bottle.Stable.Files {
+					if strings.Contains(key, "linux") {
+						hasLinuxBottle = true
+						break
+					}
+				}
+				if !hasLinuxBottle {
+					continue
+				}
+			}
+		}
+
 		if _, exists := packageMap[formula.Name]; !exists {
 			f := formula
 			pkg := models.NewPackageFromFormula(&f)
@@ -598,16 +629,18 @@ func (d *DataProvider) GetPackages() *[]models.Package {
 		packageMap[formula.Name] = pkg
 	}
 
-	for _, cask := range *d.remoteCasks {
-		if _, exists := packageMap[cask.Token]; !exists {
-			c := cask
-			pkg := models.NewPackageFromCask(&c)
-			if a, exists := d.caskAnalytics[cask.Token]; exists && a.Number > 0 {
-				downloads, _ := strconv.Atoi(strings.ReplaceAll(a.Count, ",", ""))
-				pkg.Analytics90dRank = a.Number
-				pkg.Analytics90dDownloads = downloads
+	if !isLinux {
+		for _, cask := range *d.remoteCasks {
+			if _, exists := packageMap[cask.Token]; !exists {
+				c := cask
+				pkg := models.NewPackageFromCask(&c)
+				if a, exists := d.caskAnalytics[cask.Token]; exists && a.Number > 0 {
+					downloads, _ := strconv.Atoi(strings.ReplaceAll(a.Count, ",", ""))
+					pkg.Analytics90dRank = a.Number
+					pkg.Analytics90dDownloads = downloads
+				}
+				packageMap[cask.Token] = pkg
 			}
-			packageMap[cask.Token] = pkg
 		}
 	}
 

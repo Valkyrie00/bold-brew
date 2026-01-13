@@ -45,6 +45,9 @@ type DataProviderInterface interface {
 
 	// Tap packages - gets from cache or fetches via brew info
 	GetTapPackages(entries []models.BrewfileEntry, existingPackages map[string]models.Package, forceRefresh bool) ([]models.Package, error)
+
+	// Flatpak packages
+	GetFlatpakPackages(entries []models.BrewfileEntry, installedIDs map[string]bool, metadata map[string]models.Package) ([]models.Package, error)
 }
 
 // DataProvider implements DataProviderInterface.
@@ -369,6 +372,10 @@ func (d *DataProvider) GetTapPackages(entries []models.BrewfileEntry, existingPa
 	var missingFormulae []string
 
 	for _, entry := range entries {
+		if entry.IsFlatpak {
+			continue
+		}
+
 		// Check if already in existingPackages (from API)
 		if pkg, exists := existingPackages[entry.Name]; exists {
 			result = append(result, pkg)
@@ -660,4 +667,50 @@ func (d *DataProvider) FetchInstalledCaskNames() map[string]bool {
 // Note: This runs `brew list --formula` each time it's called.
 func (d *DataProvider) FetchInstalledFormulaNames() map[string]bool {
 	return d.fetchInstalledNames("--formula")
+}
+
+// GetFlatpakPackages converts Brewfile entries into detailed Package objects for Flatpaks.
+func (d *DataProvider) GetFlatpakPackages(entries []models.BrewfileEntry, installedIDs map[string]bool, metadata map[string]models.Package) ([]models.Package, error) {
+	var result []models.Package
+	for _, entry := range entries {
+		if !entry.IsFlatpak {
+			continue
+		}
+
+		isInstalled := installedIDs[entry.Name]
+
+		// Default values
+		displayName := entry.Name
+		description := "Flatpak Application"
+		version := ""
+
+		// Use metadata if available
+		if meta, ok := metadata[entry.Name]; ok {
+			if meta.DisplayName != "" {
+				displayName = meta.DisplayName
+			}
+			if meta.Description != "" {
+				description = meta.Description
+			}
+			if meta.Version != "" {
+				version = meta.Version
+			}
+		}
+
+		// Create a basic package entry
+		// Note: fetching details for all flatpaks would be slow, so we rely on the ID/Name
+		pkg := models.Package{
+			Name:               entry.Name,
+			DisplayName:        displayName,
+			Description:        description,
+			Version:            version,
+			Homepage:           fmt.Sprintf("https://flathub.org/apps/%s", entry.Name),
+			Type:               models.PackageTypeFlatpak,
+			LocallyInstalled:   isInstalled,
+			InstalledOnRequest: true,
+			Outdated:           false, // Expense to check, default false
+		}
+		result = append(result, pkg)
+	}
+	return result, nil
 }

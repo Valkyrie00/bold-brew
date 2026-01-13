@@ -146,6 +146,19 @@ func parseBrewfileWithTaps(filepath string) (*models.BrewfileResult, error) {
 				})
 			}
 		}
+
+		// Parse flatpak entries: flatpak "app.id"
+		if strings.HasPrefix(line, "flatpak ") {
+			start := strings.Index(line, "\"")
+			end := strings.LastIndex(line, "\"")
+			if start != -1 && end != -1 && start < end {
+				packageName := line[start+1 : end]
+				result.Packages = append(result.Packages, models.BrewfileEntry{
+					Name:      packageName,
+					IsFlatpak: true,
+				})
+			}
+		}
 	}
 
 	return result, nil
@@ -167,6 +180,8 @@ func (s *AppService) loadBrewfilePackages() error {
 	for _, entry := range result.Packages {
 		if entry.IsCask {
 			packageMap[entry.Name] = models.PackageTypeCask
+		} else if entry.IsFlatpak {
+			packageMap[entry.Name] = models.PackageTypeFlatpak
 		} else {
 			packageMap[entry.Name] = models.PackageTypeFormula
 		}
@@ -195,6 +210,42 @@ func (s *AppService) loadBrewfilePackages() error {
 			}
 			*s.brewfilePackages = append(*s.brewfilePackages, pkg)
 			foundPackages[pkg.Name] = true
+		}
+	}
+
+	// Process Flatpak entries
+	if s.flatpakService.IsFlatpakInstalled() {
+		// Auto-add flathub if missing (ignores error to allow offline/other issues to pass gracefully)
+		_ = s.flatpakService.EnsureFlathubRemote(s.app, s.layout.GetOutput().View())
+
+		flatpakInstalledMap, err := s.flatpakService.GetInstalledPackages()
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Warning: failed to get installed flatpaks: %v\n", err)
+			flatpakInstalledMap = make(map[string]bool)
+		}
+
+		// Fetch metadata for richer display (Name, Version, Description)
+		flatpakMetadata, err := s.flatpakService.GetRemoteMetadata()
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Warning: failed to get flatpak metadata: %v\n", err)
+			flatpakMetadata = make(map[string]models.Package)
+		}
+
+		flatpakPackages, _ := s.dataProvider.GetFlatpakPackages(result.Packages, flatpakInstalledMap, flatpakMetadata)
+		for _, pkg := range flatpakPackages {
+			if foundPackages[pkg.Name] {
+				continue
+			}
+			*s.brewfilePackages = append(*s.brewfilePackages, pkg)
+			foundPackages[pkg.Name] = true
+		}
+	} else {
+		// Warn if Flatpak entries exist but binary is missing
+		for _, entry := range result.Packages {
+			if entry.IsFlatpak {
+				fmt.Fprintln(os.Stderr, "Warning: Flatpak entries found but 'flatpak' binary is not installed.")
+				break
+			}
 		}
 	}
 

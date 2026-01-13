@@ -53,6 +53,26 @@ func (s *AppService) search(searchText string, scrollToTop bool) {
 		})
 	}
 
+	if s.sortByType {
+		sort.Slice(filteredList, func(i, j int) bool {
+			if filteredList[i].Type != filteredList[j].Type {
+				return filteredList[i].Type < filteredList[j].Type
+			}
+			return strings.ToLower(filteredList[i].Name) < strings.ToLower(filteredList[j].Name)
+		})
+	} else if searchText != "" {
+		// sort by analytics rank when searching
+		sort.Slice(filteredList, func(i, j int) bool {
+			if filteredList[i].Analytics90dRank == 0 {
+				return false
+			}
+			if filteredList[j].Analytics90dRank == 0 {
+				return true
+			}
+			return filteredList[i].Analytics90dRank < filteredList[j].Analytics90dRank
+		})
+	}
+
 	*s.filteredPackages = filteredList
 	s.setResults(s.filteredPackages, scrollToTop)
 }

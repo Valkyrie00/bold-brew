@@ -58,6 +58,7 @@ type InputService struct {
 	ActionHelp            *InputAction
 	ActionBack            *InputAction
 	ActionQuit            *InputAction
+	ActionToggleSelection *InputAction
 }
 
 var NewInputService = func(appService *AppService, brewService BrewServiceInterface) InputServiceInterface {
@@ -124,13 +125,17 @@ var NewInputService = func(appService *AppService, brewService BrewServiceInterf
 		Key: tcell.KeyRune, Rune: 'q', KeySlug: "q", Name: "Quit",
 		Action: s.handleQuitEvent, HideFromLegend: true,
 	}
+	s.ActionToggleSelection = &InputAction{
+		Key: tcell.KeyRune, Rune: ' ', KeySlug: "space", Name: "Select",
+		Action: s.handleToggleSelectionEvent, HideFromLegend: true,
+	}
 
 	// Build keyActions slice (InstallAll/RemoveAll added dynamically in Brewfile mode)
 	s.keyActions = []*InputAction{
 		s.ActionSearch, s.ActionFilterInstalled, s.ActionFilterOutdated,
 		s.ActionFilterLeaves, s.ActionFilterCasks, s.ActionInstall,
 		s.ActionUpdate, s.ActionRemove, s.ActionUpdateAll,
-		s.ActionHelp, s.ActionBack, s.ActionQuit,
+		s.ActionHelp, s.ActionBack, s.ActionQuit, s.ActionToggleSelection,
 	}
 
 	// Convert keyActions to legend entries
@@ -169,6 +174,12 @@ func (s *InputService) HandleKeyEventInput(event *tcell.EventKey) *tcell.EventKe
 		return event
 	}
 
+	// Handle Space explicitly since it might conflict or need special handling
+	if event.Key() == tcell.KeyRune && event.Rune() == ' ' {
+		s.handleToggleSelectionEvent()
+		return nil
+	}
+
 	for _, input := range s.keyActions {
 		if event.Modifiers() == tcell.ModNone && input.Key == event.Key() && input.Rune == event.Rune() { // Check Rune
 			if input.Action != nil {
@@ -188,8 +199,24 @@ func (s *InputService) HandleKeyEventInput(event *tcell.EventKey) *tcell.EventKe
 
 // handleBack is called when the user presses the back key (Esc).
 func (s *InputService) handleBack() {
+	s.layout.GetTable().ClearSelection()
 	s.appService.GetApp().SetRoot(s.layout.Root(), true)
 	s.appService.GetApp().SetFocus(s.layout.GetTable().View())
+	// Force redraw of table to remove selection visuals
+	// s.appService.forceRefreshResults() // Might be too heavy? 
+	// Actually Table.ToggleSelection updates visual. 
+	// ClearSelection needs to update visual too.
+	// But Table.ClearSelection just clears the map. I need to implement visual clear in Table or just force refresh.
+	// For now, let's just assume we need to refresh.
+	s.appService.search(s.layout.GetSearch().Field().GetText(), false)
+}
+
+// handleToggleSelectionEvent toggles the selection of the current row.
+func (s *InputService) handleToggleSelectionEvent() {
+	row, _ := s.layout.GetTable().View().GetSelection()
+	if row > 0 { // Skip header
+		s.layout.GetTable().ToggleSelection(row)
+	}
 }
 
 // handleSearchFieldEvent is called when the user presses the search key (/).
@@ -306,6 +333,13 @@ func (s *InputService) closeModal() {
 
 // handleInstallPackageEvent is called when the user presses the installation key (i).
 func (s *InputService) handleInstallPackageEvent() {
+	if len(s.layout.GetTable().GetSelectedRows()) > 0 {
+		s.processSelectedPackages("install", "INSTALL", func(pkg models.Package) error {
+			return s.brewService.InstallPackage(pkg, s.appService.app, s.layout.GetOutput().View())
+		})
+		return
+	}
+
 	row, _ := s.layout.GetTable().View().GetSelection()
 	if row > 0 {
 		info := (*s.appService.filteredPackages)[row-1]
@@ -329,6 +363,13 @@ func (s *InputService) handleInstallPackageEvent() {
 
 // handleRemovePackageEvent is called when the user presses the removal key (r).
 func (s *InputService) handleRemovePackageEvent() {
+	if len(s.layout.GetTable().GetSelectedRows()) > 0 {
+		s.processSelectedPackages("remove", "REMOVE", func(pkg models.Package) error {
+			return s.brewService.RemovePackage(pkg, s.appService.app, s.layout.GetOutput().View())
+		})
+		return
+	}
+
 	row, _ := s.layout.GetTable().View().GetSelection()
 	if row > 0 {
 		info := (*s.appService.filteredPackages)[row-1]
@@ -352,6 +393,13 @@ func (s *InputService) handleRemovePackageEvent() {
 
 // handleUpdatePackageEvent is called when the user presses the update key (u).
 func (s *InputService) handleUpdatePackageEvent() {
+	if len(s.layout.GetTable().GetSelectedRows()) > 0 {
+		s.processSelectedPackages("update", "UPDATE", func(pkg models.Package) error {
+			return s.brewService.UpdatePackage(pkg, s.appService.app, s.layout.GetOutput().View())
+		})
+		return
+	}
+
 	row, _ := s.layout.GetTable().View().GetSelection()
 	if row > 0 {
 		info := (*s.appService.filteredPackages)[row-1]
@@ -397,6 +445,53 @@ type batchOperation struct {
 	skipCondition func(pkg models.Package) bool
 	skipReason    string
 	execute       func(pkg models.Package) error
+}
+
+// processSelectedPackages processes the selected packages from the table.
+func (s *InputService) processSelectedPackages(verb, tag string, action func(models.Package) error) {
+	selectedRows := s.layout.GetTable().GetSelectedRows()
+	if len(selectedRows) == 0 {
+		return
+	}
+
+	packages := make([]models.Package, 0, len(selectedRows))
+	for _, row := range selectedRows {
+		if row > 0 && row-1 < len(*s.appService.filteredPackages) {
+			packages = append(packages, (*s.appService.filteredPackages)[row-1])
+		}
+	}
+
+	if len(packages) == 0 {
+		return
+	}
+
+	s.showModal(fmt.Sprintf("Are you sure you want to %s %d selected packages?", verb, len(packages)), func() {
+		s.closeModal()
+		s.layout.GetOutput().Clear()
+		go func() {
+			total := len(packages)
+			for i, pkg := range packages {
+				s.layout.GetNotifier().ShowWarning(fmt.Sprintf("[%d/%d] %s %s...", i+1, total, verb, pkg.Name))
+				s.appService.app.QueueUpdateDraw(func() {
+					fmt.Fprintf(s.layout.GetOutput().View(), "\n[%s] %s %s...\n", tag, verb, pkg.Name)
+				})
+
+				if err := action(pkg); err != nil {
+					s.layout.GetNotifier().ShowError(fmt.Sprintf("Failed to %s %s", verb, pkg.Name))
+					s.appService.app.QueueUpdateDraw(func() {
+						fmt.Fprintf(s.layout.GetOutput().View(), "[ERROR] Failed to %s %s: %v\n", verb, pkg.Name, err)
+					})
+					continue
+				}
+				s.appService.app.QueueUpdateDraw(func() {
+					fmt.Fprintf(s.layout.GetOutput().View(), "[SUCCESS] %s processed successfully\n", pkg.Name)
+				})
+			}
+			s.layout.GetNotifier().ShowSuccess(fmt.Sprintf("Completed! Processed %d packages", total))
+			s.layout.GetTable().ClearSelection() // Clear selection after batch operation
+			s.appService.forceRefreshResults()
+		}()
+	}, s.closeModal)
 }
 
 // handleBatchPackageOperation processes multiple packages with progress notifications.

@@ -372,6 +372,10 @@ func (d *DataProvider) GetTapPackages(entries []models.BrewfileEntry, existingPa
 	var missingFormulae []string
 
 	for _, entry := range entries {
+		if entry.IsFlatpak {
+			continue
+		}
+
 		// Check if already in existingPackages (from API)
 		if pkg, exists := existingPackages[entry.Name]; exists {
 			result = append(result, pkg)

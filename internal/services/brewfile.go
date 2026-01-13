@@ -180,6 +180,8 @@ func (s *AppService) loadBrewfilePackages() error {
 	for _, entry := range result.Packages {
 		if entry.IsCask {
 			packageMap[entry.Name] = models.PackageTypeCask
+		} else if entry.IsFlatpak {
+			packageMap[entry.Name] = models.PackageTypeFlatpak
 		} else {
 			packageMap[entry.Name] = models.PackageTypeFormula
 		}

@@ -215,7 +215,16 @@ func (s *InputService) handleBack() {
 func (s *InputService) handleToggleSelectionEvent() {
 	row, _ := s.layout.GetTable().View().GetSelection()
 	if row > 0 { // Skip header
-		s.layout.GetTable().ToggleSelection(row)
+		// Determine highlight color based on package status
+		color := tcell.ColorDarkCyan
+		if row-1 < len(*s.appService.filteredPackages) {
+			pkg := (*s.appService.filteredPackages)[row-1]
+			if pkg.LocallyInstalled {
+				color = tcell.ColorDarkRed // Use DarkRed for installed packages to indicate different state
+			}
+		}
+
+		s.layout.GetTable().ToggleSelection(row, color)
 	}
 }
 

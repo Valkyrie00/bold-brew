@@ -46,7 +46,7 @@ func (t *Table) ClearSelection() {
 	t.selectedRows = make(map[int]bool)
 }
 
-func (t *Table) ToggleSelection(row int) {
+func (t *Table) ToggleSelection(row int, highlightColor tcell.Color) {
 	isSelected := false
 	if t.selectedRows[row] {
 		delete(t.selectedRows, row)
@@ -61,7 +61,7 @@ func (t *Table) ToggleSelection(row int) {
 		cell := t.view.GetCell(row, i)
 		if cell != nil {
 			if isSelected {
-				cell.SetBackgroundColor(tcell.ColorDarkCyan)
+				cell.SetBackgroundColor(highlightColor)
 			} else {
 				cell.SetBackgroundColor(t.theme.DefaultBgColor) // Or tcell.ColorDefault
 			}

@@ -47,12 +47,15 @@ func (d *Details) SetContent(pkg *models.Package) {
 		}
 	}
 
-	// Type tag with escaped brackets
-	typeTag := tview.Escape("[F]") // Formula
+	// Type tag
+	typeTag := "🧪" // Formula
 	typeLabel := "Formula"
 	if pkg.Type == models.PackageTypeCask {
-		typeTag = tview.Escape("[C]") // Cask
+		typeTag = "🪣" // Cask
 		typeLabel = "Cask"
+	} else if pkg.Type == models.PackageTypeFlatpak {
+		typeTag = "📦" // Flatpak
+		typeLabel = "Flatpak"
 	}
 
 	// Section separator
@@ -62,13 +65,13 @@ func (d *Details) SetContent(pkg *models.Package) {
 	basicInfo := fmt.Sprintf(
 		"[yellow::b]%s[-]\n%s\n"+
 			"[blue]• Type:[-] %s %s\n"+
+			"[blue]• ID:[-] %s\n"+
 			"[blue]• Name:[-] %s\n"+
-			"[blue]• Display Name:[-] %s\n"+
 			"[blue]• Version:[-] %s\n"+
 			"[blue]• Status:[-] %s\n"+
 			"[blue]• Homepage:[-] %s\n\n"+
 			"[yellow::b]Description[-]\n%s\n%s",
-		pkg.Name, separator,
+		pkg.DisplayName, separator,
 		typeTag, typeLabel,
 		pkg.Name,
 		pkg.DisplayName,

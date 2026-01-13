@@ -121,9 +121,11 @@ func (s *AppService) setResults(data *[]models.Package, scrollToTop bool) {
 
 	for i, info := range *data {
 		// Type cell with escaped brackets
-		typeTag := tview.Escape("[F]") // Formula
+		typeTag := "🧪" // Formula
 		if info.Type == models.PackageTypeCask {
-			typeTag = tview.Escape("[C]") // Cask
+			typeTag = "🪣" // Cask
+		} else if info.Type == models.PackageTypeFlatpak {
+			typeTag = "📦" // Flatpak
 		}
 		typeCell := tview.NewTableCell(typeTag).SetSelectable(true).SetAlign(tview.AlignLeft)
 
@@ -135,7 +137,8 @@ func (s *AppService) setResults(data *[]models.Package, scrollToTop bool) {
 		}
 
 		// Name cell
-		nameCell := tview.NewTableCell(info.Name).SetSelectable(true)
+		// Name cell
+		nameCell := tview.NewTableCell(info.DisplayName).SetSelectable(true)
 		if info.LocallyInstalled {
 			nameCell.SetTextColor(tcell.ColorGreen)
 		}

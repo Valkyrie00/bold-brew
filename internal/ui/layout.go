@@ -71,7 +71,7 @@ func (l *Layout) setupLayout() {
 
 	// Left column with search and table
 	leftColumn := tview.NewFlex().SetDirection(tview.FlexRow).
-		AddItem(filtersArea, 2, 0, false).
+		AddItem(filtersArea, 3, 0, false).
 		AddItem(tableFrame, 0, 4, false)
 
 	// Right column with details and output

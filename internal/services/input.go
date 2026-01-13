@@ -255,9 +255,9 @@ func (s *InputService) updateFilterUI() {
 
 	if cfg, exists := filterConfig[s.appService.activeFilter]; exists {
 		if s.appService.IsBrewfileMode() {
-			s.layout.GetSearch().Field().SetLabel(baseLabel + " - " + cfg.suffix + "): ")
+			s.layout.GetSearch().Field().SetTitle(baseLabel + " - " + cfg.suffix + ")")
 		} else {
-			s.layout.GetSearch().Field().SetLabel("Search (" + cfg.suffix + "): ")
+			s.layout.GetSearch().Field().SetTitle("Search (" + cfg.suffix + ")")
 		}
 		s.layout.GetLegend().SetLegend(s.legendEntries, cfg.keySlug)
 		return
@@ -265,9 +265,9 @@ func (s *InputService) updateFilterUI() {
 
 	// No filter active (FilterNone)
 	if s.appService.IsBrewfileMode() {
-		s.layout.GetSearch().Field().SetLabel(baseLabel + "): ")
+		s.layout.GetSearch().Field().SetTitle(baseLabel + ")")
 	} else {
-		s.layout.GetSearch().Field().SetLabel("Search (All): ")
+		s.layout.GetSearch().Field().SetTitle("Search (All)")
 	}
 }
 

@@ -106,6 +106,7 @@ func (s *FlatpakService) GetRemoteMetadata() (map[string]models.Package, error) 
 				DisplayName: name,
 				Version:     version,
 				Description: desc,
+				Type:        models.PackageTypeFlatpak,
 			}
 		}
 	}

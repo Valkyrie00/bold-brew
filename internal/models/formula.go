@@ -28,7 +28,7 @@ type Formula struct {
 	OptionalDependencies    []interface{} `json:"optional_dependencies"`
 	//UsesFromMacOS           []string              `json:"uses_from_macos"`
 	//UsesFromMacOSBounds     []UsesFromMacOSBounds `json:"uses_from_macos_bounds"`
-	Requirements           []interface{}      `json:"requirements"`
+	Requirements           []Requirement      `json:"requirements"`
 	ConflictsWith          []interface{}      `json:"conflicts_with"`
 	ConflictsWithReasons   []interface{}      `json:"conflicts_with_reasons"`
 	LinkOverwrite          []interface{}      `json:"link_overwrite"`

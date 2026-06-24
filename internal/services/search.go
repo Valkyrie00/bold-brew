@@ -33,6 +33,7 @@ func (s *AppService) search(searchText string, scrollToTop bool) {
 		searchTextLower := strings.ToLower(searchText)
 		for _, info := range *sourceList {
 			if strings.Contains(strings.ToLower(info.Name), searchTextLower) ||
+				strings.Contains(strings.ToLower(info.DisplayName), searchTextLower) ||
 				strings.Contains(strings.ToLower(info.Description), searchTextLower) {
 				if !uniquePackages[info.Name] {
 					filteredList = append(filteredList, info)
@@ -121,11 +122,11 @@ func (s *AppService) setResults(data *[]models.Package, scrollToTop bool) {
 
 	for i, info := range *data {
 		// Type cell with escaped brackets
-		typeTag := "🧪" // Formula
+		typeTag := tview.Escape("[F]") // Formula
 		if info.Type == models.PackageTypeCask {
-			typeTag = "🪣" // Cask
+			typeTag = tview.Escape("[C]") // Cask
 		} else if info.Type == models.PackageTypeFlatpak {
-			typeTag = "📦" // Flatpak
+			typeTag = tview.Escape("[P]") // Flatpak
 		}
 		typeCell := tview.NewTableCell(typeTag).SetSelectable(true).SetAlign(tview.AlignLeft)
 
@@ -137,8 +138,7 @@ func (s *AppService) setResults(data *[]models.Package, scrollToTop bool) {
 		}
 
 		// Name cell
-		// Name cell
-		nameCell := tview.NewTableCell(info.DisplayName).SetSelectable(true)
+		nameCell := tview.NewTableCell(info.Name).SetSelectable(true)
 		if info.LocallyInstalled {
 			nameCell.SetTextColor(tcell.ColorGreen)
 		}

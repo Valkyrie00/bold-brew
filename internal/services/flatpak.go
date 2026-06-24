@@ -2,11 +2,8 @@ package services
 
 import (
 	"bbrew/internal/models"
-	"fmt"
-	"io"
 	"os/exec"
 	"strings"
-	"sync"
 
 	"github.com/rivo/tview"
 )
@@ -20,10 +17,13 @@ type FlatpakServiceInterface interface {
 	InstallPackage(info models.Package, app *tview.Application, outputView *tview.TextView) error
 	RemovePackage(info models.Package, app *tview.Application, outputView *tview.TextView) error
 	UpdatePackage(info models.Package, app *tview.Application, outputView *tview.TextView) error
+	UpdateAllPackages(app *tview.Application, outputView *tview.TextView) error
 }
 
 // FlatpakService implements FlatpakServiceInterface.
-type FlatpakService struct{}
+type FlatpakService struct {
+	cachedMetadata map[string]models.Package
+}
 
 // NewFlatpakService creates a new instance of FlatpakService.
 var NewFlatpakService = func() FlatpakServiceInterface {
@@ -36,43 +36,47 @@ func (s *FlatpakService) IsFlatpakInstalled() bool {
 	return err == nil
 }
 
-// EnsureFlathubRemote checks if the flathub remote exists, and adds it if missing.
+// EnsureFlathubRemote ensures flathub is available as a user-level remote.
+// Even if flathub exists at system level, --user installs need a user-level remote.
 func (s *FlatpakService) EnsureFlathubRemote(app *tview.Application, outputView *tview.TextView) error {
-	// Check if flathub exists
-	checkCmd := exec.Command("flatpak", "remote-list")
+	checkCmd := exec.Command("flatpak", "remote-list", "--user")
 	output, err := checkCmd.Output()
 	if err == nil && strings.Contains(string(output), "flathub") {
-		return nil // Already exists
+		return nil
 	}
 
-	// Add flathub
-	addCmd := exec.Command("flatpak", "remote-add", "--if-not-exists", "flathub", "https://dl.flathub.org/repo/flathub.flatpakrepo")
+	addCmd := exec.Command("flatpak", "remote-add", "--user", "--if-not-exists", "flathub", "https://dl.flathub.org/repo/flathub.flatpakrepo")
 	return s.executeCommand(app, addCmd, outputView)
 }
 
-// GetInstalledPackages returns a map of installed Flatpak application IDs.
+// GetInstalledPackages returns a map of installed Flatpak application IDs (both user and system).
 func (s *FlatpakService) GetInstalledPackages() (map[string]bool, error) {
-	cmd := exec.Command("flatpak", "list", "--app", "--columns=application")
-	output, err := cmd.Output()
-	if err != nil {
-		return nil, err
-	}
-
 	installed := make(map[string]bool)
-	lines := strings.Split(strings.TrimSpace(string(output)), "\n")
-	for _, line := range lines {
-		if id := strings.TrimSpace(line); id != "" {
-			installed[id] = true
+
+	for _, scope := range []string{"--user", "--system"} {
+		cmd := exec.Command("flatpak", "list", scope, "--app", "--columns=application") // #nosec G204 - scope is a hardcoded constant
+		output, err := cmd.Output()
+		if err != nil {
+			continue
+		}
+		for _, line := range strings.Split(strings.TrimSpace(string(output)), "\n") {
+			if id := strings.TrimSpace(line); id != "" {
+				installed[id] = true
+			}
 		}
 	}
+
 	return installed, nil
 }
 
 // GetRemoteMetadata fetches metadata (name, version, description) for all applications in Flathub.
-// This is an expensive operation so it should be used sparingly or cached at the app level.
+// Results are cached in memory to avoid repeated expensive `flatpak remote-ls` calls.
 func (s *FlatpakService) GetRemoteMetadata() (map[string]models.Package, error) {
-	// Fetch columns: application ID, name, version, description
-	cmd := exec.Command("flatpak", "remote-ls", "flathub", "--app", "--columns=application,name,version,description")
+	if s.cachedMetadata != nil {
+		return s.cachedMetadata, nil
+	}
+
+	cmd := exec.Command("flatpak", "remote-ls", "--user", "flathub", "--app", "--columns=application,name,version,description")
 	output, err := cmd.Output()
 	if err != nil {
 		return nil, err
@@ -97,9 +101,6 @@ func (s *FlatpakService) GetRemoteMetadata() (map[string]models.Package, error) 
 			if len(parts) >= 4 {
 				desc = strings.TrimSpace(parts[3])
 			}
-			
-			// Some rows might have missing fields that flatpak leaves as empty strings or skips?
-			// Checking actual output suggests it tabs empty fields correctly.
 
 			metadata[id] = models.Package{
 				Name:        id,
@@ -110,110 +111,36 @@ func (s *FlatpakService) GetRemoteMetadata() (map[string]models.Package, error) 
 			}
 		}
 	}
+
+	s.cachedMetadata = metadata
 	return metadata, nil
 }
 
-
 // InstallPackage installs a Flatpak from Flathub.
 func (s *FlatpakService) InstallPackage(info models.Package, app *tview.Application, outputView *tview.TextView) error {
-	// flatpak install -y flathub <app-id>
-	cmd := exec.Command("flatpak", "install", "-y", "flathub", info.Name)
+	cmd := exec.Command("flatpak", "install", "--user", "-y", "flathub", info.Name) // #nosec G204
 	return s.executeCommand(app, cmd, outputView)
 }
 
 // RemovePackage uninstalls a Flatpak.
 func (s *FlatpakService) RemovePackage(info models.Package, app *tview.Application, outputView *tview.TextView) error {
-	// flatpak uninstall -y <app-id>
-	cmd := exec.Command("flatpak", "uninstall", "-y", info.Name)
+	cmd := exec.Command("flatpak", "uninstall", "--user", "-y", info.Name) // #nosec G204
 	return s.executeCommand(app, cmd, outputView)
 }
 
 // UpdatePackage updates a specific Flatpak.
 func (s *FlatpakService) UpdatePackage(info models.Package, app *tview.Application, outputView *tview.TextView) error {
-	// flatpak update -y <app-id>
-	cmd := exec.Command("flatpak", "update", "-y", info.Name)
+	cmd := exec.Command("flatpak", "update", "--user", "-y", info.Name) // #nosec G204
+	return s.executeCommand(app, cmd, outputView)
+}
+
+// UpdateAllPackages updates all installed user-level Flatpak applications.
+func (s *FlatpakService) UpdateAllPackages(app *tview.Application, outputView *tview.TextView) error {
+	cmd := exec.Command("flatpak", "update", "--user", "-y") // #nosec G204
 	return s.executeCommand(app, cmd, outputView)
 }
 
 // executeCommand runs a command and captures its output, updating the provided TextView.
-// Duplicated from BrewService for modularity as requested (no shared base yet).
-func (s *FlatpakService) executeCommand(
-	app *tview.Application,
-	cmd *exec.Cmd,
-	outputView *tview.TextView,
-) error {
-	stdoutPipe, stdoutWriter := io.Pipe()
-	stderrPipe, stderrWriter := io.Pipe()
-	cmd.Stdout = stdoutWriter
-	cmd.Stderr = stderrWriter
-
-	if err := cmd.Start(); err != nil {
-		return err
-	}
-
-	var wg sync.WaitGroup
-	wg.Add(3)
-
-	cmdErrCh := make(chan error, 1)
-
-	go func() {
-		defer wg.Done()
-		defer stdoutWriter.Close()
-		defer stderrWriter.Close()
-		cmdErrCh <- cmd.Wait()
-	}()
-
-	go func() {
-		defer wg.Done()
-		defer stdoutPipe.Close()
-		buf := make([]byte, 1024)
-		for {
-			n, err := stdoutPipe.Read(buf)
-			if n > 0 {
-				output := make([]byte, n)
-				copy(output, buf[:n])
-				app.QueueUpdateDraw(func() {
-					_, _ = outputView.Write(output)
-					outputView.ScrollToEnd()
-				})
-			}
-			if err != nil {
-				if err != io.EOF {
-					app.QueueUpdateDraw(func() {
-						fmt.Fprintf(outputView, "\nError: %v\n", err)
-					})
-				}
-				break
-			}
-		}
-	}()
-
-	go func() {
-		defer wg.Done()
-		defer stderrPipe.Close()
-		buf := make([]byte, 1024)
-		for {
-			n, err := stderrPipe.Read(buf)
-			if n > 0 {
-				output := make([]byte, n)
-				copy(output, buf[:n])
-				app.QueueUpdateDraw(func() {
-					_, _ = outputView.Write(output)
-					outputView.ScrollToEnd()
-				})
-			}
-			if err != nil {
-				if err != io.EOF {
-					app.QueueUpdateDraw(func() {
-						fmt.Fprintf(outputView, "\nError: %v\n", err)
-					})
-				}
-				break
-			}
-		}
-	}()
-
-	wg.Wait()
-
-	return <-cmdErrCh
+func (s *FlatpakService) executeCommand(app *tview.Application, cmd *exec.Cmd, outputView *tview.TextView) error {
+	return ExecuteCommand(app, cmd, outputView)
 }

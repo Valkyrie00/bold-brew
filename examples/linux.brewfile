@@ -1,0 +1,22 @@
+# Linux Brewfile with Flatpak support
+# Usage: bbrew -f examples/linux.brewfile
+# Requires: Linuxbrew + Flatpak (flatpak entries are skipped if not installed)
+
+# Command-line utilities
+brew "wget"
+brew "curl"
+brew "htop"
+brew "jq"
+brew "ripgrep"
+
+# Development tools
+brew "git"
+brew "node"
+brew "go"
+
+# Flatpak applications (Linux desktop apps from Flathub)
+flatpak "com.spotify.Client"
+flatpak "org.mozilla.firefox"
+flatpak "com.visualstudio.code"
+flatpak "org.gimp.GIMP"
+flatpak "org.videolan.VLC"

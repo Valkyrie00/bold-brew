@@ -89,6 +89,21 @@ func downloadBrewfile(url string) (string, error) {
 	return filepath.Clean(tempFile.Name()), nil
 }
 
+// extractQuotedValue extracts the first quoted string from a line.
+// Handles lines like: brew "git", restart_service: true # some "note"
+// by finding the first opening quote and its immediately closing pair.
+func extractQuotedValue(line string) (string, bool) {
+	start := strings.Index(line, "\"")
+	if start == -1 {
+		return "", false
+	}
+	end := strings.Index(line[start+1:], "\"")
+	if end == -1 {
+		return "", false
+	}
+	return line[start+1 : start+1+end], true
+}
+
 // parseBrewfileWithTaps parses a Brewfile and returns taps and packages separately.
 func parseBrewfileWithTaps(filepath string) (*models.BrewfileResult, error) {
 	// #nosec G304 -- filepath is user-provided via CLI flag
@@ -106,55 +121,37 @@ func parseBrewfileWithTaps(filepath string) (*models.BrewfileResult, error) {
 	for _, line := range lines {
 		line = strings.TrimSpace(line)
 
-		// Skip empty lines and comments
 		if line == "" || strings.HasPrefix(line, "#") {
 			continue
 		}
 
-		// Parse tap entries: tap "user/repo"
 		if strings.HasPrefix(line, "tap ") {
-			start := strings.Index(line, "\"")
-			end := strings.LastIndex(line, "\"")
-			if start != -1 && end != -1 && start < end {
-				tapName := line[start+1 : end]
-				result.Taps = append(result.Taps, tapName)
+			if name, ok := extractQuotedValue(line); ok {
+				result.Taps = append(result.Taps, name)
 			}
 		}
 
-		// Parse brew entries: brew "package-name"
 		if strings.HasPrefix(line, "brew ") {
-			start := strings.Index(line, "\"")
-			end := strings.LastIndex(line, "\"")
-			if start != -1 && end != -1 && start < end {
-				packageName := line[start+1 : end]
+			if name, ok := extractQuotedValue(line); ok {
 				result.Packages = append(result.Packages, models.BrewfileEntry{
-					Name:   packageName,
-					IsCask: false,
+					Name: name,
 				})
 			}
 		}
 
-		// Parse cask entries: cask "package-name"
 		if strings.HasPrefix(line, "cask ") {
-			start := strings.Index(line, "\"")
-			end := strings.LastIndex(line, "\"")
-			if start != -1 && end != -1 && start < end {
-				packageName := line[start+1 : end]
+			if name, ok := extractQuotedValue(line); ok {
 				result.Packages = append(result.Packages, models.BrewfileEntry{
-					Name:   packageName,
+					Name:   name,
 					IsCask: true,
 				})
 			}
 		}
 
-		// Parse flatpak entries: flatpak "app.id"
 		if strings.HasPrefix(line, "flatpak ") {
-			start := strings.Index(line, "\"")
-			end := strings.LastIndex(line, "\"")
-			if start != -1 && end != -1 && start < end {
-				packageName := line[start+1 : end]
+			if name, ok := extractQuotedValue(line); ok {
 				result.Packages = append(result.Packages, models.BrewfileEntry{
-					Name:      packageName,
+					Name:      name,
 					IsFlatpak: true,
 				})
 			}
@@ -220,14 +217,11 @@ func (s *AppService) loadBrewfilePackages() error {
 
 		flatpakInstalledMap, err := s.flatpakService.GetInstalledPackages()
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Warning: failed to get installed flatpaks: %v\n", err)
 			flatpakInstalledMap = make(map[string]bool)
 		}
 
-		// Fetch metadata for richer display (Name, Version, Description)
 		flatpakMetadata, err := s.flatpakService.GetRemoteMetadata()
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Warning: failed to get flatpak metadata: %v\n", err)
 			flatpakMetadata = make(map[string]models.Package)
 		}
 
@@ -238,14 +232,6 @@ func (s *AppService) loadBrewfilePackages() error {
 			}
 			*s.brewfilePackages = append(*s.brewfilePackages, pkg)
 			foundPackages[pkg.Name] = true
-		}
-	} else {
-		// Warn if Flatpak entries exist but binary is missing
-		for _, entry := range result.Packages {
-			if entry.IsFlatpak {
-				fmt.Fprintln(os.Stderr, "Warning: Flatpak entries found but 'flatpak' binary is not installed.")
-				break
-			}
 		}
 	}
 

@@ -402,11 +402,20 @@ func (s *InputService) handleUpdateAllPackagesEvent() {
 		s.closeModal()
 		s.layout.GetOutput().Clear()
 		go func() {
-			s.layout.GetNotifier().ShowWarning("Updating all Packages...")
+			s.layout.GetNotifier().ShowWarning("Updating all Homebrew packages...")
 			if err := s.brewService.UpdateAllPackages(s.appService.app, s.layout.GetOutput().View()); err != nil {
-				s.layout.GetNotifier().ShowError("Failed to update all Packages")
+				s.layout.GetNotifier().ShowError("Failed to update Homebrew packages")
 				return
 			}
+
+			if s.flatpakService.IsFlatpakInstalled() {
+				s.layout.GetNotifier().ShowWarning("Updating all Flatpak packages...")
+				if err := s.flatpakService.UpdateAllPackages(s.appService.app, s.layout.GetOutput().View()); err != nil {
+					s.layout.GetNotifier().ShowError("Failed to update Flatpak packages")
+					return
+				}
+			}
+
 			s.layout.GetNotifier().ShowSuccess("Updated all Packages")
 			s.appService.forceRefreshResults()
 		}()

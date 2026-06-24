@@ -15,7 +15,7 @@ import (
 
 var (
 	AppName    = "Bold Brew"
-	AppVersion = "0.0.1"
+	AppVersion = "2.3.0-rc1"
 )
 
 type AppServiceInterface interface {

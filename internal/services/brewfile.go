@@ -249,10 +249,10 @@ func (s *AppService) loadBrewfilePackages() error {
 		}
 	}
 
-	// Collect entries not found in main list (tap packages)
+	// Collect entries not found in main list (tap packages, excluding flatpak)
 	var tapEntries []models.BrewfileEntry
 	for _, entry := range result.Packages {
-		if !foundPackages[entry.Name] {
+		if !foundPackages[entry.Name] && !entry.IsFlatpak {
 			tapEntries = append(tapEntries, entry)
 		}
 	}

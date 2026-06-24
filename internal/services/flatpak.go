@@ -23,7 +23,9 @@ type FlatpakServiceInterface interface {
 }
 
 // FlatpakService implements FlatpakServiceInterface.
-type FlatpakService struct{}
+type FlatpakService struct {
+	cachedMetadata map[string]models.Package
+}
 
 // NewFlatpakService creates a new instance of FlatpakService.
 var NewFlatpakService = func() FlatpakServiceInterface {
@@ -69,9 +71,12 @@ func (s *FlatpakService) GetInstalledPackages() (map[string]bool, error) {
 }
 
 // GetRemoteMetadata fetches metadata (name, version, description) for all applications in Flathub.
-// This is an expensive operation so it should be used sparingly or cached at the app level.
+// Results are cached in memory to avoid repeated expensive `flatpak remote-ls` calls.
 func (s *FlatpakService) GetRemoteMetadata() (map[string]models.Package, error) {
-	// Fetch columns: application ID, name, version, description
+	if s.cachedMetadata != nil {
+		return s.cachedMetadata, nil
+	}
+
 	cmd := exec.Command("flatpak", "remote-ls", "flathub", "--app", "--columns=application,name,version,description")
 	output, err := cmd.Output()
 	if err != nil {
@@ -97,9 +102,6 @@ func (s *FlatpakService) GetRemoteMetadata() (map[string]models.Package, error) 
 			if len(parts) >= 4 {
 				desc = strings.TrimSpace(parts[3])
 			}
-			
-			// Some rows might have missing fields that flatpak leaves as empty strings or skips?
-			// Checking actual output suggests it tabs empty fields correctly.
 
 			metadata[id] = models.Package{
 				Name:        id,
@@ -110,9 +112,10 @@ func (s *FlatpakService) GetRemoteMetadata() (map[string]models.Package, error) 
 			}
 		}
 	}
+
+	s.cachedMetadata = metadata
 	return metadata, nil
 }
-
 
 // InstallPackage installs a Flatpak from Flathub.
 func (s *FlatpakService) InstallPackage(info models.Package, app *tview.Application, outputView *tview.TextView) error {

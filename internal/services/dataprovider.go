@@ -481,6 +481,10 @@ func (d *DataProvider) fetchPackagesInfo(names []string, isCask bool) map[string
 				c := cask
 				pkg := models.NewPackageFromCask(&c)
 				result[c.Token] = pkg
+				// Also map FullToken if available (e.g. user/repo/token)
+				if c.FullToken != "" && c.FullToken != c.Token {
+					result[c.FullToken] = pkg
+				}
 			}
 		}
 	} else {
@@ -490,6 +494,10 @@ func (d *DataProvider) fetchPackagesInfo(names []string, isCask bool) map[string
 				f := formula
 				pkg := models.NewPackageFromFormula(&f)
 				result[f.Name] = pkg
+				// Also map FullName if available (e.g. user/repo/name)
+				if f.FullName != "" && f.FullName != f.Name {
+					result[f.FullName] = pkg
+				}
 			}
 		}
 	}

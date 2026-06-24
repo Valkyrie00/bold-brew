@@ -50,7 +50,13 @@ func main() {
 	}
 
 	// Initialize app service
-	appService := services.NewAppService()
+	var appService services.AppServiceInterface = services.NewAppService()
+
+	// Ensure cleanup runs on exit (if appService implements Cleanup)
+	if s, ok := appService.(*services.AppService); ok {
+		defer s.Cleanup()
+	}
+
 	// Configure Brewfile mode if path was provided
 	if *brewfilePath != "" {
 		appService.SetBrewfilePath(*brewfilePath)

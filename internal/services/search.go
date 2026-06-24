@@ -122,11 +122,14 @@ func (s *AppService) setResults(data *[]models.Package, scrollToTop bool) {
 
 	for i, info := range *data {
 		// Type cell with escaped brackets
-		typeTag := tview.Escape("[F]") // Formula
-		if info.Type == models.PackageTypeCask {
-			typeTag = tview.Escape("[C]") // Cask
-		} else if info.Type == models.PackageTypeFlatpak {
-			typeTag = tview.Escape("[P]") // Flatpak
+		var typeTag string
+		switch info.Type {
+		case models.PackageTypeCask:
+			typeTag = tview.Escape("[C]")
+		case models.PackageTypeFlatpak:
+			typeTag = tview.Escape("[P]")
+		default:
+			typeTag = tview.Escape("[F]")
 		}
 		typeCell := tview.NewTableCell(typeTag).SetSelectable(true).SetAlign(tview.AlignLeft)
 

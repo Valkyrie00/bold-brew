@@ -48,14 +48,17 @@ func (d *Details) SetContent(pkg *models.Package) {
 	}
 
 	// Type tag with escaped brackets
-	typeTag := tview.Escape("[F]") // Formula
-	typeLabel := "Formula"
-	if pkg.Type == models.PackageTypeCask {
-		typeTag = tview.Escape("[C]") // Cask
+	var typeTag, typeLabel string
+	switch pkg.Type {
+	case models.PackageTypeCask:
+		typeTag = tview.Escape("[C]")
 		typeLabel = "Cask"
-	} else if pkg.Type == models.PackageTypeFlatpak {
-		typeTag = tview.Escape("[P]") // Flatpak
+	case models.PackageTypeFlatpak:
+		typeTag = tview.Escape("[P]")
 		typeLabel = "Flatpak"
+	default:
+		typeTag = tview.Escape("[F]")
+		typeLabel = "Formula"
 	}
 
 	// Section separator

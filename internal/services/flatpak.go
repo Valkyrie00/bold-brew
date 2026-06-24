@@ -38,17 +38,16 @@ func (s *FlatpakService) IsFlatpakInstalled() bool {
 	return err == nil
 }
 
-// EnsureFlathubRemote checks if the flathub remote exists, and adds it if missing.
+// EnsureFlathubRemote ensures flathub is available as a user-level remote.
+// Even if flathub exists at system level, --user installs need a user-level remote.
 func (s *FlatpakService) EnsureFlathubRemote(app *tview.Application, outputView *tview.TextView) error {
-	// Check if flathub exists
-	checkCmd := exec.Command("flatpak", "remote-list")
+	checkCmd := exec.Command("flatpak", "remote-list", "--user")
 	output, err := checkCmd.Output()
 	if err == nil && strings.Contains(string(output), "flathub") {
-		return nil // Already exists
+		return nil
 	}
 
-	// Add flathub
-	addCmd := exec.Command("flatpak", "remote-add", "--if-not-exists", "flathub", "https://dl.flathub.org/repo/flathub.flatpakrepo")
+	addCmd := exec.Command("flatpak", "remote-add", "--user", "--if-not-exists", "flathub", "https://dl.flathub.org/repo/flathub.flatpakrepo")
 	return s.executeCommand(app, addCmd, outputView)
 }
 
@@ -77,7 +76,7 @@ func (s *FlatpakService) GetRemoteMetadata() (map[string]models.Package, error) 
 		return s.cachedMetadata, nil
 	}
 
-	cmd := exec.Command("flatpak", "remote-ls", "flathub", "--app", "--columns=application,name,version,description")
+	cmd := exec.Command("flatpak", "remote-ls", "--user", "flathub", "--app", "--columns=application,name,version,description")
 	output, err := cmd.Output()
 	if err != nil {
 		return nil, err
@@ -119,22 +118,19 @@ func (s *FlatpakService) GetRemoteMetadata() (map[string]models.Package, error) 
 
 // InstallPackage installs a Flatpak from Flathub.
 func (s *FlatpakService) InstallPackage(info models.Package, app *tview.Application, outputView *tview.TextView) error {
-	// flatpak install -y flathub <app-id>
-	cmd := exec.Command("flatpak", "install", "-y", "flathub", info.Name)
+	cmd := exec.Command("flatpak", "install", "--user", "-y", "flathub", info.Name)
 	return s.executeCommand(app, cmd, outputView)
 }
 
 // RemovePackage uninstalls a Flatpak.
 func (s *FlatpakService) RemovePackage(info models.Package, app *tview.Application, outputView *tview.TextView) error {
-	// flatpak uninstall -y <app-id>
-	cmd := exec.Command("flatpak", "uninstall", "-y", info.Name)
+	cmd := exec.Command("flatpak", "uninstall", "--user", "-y", info.Name)
 	return s.executeCommand(app, cmd, outputView)
 }
 
 // UpdatePackage updates a specific Flatpak.
 func (s *FlatpakService) UpdatePackage(info models.Package, app *tview.Application, outputView *tview.TextView) error {
-	// flatpak update -y <app-id>
-	cmd := exec.Command("flatpak", "update", "-y", info.Name)
+	cmd := exec.Command("flatpak", "update", "--user", "-y", info.Name)
 	return s.executeCommand(app, cmd, outputView)
 }
 

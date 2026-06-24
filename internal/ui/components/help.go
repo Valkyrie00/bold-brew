@@ -87,20 +87,22 @@ func (h *HelpScreen) buildHelpContent() string {
 	sb.WriteString(h.formatSection("NAVIGATION"))
 	sb.WriteString(h.formatKey("↑/↓, j/k", "Navigate list"))
 	sb.WriteString(h.formatKey("/", "Focus search"))
+	sb.WriteString(h.formatKey("Shift+T", "Sort by Type"))
 	sb.WriteString(h.formatKey("Esc", "Back to table"))
 	sb.WriteString(h.formatKey("q", "Quit"))
 	sb.WriteString("\n")
 
 	// Filters section
 	sb.WriteString(h.formatSection("FILTERS"))
-	sb.WriteString(h.formatKey("f", "Toggle installed"))
-	sb.WriteString(h.formatKey("o", "Toggle outdated"))
-	sb.WriteString(h.formatKey("l", "Toggle leaves"))
-	sb.WriteString(h.formatKey("c", "Toggle casks"))
+	sb.WriteString(h.formatKey("Shift+F", "Toggle installed"))
+	sb.WriteString(h.formatKey("Shift+O", "Toggle outdated"))
+	sb.WriteString(h.formatKey("Shift+L", "Toggle leaves"))
+	sb.WriteString(h.formatKey("Shift+C", "Toggle casks"))
 	sb.WriteString("\n")
 
 	// Actions section
 	sb.WriteString(h.formatSection("ACTIONS"))
+	sb.WriteString(h.formatKey("o", "Open Homepage"))
 	sb.WriteString(h.formatKey("i", "Install selected"))
 	sb.WriteString(h.formatKey("u", "Update selected"))
 	sb.WriteString(h.formatKey("r", "Remove selected"))

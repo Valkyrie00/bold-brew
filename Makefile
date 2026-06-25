@@ -13,7 +13,7 @@ BUILD_GOOS ?= $(shell go env GOOS)
 BUILD_GOARCH ?= $(shell go env GOARCH)
 
 # Container runtime command
-CONTAINER_RUN = podman run --rm -v $(PWD):/app $(CONTAINER_IMAGE_NAME)
+CONTAINER_RUN = podman run --rm -v $(PWD):/app:Z $(CONTAINER_IMAGE_NAME)
 
 ##############################
 # HELP

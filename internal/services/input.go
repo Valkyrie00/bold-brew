@@ -309,7 +309,7 @@ func (s *InputService) closeModal() {
 // handleInstallPackageEvent is called when the user presses the installation key (i).
 func (s *InputService) handleInstallPackageEvent() {
 	row, _ := s.layout.GetTable().View().GetSelection()
-	if row > 0 {
+	if row > 0 && row-1 < len(*s.appService.filteredPackages) {
 		info := (*s.appService.filteredPackages)[row-1]
 		s.showModal(
 			fmt.Sprintf("Are you sure you want to install the package: %s?", info.Name),
@@ -339,7 +339,7 @@ func (s *InputService) handleInstallPackageEvent() {
 // handleRemovePackageEvent is called when the user presses the removal key (r).
 func (s *InputService) handleRemovePackageEvent() {
 	row, _ := s.layout.GetTable().View().GetSelection()
-	if row > 0 {
+	if row > 0 && row-1 < len(*s.appService.filteredPackages) {
 		info := (*s.appService.filteredPackages)[row-1]
 		s.showModal(
 			fmt.Sprintf("Are you sure you want to remove the package: %s?", info.Name),
@@ -369,7 +369,7 @@ func (s *InputService) handleRemovePackageEvent() {
 // handleUpdatePackageEvent is called when the user presses the update key (u).
 func (s *InputService) handleUpdatePackageEvent() {
 	row, _ := s.layout.GetTable().View().GetSelection()
-	if row > 0 {
+	if row > 0 && row-1 < len(*s.appService.filteredPackages) {
 		info := (*s.appService.filteredPackages)[row-1]
 		s.showModal(
 			fmt.Sprintf("Are you sure you want to update the package: %s?", info.Name),

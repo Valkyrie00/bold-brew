@@ -53,7 +53,9 @@ type AppService struct {
 
 // NewAppService creates a new instance of AppService with initialized components.
 var NewAppService = func() AppServiceInterface {
-	app := tview.NewApplication()
+	app := tview.NewApplication().
+		EnableMouse(true). // Capture mouse events directly to prevent middle-click paste from injecting key actions
+		EnablePaste(true)  // Use bracketed paste mode so pasted text is handled as a single event
 	themeService := theme.NewTheme()
 	layout := ui.NewLayout(themeService)
 

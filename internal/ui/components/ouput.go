@@ -2,6 +2,7 @@ package components
 
 import (
 	"bbrew/internal/ui/theme"
+
 	"github.com/rivo/tview"
 )
 
@@ -20,10 +21,7 @@ func NewOutput(theme *theme.Theme) *Output {
 	output.view.SetScrollable(true)
 	output.view.SetWrap(true)
 	output.view.SetTextAlign(tview.AlignLeft)
-	output.view.SetBorder(true)
-	output.view.SetTitle("Output")
-	output.view.SetTitleColor(theme.TitleColor)
-	output.view.SetTitleAlign(tview.AlignLeft)
+	output.view.SetBorder(false)
 	output.view.SetBorderPadding(0, 0, 1, 1)
 	return output
 }

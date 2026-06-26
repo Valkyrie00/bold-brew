@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 	"golang.org/x/text/language"
 	"golang.org/x/text/message"
@@ -24,11 +25,20 @@ func NewDetails(theme *theme.Theme) *Details {
 
 	details.view.SetDynamicColors(true)
 	details.view.SetTextAlign(tview.AlignLeft)
-	details.view.SetTitle("Details")
-	details.view.SetTitleColor(theme.TitleColor)
-	details.view.SetTitleAlign(tview.AlignLeft)
-	details.view.SetBorder(true)
-	details.view.SetBorderPadding(0, 0, 1, 1)
+	details.view.SetBorder(false)
+	details.view.SetBorderPadding(0, 0, 3, 1)
+	details.view.SetDrawFunc(func(screen tcell.Screen, x, y, width, height int) (int, int, int, int) {
+		borderStyle := tcell.StyleDefault.Foreground(tcell.ColorWhite)
+		titleStyle := tcell.StyleDefault.Foreground(theme.TitleColor)
+		for row := y; row < y+height; row++ {
+			screen.SetContent(x, row, tview.Borders.Vertical, nil, borderStyle)
+		}
+		title := "Details"
+		for i, ch := range title {
+			screen.SetContent(x+2+i, y, ch, nil, titleStyle)
+		}
+		return x + 3, y + 2, width - 3, height - 2
+	})
 	return details
 }
 

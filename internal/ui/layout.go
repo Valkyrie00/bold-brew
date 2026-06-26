@@ -74,10 +74,9 @@ func (l *Layout) setupLayout() {
 		AddItem(filtersArea, 2, 0, false).
 		AddItem(tableFrame, 0, 4, false)
 
-	// Right column with details and output
+	// Right column with details only
 	rightColumn := tview.NewFlex().SetDirection(tview.FlexRow).
-		AddItem(l.details.View(), 0, 2, false).
-		AddItem(l.output.View(), 0, 1, false)
+		AddItem(l.details.View(), 0, 1, false)
 
 	// Central content (left 75%, right 25%)
 	mainContent := tview.NewFlex().SetDirection(tview.FlexColumn).
@@ -88,14 +87,15 @@ func (l *Layout) setupLayout() {
 	footerContent := tview.NewFlex().SetDirection(tview.FlexRow).
 		AddItem(l.legend.View(), 0, 1, false)
 
-	// Final layout
+	// Final layout: header, main content, output (full width), footer
 	l.mainContent.
-		SetRows(1, 0, 1).
+		SetRows(1, 0, 5, 1).
 		SetColumns(0).
 		SetBorders(true).
 		AddItem(headerContent, 0, 0, 1, 1, 0, 0, false).
 		AddItem(mainContent, 1, 0, 1, 1, 0, 0, true).
-		AddItem(footerContent, 2, 0, 1, 1, 0, 0, false)
+		AddItem(l.output.View(), 2, 0, 1, 1, 0, 0, false).
+		AddItem(footerContent, 3, 0, 1, 1, 0, 0, false)
 }
 
 func (l *Layout) Setup() {

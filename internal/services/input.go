@@ -52,6 +52,7 @@ type InputService struct {
 	ActionFilterOutdated  *InputAction
 	ActionFilterLeaves    *InputAction
 	ActionFilterCasks     *InputAction
+	ActionSort            *InputAction
 	ActionInstall         *InputAction
 	ActionUpdate          *InputAction
 	ActionRemove          *InputAction
@@ -91,6 +92,10 @@ var NewInputService = func(appService *AppService, brewService BrewServiceInterf
 	s.ActionFilterCasks = &InputAction{
 		Key: tcell.KeyRune, Rune: 'c', KeySlug: "c", Name: "Casks",
 		Action: s.handleFilterCasksEvent, HideFromLegend: true,
+	}
+	s.ActionSort = &InputAction{
+		Key: tcell.KeyRune, Rune: 's', KeySlug: "s", Name: "Sort",
+		Action: s.handleSortEvent,
 	}
 	s.ActionInstall = &InputAction{
 		Key: tcell.KeyRune, Rune: 'i', KeySlug: "i", Name: "Install",
@@ -132,8 +137,8 @@ var NewInputService = func(appService *AppService, brewService BrewServiceInterf
 	// Build keyActions slice (InstallAll/RemoveAll added dynamically in Brewfile mode)
 	s.keyActions = []*InputAction{
 		s.ActionSearch, s.ActionFilterInstalled, s.ActionFilterOutdated,
-		s.ActionFilterLeaves, s.ActionFilterCasks, s.ActionInstall,
-		s.ActionUpdate, s.ActionRemove, s.ActionUpdateAll,
+		s.ActionFilterLeaves, s.ActionFilterCasks, s.ActionSort,
+		s.ActionInstall, s.ActionUpdate, s.ActionRemove, s.ActionUpdateAll,
 		s.ActionHelp, s.ActionBack, s.ActionQuit,
 	}
 
@@ -298,6 +303,12 @@ func (s *InputService) handleFilterLeavesEvent() {
 // handleFilterCasksEvent toggles the filter for cask packages only
 func (s *InputService) handleFilterCasksEvent() {
 	s.handleFilterEvent(FilterCasks)
+}
+
+// handleSortEvent cycles through sort modes (Downloads → Name → Installed).
+func (s *InputService) handleSortEvent() {
+	newSort := s.appService.CycleSortMode()
+	s.layout.GetNotifier().ShowSuccess(fmt.Sprintf("Sort: %s", newSort))
 }
 
 // showModal displays a modal dialog with the specified text and confirmation/cancellation actions.

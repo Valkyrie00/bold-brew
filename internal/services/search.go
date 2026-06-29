@@ -26,10 +26,8 @@ func (s *AppService) search(searchText string, scrollToTop bool) {
 	sourceList = s.applyFilter(sourceList)
 
 	if searchText == "" {
-		// Reset to the appropriate list when the search string is empty
 		filteredList = *sourceList
 	} else {
-		// Apply the search filter
 		searchTextLower := strings.ToLower(searchText)
 		for _, info := range *sourceList {
 			if strings.Contains(strings.ToLower(info.Name), searchTextLower) ||
@@ -41,21 +39,39 @@ func (s *AppService) search(searchText string, scrollToTop bool) {
 				}
 			}
 		}
-
-		// sort by analytics rank
-		sort.Slice(filteredList, func(i, j int) bool {
-			if filteredList[i].Analytics90dRank == 0 {
-				return false
-			}
-			if filteredList[j].Analytics90dRank == 0 {
-				return true
-			}
-			return filteredList[i].Analytics90dRank < filteredList[j].Analytics90dRank
-		})
 	}
 
+	s.applySortOrder(filteredList)
 	*s.filteredPackages = filteredList
 	s.setResults(s.filteredPackages, scrollToTop)
+}
+
+// applySortOrder sorts the list in place based on the active sort mode.
+func (s *AppService) applySortOrder(list []models.Package) {
+	switch s.activeSort {
+	case models.SortByName:
+		sort.Slice(list, func(i, j int) bool {
+			return strings.ToLower(list[i].Name) < strings.ToLower(list[j].Name)
+		})
+	case models.SortByInstalled:
+		sort.SliceStable(list, func(i, j int) bool {
+			if list[i].LocallyInstalled != list[j].LocallyInstalled {
+				return list[i].LocallyInstalled
+			}
+			return false
+		})
+	default: // SortByDownloads
+		sort.Slice(list, func(i, j int) bool {
+			return list[i].Analytics90dDownloads > list[j].Analytics90dDownloads
+		})
+	}
+}
+
+// CycleSortMode advances to the next sort mode and re-applies the search.
+func (s *AppService) CycleSortMode() models.SortMode {
+	s.activeSort = s.activeSort.Next()
+	s.search(s.layout.GetSearch().Field().GetText(), false)
+	return s.activeSort
 }
 
 // applyFilter filters packages based on the active filter type.

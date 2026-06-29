@@ -39,6 +39,7 @@ type AppService struct {
 	packages         *[]models.Package
 	filteredPackages *[]models.Package
 	activeFilter     FilterType
+	activeSort       models.SortMode
 	brewVersion      string
 
 	// Brewfile support

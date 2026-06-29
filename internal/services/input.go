@@ -1,11 +1,13 @@
 package services
 
 import (
-	"bbrew/internal/models"
-	"bbrew/internal/ui"
 	"fmt"
+	"io"
 
 	"github.com/gdamore/tcell/v2"
+
+	"bbrew/internal/models"
+	"bbrew/internal/ui"
 )
 
 // FilterType represents the active package filter state.
@@ -138,6 +140,11 @@ var NewInputService = func(appService *AppService, brewService BrewServiceInterf
 	// Convert keyActions to legend entries
 	s.updateLegendEntries()
 	return s
+}
+
+// outputWriter returns a thread-safe writer that streams to the output panel.
+func (s *InputService) outputWriter() io.Writer {
+	return ui.NewThreadSafeWriter(s.appService.app, s.layout.GetOutput().View())
 }
 
 // updateLegendEntries updates the legend entries based on current keyActions
@@ -320,9 +327,9 @@ func (s *InputService) handleInstallPackageEvent() {
 					s.layout.GetNotifier().ShowWarning(fmt.Sprintf("Installing %s...", info.Name))
 					var err error
 					if info.Type == models.PackageTypeFlatpak {
-						err = s.flatpakService.InstallPackage(info, s.appService.app, s.layout.GetOutput().View())
+						err = s.flatpakService.InstallPackage(info, s.outputWriter())
 					} else {
-						err = s.brewService.InstallPackage(info, s.appService.app, s.layout.GetOutput().View())
+						err = s.brewService.InstallPackage(info, s.outputWriter())
 					}
 
 					if err != nil {
@@ -350,9 +357,9 @@ func (s *InputService) handleRemovePackageEvent() {
 					s.layout.GetNotifier().ShowWarning(fmt.Sprintf("Removing %s...", info.Name))
 					var err error
 					if info.Type == models.PackageTypeFlatpak {
-						err = s.flatpakService.RemovePackage(info, s.appService.app, s.layout.GetOutput().View())
+						err = s.flatpakService.RemovePackage(info, s.outputWriter())
 					} else {
-						err = s.brewService.RemovePackage(info, s.appService.app, s.layout.GetOutput().View())
+						err = s.brewService.RemovePackage(info, s.outputWriter())
 					}
 
 					if err != nil {
@@ -380,9 +387,9 @@ func (s *InputService) handleUpdatePackageEvent() {
 					s.layout.GetNotifier().ShowWarning(fmt.Sprintf("Updating %s...", info.Name))
 					var err error
 					if info.Type == models.PackageTypeFlatpak {
-						err = s.flatpakService.UpdatePackage(info, s.appService.app, s.layout.GetOutput().View())
+						err = s.flatpakService.UpdatePackage(info, s.outputWriter())
 					} else {
-						err = s.brewService.UpdatePackage(info, s.appService.app, s.layout.GetOutput().View())
+						err = s.brewService.UpdatePackage(info, s.outputWriter())
 					}
 
 					if err != nil {
@@ -403,14 +410,14 @@ func (s *InputService) handleUpdateAllPackagesEvent() {
 		s.layout.GetOutput().Clear()
 		go func() {
 			s.layout.GetNotifier().ShowWarning("Updating all Homebrew packages...")
-			if err := s.brewService.UpdateAllPackages(s.appService.app, s.layout.GetOutput().View()); err != nil {
+			if err := s.brewService.UpdateAllPackages(s.outputWriter()); err != nil {
 				s.layout.GetNotifier().ShowError("Failed to update Homebrew packages")
 				return
 			}
 
 			if s.flatpakService.IsFlatpakInstalled() {
 				s.layout.GetNotifier().ShowWarning("Updating all Flatpak packages...")
-				if err := s.flatpakService.UpdateAllPackages(s.appService.app, s.layout.GetOutput().View()); err != nil {
+				if err := s.flatpakService.UpdateAllPackages(s.outputWriter()); err != nil {
 					s.layout.GetNotifier().ShowError("Failed to update Flatpak packages")
 					return
 				}
@@ -511,9 +518,9 @@ func (s *InputService) handleInstallAllPackagesEvent() {
 		skipReason:    "already installed",
 		execute: func(pkg models.Package) error {
 			if pkg.Type == models.PackageTypeFlatpak {
-				return s.flatpakService.InstallPackage(pkg, s.appService.app, s.layout.GetOutput().View())
+				return s.flatpakService.InstallPackage(pkg, s.outputWriter())
 			}
-			return s.brewService.InstallPackage(pkg, s.appService.app, s.layout.GetOutput().View())
+			return s.brewService.InstallPackage(pkg, s.outputWriter())
 		},
 	})
 }
@@ -527,9 +534,9 @@ func (s *InputService) handleRemoveAllPackagesEvent() {
 		skipReason:    "not installed",
 		execute: func(pkg models.Package) error {
 			if pkg.Type == models.PackageTypeFlatpak {
-				return s.flatpakService.RemovePackage(pkg, s.appService.app, s.layout.GetOutput().View())
+				return s.flatpakService.RemovePackage(pkg, s.outputWriter())
 			}
-			return s.brewService.RemovePackage(pkg, s.appService.app, s.layout.GetOutput().View())
+			return s.brewService.RemovePackage(pkg, s.outputWriter())
 		},
 	})
 }

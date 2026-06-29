@@ -1,13 +1,13 @@
 package services
 
 import (
-	"bbrew/internal/models"
 	"context"
+	"io"
 	"os"
 	"os/exec"
 	"strings"
 
-	"github.com/rivo/tview"
+	"bbrew/internal/models"
 )
 
 // brewEnv returns the environment variables for non-interactive Homebrew execution.
@@ -41,18 +41,13 @@ func brewCommandContext(ctx context.Context, args ...string) *exec.Cmd {
 // BrewService is a pure executor of brew commands - it does NOT hold data.
 // For data retrieval, use DataProviderInterface.
 type BrewServiceInterface interface {
-	// Core info
 	GetBrewVersion() (string, error)
-
-	// Package operations
 	UpdateHomebrew() error
-	UpdateAllPackages(app *tview.Application, outputView *tview.TextView) error
-	UpdatePackage(info models.Package, app *tview.Application, outputView *tview.TextView) error
-	RemovePackage(info models.Package, app *tview.Application, outputView *tview.TextView) error
-	InstallPackage(info models.Package, app *tview.Application, outputView *tview.TextView) error
-
-	// Tap support
-	InstallTap(tapName string, app *tview.Application, outputView *tview.TextView) error
+	UpdateAllPackages(output io.Writer) error
+	UpdatePackage(info models.Package, output io.Writer) error
+	RemovePackage(info models.Package, output io.Writer) error
+	InstallPackage(info models.Package, output io.Writer) error
+	InstallTap(tapName string, output io.Writer) error
 	IsTapInstalled(tapName string) bool
 }
 
@@ -90,50 +85,50 @@ func (s *BrewService) UpdateHomebrew() error {
 }
 
 // UpdateAllPackages upgrades all outdated packages.
-func (s *BrewService) UpdateAllPackages(app *tview.Application, outputView *tview.TextView) error {
+func (s *BrewService) UpdateAllPackages(output io.Writer) error {
 	cmd := brewCommand("upgrade") // #nosec G204
-	return s.executeCommand(app, cmd, outputView)
+	return ExecuteCommand(cmd, output)
 }
 
 // UpdatePackage upgrades a specific package.
-func (s *BrewService) UpdatePackage(info models.Package, app *tview.Application, outputView *tview.TextView) error {
+func (s *BrewService) UpdatePackage(info models.Package, output io.Writer) error {
 	var cmd *exec.Cmd
 	if info.Type == models.PackageTypeCask {
 		cmd = brewCommand("upgrade", "--cask", info.Name) // #nosec G204
 	} else {
 		cmd = brewCommand("upgrade", info.Name) // #nosec G204
 	}
-	return s.executeCommand(app, cmd, outputView)
+	return ExecuteCommand(cmd, output)
 }
 
 // RemovePackage uninstalls a package.
-func (s *BrewService) RemovePackage(info models.Package, app *tview.Application, outputView *tview.TextView) error {
+func (s *BrewService) RemovePackage(info models.Package, output io.Writer) error {
 	var cmd *exec.Cmd
 	if info.Type == models.PackageTypeCask {
 		cmd = brewCommand("uninstall", "--cask", info.Name) // #nosec G204
 	} else {
 		cmd = brewCommand("uninstall", info.Name) // #nosec G204
 	}
-	return s.executeCommand(app, cmd, outputView)
+	return ExecuteCommand(cmd, output)
 }
 
 // InstallPackage installs a package.
-func (s *BrewService) InstallPackage(info models.Package, app *tview.Application, outputView *tview.TextView) error {
+func (s *BrewService) InstallPackage(info models.Package, output io.Writer) error {
 	var cmd *exec.Cmd
 	if info.Type == models.PackageTypeCask {
 		cmd = brewCommand("install", "--cask", info.Name) // #nosec G204
 	} else {
 		cmd = brewCommand("install", info.Name) // #nosec G204
 	}
-	return s.executeCommand(app, cmd, outputView)
+	return ExecuteCommand(cmd, output)
 }
 
 // InstallTap installs a Homebrew tap, trusting it for Homebrew 6+ tap trust enforcement.
 // The --force flag marks the tap as trusted, which is required in Homebrew 6.0.0+
 // and is safely ignored in older versions.
-func (s *BrewService) InstallTap(tapName string, app *tview.Application, outputView *tview.TextView) error {
+func (s *BrewService) InstallTap(tapName string, output io.Writer) error {
 	cmd := brewCommand("tap", "--force", tapName) // #nosec G204
-	return s.executeCommand(app, cmd, outputView)
+	return ExecuteCommand(cmd, output)
 }
 
 // IsTapInstalled checks if a tap is already installed.
@@ -151,9 +146,4 @@ func (s *BrewService) IsTapInstalled(tapName string) bool {
 		}
 	}
 	return false
-}
-
-// executeCommand runs a command and captures its output, updating the provided TextView.
-func (s *BrewService) executeCommand(app *tview.Application, cmd *exec.Cmd, outputView *tview.TextView) error {
-	return ExecuteCommand(app, cmd, outputView)
 }

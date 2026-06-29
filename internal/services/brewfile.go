@@ -213,7 +213,7 @@ func (s *AppService) loadBrewfilePackages() error {
 	// Process Flatpak entries
 	if s.flatpakService.IsFlatpakInstalled() {
 		// Auto-add flathub if missing (ignores error to allow offline/other issues to pass gracefully)
-		_ = s.flatpakService.EnsureFlathubRemote(s.app, s.layout.GetOutput().View())
+		_ = s.flatpakService.EnsureFlathubRemote(s.outputWriter())
 
 		flatpakInstalledMap, err := s.flatpakService.GetInstalledPackages()
 		if err != nil {
@@ -330,7 +330,7 @@ func (s *AppService) installBrewfileTapsAtStartup() {
 			fmt.Fprintf(s.layout.GetOutput().View(), "[TAP] Installing %s...\n", tap)
 		})
 
-		if err := s.brewService.InstallTap(tap, s.app, s.layout.GetOutput().View()); err != nil {
+		if err := s.brewService.InstallTap(tap, s.outputWriter()); err != nil {
 			s.app.QueueUpdateDraw(func() {
 				s.layout.GetNotifier().ShowError(fmt.Sprintf("Failed to install tap %s", tap))
 				fmt.Fprintf(s.layout.GetOutput().View(), "[ERROR] Failed to install tap %s\n", tap)

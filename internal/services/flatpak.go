@@ -1,23 +1,23 @@
 package services
 
 import (
-	"bbrew/internal/models"
+	"io"
 	"os/exec"
 	"strings"
 
-	"github.com/rivo/tview"
+	"bbrew/internal/models"
 )
 
 // FlatpakServiceInterface defines the contract for Flatpak operations.
 type FlatpakServiceInterface interface {
 	IsFlatpakInstalled() bool
-	EnsureFlathubRemote(app *tview.Application, outputView *tview.TextView) error
+	EnsureFlathubRemote(output io.Writer) error
 	GetInstalledPackages() (map[string]bool, error)
 	GetRemoteMetadata() (map[string]models.Package, error)
-	InstallPackage(info models.Package, app *tview.Application, outputView *tview.TextView) error
-	RemovePackage(info models.Package, app *tview.Application, outputView *tview.TextView) error
-	UpdatePackage(info models.Package, app *tview.Application, outputView *tview.TextView) error
-	UpdateAllPackages(app *tview.Application, outputView *tview.TextView) error
+	InstallPackage(info models.Package, output io.Writer) error
+	RemovePackage(info models.Package, output io.Writer) error
+	UpdatePackage(info models.Package, output io.Writer) error
+	UpdateAllPackages(output io.Writer) error
 }
 
 // FlatpakService implements FlatpakServiceInterface.
@@ -38,15 +38,15 @@ func (s *FlatpakService) IsFlatpakInstalled() bool {
 
 // EnsureFlathubRemote ensures flathub is available as a user-level remote.
 // Even if flathub exists at system level, --user installs need a user-level remote.
-func (s *FlatpakService) EnsureFlathubRemote(app *tview.Application, outputView *tview.TextView) error {
+func (s *FlatpakService) EnsureFlathubRemote(output io.Writer) error {
 	checkCmd := exec.Command("flatpak", "remote-list", "--user")
-	output, err := checkCmd.Output()
-	if err == nil && strings.Contains(string(output), "flathub") {
+	checkOutput, err := checkCmd.Output()
+	if err == nil && strings.Contains(string(checkOutput), "flathub") {
 		return nil
 	}
 
 	addCmd := exec.Command("flatpak", "remote-add", "--user", "--if-not-exists", "flathub", "https://dl.flathub.org/repo/flathub.flatpakrepo")
-	return s.executeCommand(app, addCmd, outputView)
+	return ExecuteCommand(addCmd, output)
 }
 
 // GetInstalledPackages returns a map of installed Flatpak application IDs (both user and system).
@@ -117,30 +117,25 @@ func (s *FlatpakService) GetRemoteMetadata() (map[string]models.Package, error) 
 }
 
 // InstallPackage installs a Flatpak from Flathub.
-func (s *FlatpakService) InstallPackage(info models.Package, app *tview.Application, outputView *tview.TextView) error {
+func (s *FlatpakService) InstallPackage(info models.Package, output io.Writer) error {
 	cmd := exec.Command("flatpak", "install", "--user", "-y", "flathub", info.Name) // #nosec G204
-	return s.executeCommand(app, cmd, outputView)
+	return ExecuteCommand(cmd, output)
 }
 
 // RemovePackage uninstalls a Flatpak.
-func (s *FlatpakService) RemovePackage(info models.Package, app *tview.Application, outputView *tview.TextView) error {
+func (s *FlatpakService) RemovePackage(info models.Package, output io.Writer) error {
 	cmd := exec.Command("flatpak", "uninstall", "--user", "-y", info.Name) // #nosec G204
-	return s.executeCommand(app, cmd, outputView)
+	return ExecuteCommand(cmd, output)
 }
 
 // UpdatePackage updates a specific Flatpak.
-func (s *FlatpakService) UpdatePackage(info models.Package, app *tview.Application, outputView *tview.TextView) error {
+func (s *FlatpakService) UpdatePackage(info models.Package, output io.Writer) error {
 	cmd := exec.Command("flatpak", "update", "--user", "-y", info.Name) // #nosec G204
-	return s.executeCommand(app, cmd, outputView)
+	return ExecuteCommand(cmd, output)
 }
 
 // UpdateAllPackages updates all installed user-level Flatpak applications.
-func (s *FlatpakService) UpdateAllPackages(app *tview.Application, outputView *tview.TextView) error {
+func (s *FlatpakService) UpdateAllPackages(output io.Writer) error {
 	cmd := exec.Command("flatpak", "update", "--user", "-y") // #nosec G204
-	return s.executeCommand(app, cmd, outputView)
-}
-
-// executeCommand runs a command and captures its output, updating the provided TextView.
-func (s *FlatpakService) executeCommand(app *tview.Application, cmd *exec.Cmd, outputView *tview.TextView) error {
-	return ExecuteCommand(app, cmd, outputView)
+	return ExecuteCommand(cmd, output)
 }

@@ -90,6 +90,11 @@ func (s *AppService) GetLayout() ui.LayoutInterface { return s.layout }
 func (s *AppService) SetBrewfilePath(path string)   { s.brewfilePath = path }
 func (s *AppService) IsBrewfileMode() bool          { return s.brewfilePath != "" }
 
+// outputWriter returns a thread-safe writer that streams to the output panel.
+func (s *AppService) outputWriter() *ui.ThreadSafeWriter {
+	return ui.NewThreadSafeWriter(s.app, s.layout.GetOutput().View())
+}
+
 func (s *AppService) GetBrewfilePackages() *[]models.Package {
 	s.mu.RLock()
 	defer s.mu.RUnlock()

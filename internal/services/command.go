@@ -5,12 +5,10 @@ import (
 	"io"
 	"os/exec"
 	"sync"
-
-	"github.com/rivo/tview"
 )
 
-// ExecuteCommand runs a command, streaming stdout/stderr to a tview.TextView in real time.
-func ExecuteCommand(app *tview.Application, cmd *exec.Cmd, outputView *tview.TextView) error {
+// ExecuteCommand runs a command, streaming stdout/stderr to the provided writer in real time.
+func ExecuteCommand(cmd *exec.Cmd, output io.Writer) error {
 	stdoutPipe, stdoutWriter := io.Pipe()
 	stderrPipe, stderrWriter := io.Pipe()
 	cmd.Stdout = stdoutWriter
@@ -39,18 +37,11 @@ func ExecuteCommand(app *tview.Application, cmd *exec.Cmd, outputView *tview.Tex
 		for {
 			n, err := pipe.Read(buf)
 			if n > 0 {
-				output := make([]byte, n)
-				copy(output, buf[:n])
-				app.QueueUpdateDraw(func() {
-					_, _ = outputView.Write(output) // #nosec G104
-					outputView.ScrollToEnd()
-				})
+				_, _ = output.Write(buf[:n]) // #nosec G104
 			}
 			if err != nil {
 				if err != io.EOF {
-					app.QueueUpdateDraw(func() {
-						fmt.Fprintf(outputView, "\nError: %v\n", err)
-					})
+					fmt.Fprintf(output, "\nError: %v\n", err)
 				}
 				break
 			}

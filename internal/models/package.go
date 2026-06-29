@@ -23,6 +23,10 @@ type Package struct {
 	Analytics90dRank      int
 	Analytics90dDownloads int
 
+	// Health status
+	Deprecated bool // Marked as deprecated by Homebrew maintainers
+	Disabled   bool // Disabled and no longer available for install
+
 	// Original data (for operations)
 	Formula *Formula `json:"-"` // nil if Type == cask
 	Cask    *Cask    `json:"-"` // nil if Type == formula
@@ -49,6 +53,8 @@ func NewPackageFromFormula(f *Formula) Package {
 		Type:                  PackageTypeFormula,
 		Analytics90dRank:      f.Analytics90dRank,
 		Analytics90dDownloads: f.Analytics90dDownloads,
+		Deprecated:            f.Deprecated,
+		Disabled:              f.Disabled,
 		Formula:               f,
 		Cask:                  nil,
 		InstalledOnRequest:    installedOnRequest,
@@ -73,6 +79,8 @@ func NewPackageFromCask(c *Cask) Package {
 		Type:                  PackageTypeCask,
 		Analytics90dRank:      c.Analytics90dRank,
 		Analytics90dDownloads: c.Analytics90dDownloads,
+		Deprecated:            c.Deprecated,
+		Disabled:              c.Disabled,
 		Formula:               nil,
 		Cask:                  c,
 		InstalledOnRequest:    true, // Casks are always explicitly installed

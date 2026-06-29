@@ -159,9 +159,14 @@ func (s *AppService) setResults(data *[]models.Package, scrollToTop bool) {
 			version = version[:maxVersionLen-1] + "…"
 		}
 
-		// Name cell
+		// Name cell with color based on status
 		nameCell := tview.NewTableCell(info.Name).SetSelectable(true)
-		if info.LocallyInstalled {
+		switch {
+		case info.Disabled:
+			nameCell.SetTextColor(tcell.ColorRed)
+		case info.Deprecated:
+			nameCell.SetTextColor(tcell.ColorYellow)
+		case info.LocallyInstalled:
 			nameCell.SetTextColor(tcell.ColorGreen)
 		}
 
@@ -171,6 +176,14 @@ func (s *AppService) setResults(data *[]models.Package, scrollToTop bool) {
 			versionCell.SetTextColor(tcell.ColorOrange)
 		}
 
+		// Description with deprecation/disabled warning prefix
+		desc := info.Description
+		if info.Disabled {
+			desc = "[DISABLED] " + desc
+		} else if info.Deprecated {
+			desc = "[DEPRECATED] " + desc
+		}
+
 		// Downloads cell
 		downloadsCell := tview.NewTableCell(fmt.Sprintf("%d", info.Analytics90dDownloads)).SetSelectable(true).SetAlign(tview.AlignRight)
 
@@ -178,7 +191,7 @@ func (s *AppService) setResults(data *[]models.Package, scrollToTop bool) {
 		s.layout.GetTable().View().SetCell(i+1, 0, typeCell.SetExpansion(0))
 		s.layout.GetTable().View().SetCell(i+1, 1, nameCell.SetExpansion(0))
 		s.layout.GetTable().View().SetCell(i+1, 2, versionCell.SetExpansion(0))
-		s.layout.GetTable().View().SetCell(i+1, 3, tview.NewTableCell(info.Description).SetSelectable(true).SetExpansion(1))
+		s.layout.GetTable().View().SetCell(i+1, 3, tview.NewTableCell(desc).SetSelectable(true).SetExpansion(1))
 		s.layout.GetTable().View().SetCell(i+1, 4, downloadsCell.SetExpansion(0))
 	}
 

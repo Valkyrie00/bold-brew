@@ -57,6 +57,14 @@ func (d *Details) SetContent(pkg *models.Package) {
 		}
 	}
 
+	// Health warning for deprecated/disabled packages
+	healthWarning := ""
+	if pkg.Disabled {
+		healthWarning = "\n[red::b]⚠ DISABLED[-] - This package is disabled and cannot be installed"
+	} else if pkg.Deprecated {
+		healthWarning = "\n[yellow::b]⚠ DEPRECATED[-] - This package is deprecated and may be removed in the future"
+	}
+
 	// Type tag with escaped brackets
 	var typeTag, typeLabel string
 	switch pkg.Type {
@@ -81,7 +89,7 @@ func (d *Details) SetContent(pkg *models.Package) {
 			"[blue]• Name:[-] %s\n"+
 			"[blue]• Display Name:[-] %s\n"+
 			"[blue]• Version:[-] %s\n"+
-			"[blue]• Status:[-] %s\n"+
+			"[blue]• Status:[-] %s%s\n"+
 			"[blue]• Homepage:[-] %s\n\n"+
 			"[yellow::b]Description[-]\n%s\n%s",
 		pkg.Name, separator,
@@ -89,7 +97,7 @@ func (d *Details) SetContent(pkg *models.Package) {
 		pkg.Name,
 		pkg.DisplayName,
 		pkg.Version,
-		installedStatus,
+		installedStatus, healthWarning,
 		pkg.Homepage,
 		separator,
 		pkg.Description,

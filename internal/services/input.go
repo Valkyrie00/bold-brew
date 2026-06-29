@@ -53,6 +53,7 @@ type InputService struct {
 	ActionFilterLeaves    *InputAction
 	ActionFilterCasks     *InputAction
 	ActionSort            *InputAction
+	ActionExport          *InputAction
 	ActionInstall         *InputAction
 	ActionUpdate          *InputAction
 	ActionRemove          *InputAction
@@ -97,6 +98,10 @@ var NewInputService = func(appService *AppService, brewService BrewServiceInterf
 		Key: tcell.KeyRune, Rune: 's', KeySlug: "s", Name: "Sort",
 		Action: s.handleSortEvent,
 	}
+	s.ActionExport = &InputAction{
+		Key: tcell.KeyRune, Rune: 'e', KeySlug: "e", Name: "Export",
+		Action: s.handleExportEvent,
+	}
 	s.ActionInstall = &InputAction{
 		Key: tcell.KeyRune, Rune: 'i', KeySlug: "i", Name: "Install",
 		Action: s.handleInstallPackageEvent,
@@ -138,8 +143,8 @@ var NewInputService = func(appService *AppService, brewService BrewServiceInterf
 	s.keyActions = []*InputAction{
 		s.ActionSearch, s.ActionFilterInstalled, s.ActionFilterOutdated,
 		s.ActionFilterLeaves, s.ActionFilterCasks, s.ActionSort,
-		s.ActionInstall, s.ActionUpdate, s.ActionRemove, s.ActionUpdateAll,
-		s.ActionHelp, s.ActionBack, s.ActionQuit,
+		s.ActionExport, s.ActionInstall, s.ActionUpdate, s.ActionRemove,
+		s.ActionUpdateAll, s.ActionHelp, s.ActionBack, s.ActionQuit,
 	}
 
 	// Convert keyActions to legend entries
@@ -309,6 +314,16 @@ func (s *InputService) handleFilterCasksEvent() {
 func (s *InputService) handleSortEvent() {
 	newSort := s.appService.CycleSortMode()
 	s.layout.GetNotifier().ShowSuccess(fmt.Sprintf("Sort: %s", newSort))
+}
+
+// handleExportEvent exports installed packages to ~/Brewfile.
+func (s *InputService) handleExportEvent() {
+	path, err := s.appService.ExportBrewfile()
+	if err != nil {
+		s.layout.GetNotifier().ShowError(fmt.Sprintf("Export failed: %v", err))
+		return
+	}
+	s.layout.GetNotifier().ShowSuccess(fmt.Sprintf("Exported to %s", path))
 }
 
 // showModal displays a modal dialog with the specified text and confirmation/cancellation actions.

@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"os/exec"
 )
 
 type SelfUpdateServiceInterface interface {
@@ -25,7 +24,7 @@ var NewSelfUpdateService = func() SelfUpdateServiceInterface {
 
 // CheckForUpdates checks for the latest version of the Bold Brew package using Homebrew.
 func (s *SelfUpdateService) CheckForUpdates(ctx context.Context) (string, error) {
-	cmd := exec.CommandContext(ctx, "brew", "info", "--json=v1", "valkyrie00/bbrew/bbrew")
+	cmd := brewCommandContext(ctx, "info", "--json=v1", "valkyrie00/bbrew/bbrew")
 	output, err := cmd.CombinedOutput()
 	if err != nil {
 		if ctx.Err() != nil {

@@ -2,11 +2,40 @@ package services
 
 import (
 	"bbrew/internal/models"
+	"context"
+	"os"
 	"os/exec"
 	"strings"
 
 	"github.com/rivo/tview"
 )
+
+// brewEnv returns the environment variables for non-interactive Homebrew execution.
+// This ensures commands don't hang waiting for user input (Homebrew 6+ ask mode)
+// and is backward-compatible with older Homebrew versions.
+func brewEnv() []string {
+	return append(os.Environ(),
+		"NONINTERACTIVE=1",
+		"HOMEBREW_NO_AUTO_UPDATE=1",
+		"HOMEBREW_NO_ENV_HINTS=1",
+	)
+}
+
+// brewCommand creates an exec.Cmd for brew with non-interactive environment settings.
+func brewCommand(args ...string) *exec.Cmd {
+	cmd := exec.Command("brew", args...)
+	cmd.Stdin = nil
+	cmd.Env = brewEnv()
+	return cmd
+}
+
+// brewCommandContext creates a context-aware exec.Cmd for brew with non-interactive settings.
+func brewCommandContext(ctx context.Context, args ...string) *exec.Cmd {
+	cmd := exec.CommandContext(ctx, "brew", args...)
+	cmd.Stdin = nil
+	cmd.Env = brewEnv()
+	return cmd
+}
 
 // BrewServiceInterface defines the contract for Homebrew operations.
 // BrewService is a pure executor of brew commands - it does NOT hold data.
@@ -44,7 +73,7 @@ func (s *BrewService) GetBrewVersion() (string, error) {
 		return s.brewVersion, nil
 	}
 
-	cmd := exec.Command("brew", "--version")
+	cmd := brewCommand("--version")
 	output, err := cmd.Output()
 	if err != nil {
 		return "", err
@@ -56,13 +85,13 @@ func (s *BrewService) GetBrewVersion() (string, error) {
 
 // UpdateHomebrew updates the Homebrew package manager by running the `brew update` command.
 func (s *BrewService) UpdateHomebrew() error {
-	cmd := exec.Command("brew", "update")
+	cmd := brewCommand("update")
 	return cmd.Run()
 }
 
 // UpdateAllPackages upgrades all outdated packages.
 func (s *BrewService) UpdateAllPackages(app *tview.Application, outputView *tview.TextView) error {
-	cmd := exec.Command("brew", "upgrade") // #nosec G204
+	cmd := brewCommand("upgrade") // #nosec G204
 	return s.executeCommand(app, cmd, outputView)
 }
 
@@ -70,9 +99,9 @@ func (s *BrewService) UpdateAllPackages(app *tview.Application, outputView *tvie
 func (s *BrewService) UpdatePackage(info models.Package, app *tview.Application, outputView *tview.TextView) error {
 	var cmd *exec.Cmd
 	if info.Type == models.PackageTypeCask {
-		cmd = exec.Command("brew", "upgrade", "--cask", info.Name) // #nosec G204
+		cmd = brewCommand("upgrade", "--cask", info.Name) // #nosec G204
 	} else {
-		cmd = exec.Command("brew", "upgrade", info.Name) // #nosec G204
+		cmd = brewCommand("upgrade", info.Name) // #nosec G204
 	}
 	return s.executeCommand(app, cmd, outputView)
 }
@@ -81,9 +110,9 @@ func (s *BrewService) UpdatePackage(info models.Package, app *tview.Application,
 func (s *BrewService) RemovePackage(info models.Package, app *tview.Application, outputView *tview.TextView) error {
 	var cmd *exec.Cmd
 	if info.Type == models.PackageTypeCask {
-		cmd = exec.Command("brew", "uninstall", "--cask", info.Name) // #nosec G204
+		cmd = brewCommand("uninstall", "--cask", info.Name) // #nosec G204
 	} else {
-		cmd = exec.Command("brew", "uninstall", info.Name) // #nosec G204
+		cmd = brewCommand("uninstall", info.Name) // #nosec G204
 	}
 	return s.executeCommand(app, cmd, outputView)
 }
@@ -92,22 +121,24 @@ func (s *BrewService) RemovePackage(info models.Package, app *tview.Application,
 func (s *BrewService) InstallPackage(info models.Package, app *tview.Application, outputView *tview.TextView) error {
 	var cmd *exec.Cmd
 	if info.Type == models.PackageTypeCask {
-		cmd = exec.Command("brew", "install", "--cask", info.Name) // #nosec G204
+		cmd = brewCommand("install", "--cask", info.Name) // #nosec G204
 	} else {
-		cmd = exec.Command("brew", "install", info.Name) // #nosec G204
+		cmd = brewCommand("install", info.Name) // #nosec G204
 	}
 	return s.executeCommand(app, cmd, outputView)
 }
 
-// InstallTap installs a Homebrew tap.
+// InstallTap installs a Homebrew tap, trusting it for Homebrew 6+ tap trust enforcement.
+// The --force flag marks the tap as trusted, which is required in Homebrew 6.0.0+
+// and is safely ignored in older versions.
 func (s *BrewService) InstallTap(tapName string, app *tview.Application, outputView *tview.TextView) error {
-	cmd := exec.Command("brew", "tap", tapName) // #nosec G204
+	cmd := brewCommand("tap", "--force", tapName) // #nosec G204
 	return s.executeCommand(app, cmd, outputView)
 }
 
 // IsTapInstalled checks if a tap is already installed.
 func (s *BrewService) IsTapInstalled(tapName string) bool {
-	cmd := exec.Command("brew", "tap")
+	cmd := brewCommand("tap")
 	output, err := cmd.Output()
 	if err != nil {
 		return false

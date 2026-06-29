@@ -87,6 +87,10 @@ func fetchFromAPI(url string) ([]byte, error) {
 		return nil, err
 	}
 	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("API request failed: %s returned HTTP %d", url, resp.StatusCode)
+	}
 	return io.ReadAll(resp.Body)
 }
 
@@ -95,7 +99,7 @@ func (d *DataProvider) getPrefixPath() string {
 	if d.prefixPath != "" {
 		return d.prefixPath
 	}
-	cmd := exec.Command("brew", "--prefix")
+	cmd := brewCommand("--prefix")
 	output, err := cmd.Output()
 	if err != nil {
 		d.prefixPath = "Unknown"
@@ -112,7 +116,7 @@ func (d *DataProvider) GetInstalledFormulae(forceRefresh bool) ([]models.Formula
 	}
 
 	if !forceRefresh {
-		if data := readCacheFile(cacheFileInstalled, 10); data != nil {
+		if data := readCacheFileWithTTL(cacheFileInstalled, 10, cacheShortTTL); data != nil {
 			var formulae []models.Formula
 			if err := json.Unmarshal(data, &formulae); err == nil {
 				d.markFormulaeAsInstalled(&formulae)
@@ -121,7 +125,7 @@ func (d *DataProvider) GetInstalledFormulae(forceRefresh bool) ([]models.Formula
 		}
 	}
 
-	cmd := exec.Command("brew", "info", "--json=v1", "--installed")
+	cmd := brewCommand("info", "--json=v1", "--installed")
 	output, err := cmd.Output()
 	if err != nil {
 		return nil, err
@@ -153,7 +157,7 @@ func (d *DataProvider) GetInstalledCasks(forceRefresh bool) ([]models.Cask, erro
 	}
 
 	if !forceRefresh {
-		if data := readCacheFile(cacheFileInstalledCasks, 10); data != nil {
+		if data := readCacheFileWithTTL(cacheFileInstalledCasks, 10, cacheShortTTL); data != nil {
 			var response struct {
 				Casks []models.Cask `json:"casks"`
 			}
@@ -165,7 +169,7 @@ func (d *DataProvider) GetInstalledCasks(forceRefresh bool) ([]models.Cask, erro
 	}
 
 	// Get list of installed cask names
-	listCmd := exec.Command("brew", "list", "--cask")
+	listCmd := brewCommand("list", "--cask")
 	listOutput, err := listCmd.Output()
 	if err != nil {
 		return []models.Cask{}, nil // No casks installed
@@ -178,7 +182,7 @@ func (d *DataProvider) GetInstalledCasks(forceRefresh bool) ([]models.Cask, erro
 
 	// Get info for each installed cask
 	args := append([]string{"info", "--json=v2", "--cask"}, caskNames...)
-	infoCmd := exec.Command("brew", args...)
+	infoCmd := brewCommand(args...)
 	infoOutput, err := infoCmd.Output()
 	if err != nil {
 		return []models.Cask{}, nil
@@ -356,7 +360,7 @@ func (d *DataProvider) GetTapPackages(entries []models.BrewfileEntry, existingPa
 	// 1. Get from cache (if not forceRefresh)
 	cachedPackages := make(map[string]models.Package)
 	if !forceRefresh {
-		if data := readCacheFile(cacheFileTapPackages, 10); data != nil {
+		if data := readCacheFileWithTTL(cacheFileTapPackages, 10, cacheShortTTL); data != nil {
 			var packages []models.Package
 			if err := json.Unmarshal(data, &packages); err == nil {
 				for _, pkg := range packages {
@@ -455,10 +459,10 @@ func (d *DataProvider) fetchPackagesInfo(names []string, isCask bool) map[string
 	var cmd *exec.Cmd
 	if isCask {
 		args := append([]string{"info", "--json=v2", "--cask"}, names...)
-		cmd = exec.Command("brew", args...)
+		cmd = brewCommand(args...)
 	} else {
 		args := append([]string{"info", "--json=v1"}, names...)
-		cmd = exec.Command("brew", args...)
+		cmd = brewCommand(args...)
 	}
 
 	output, err := cmd.Output()
@@ -501,9 +505,9 @@ func (d *DataProvider) fetchPackagesInfo(names []string, isCask bool) map[string
 func (d *DataProvider) fetchSinglePackageInfo(name string, isCask bool) *models.Package {
 	var cmd *exec.Cmd
 	if isCask {
-		cmd = exec.Command("brew", "info", "--json=v2", "--cask", name)
+		cmd = brewCommand("info", "--json=v2", "--cask", name)
 	} else {
-		cmd = exec.Command("brew", "info", "--json=v1", name)
+		cmd = brewCommand("info", "--json=v1", name)
 	}
 
 	output, err := cmd.Output()
@@ -644,7 +648,7 @@ func (d *DataProvider) GetPackages() *[]models.Package {
 // fetchInstalledNames returns a map of installed package names for the given type.
 func (d *DataProvider) fetchInstalledNames(packageType string) map[string]bool {
 	result := make(map[string]bool)
-	cmd := exec.Command("brew", "list", packageType)
+	cmd := brewCommand("list", packageType)
 	output, err := cmd.Output()
 	if err != nil {
 		return result

@@ -88,15 +88,17 @@ func (s *AppService) applyFilter(sourceList *[]models.Package) *[]models.Package
 func (s *AppService) forceRefreshResults() {
 	// Force refresh all data to get up-to-date versions and installed status
 	_ = s.dataProvider.SetupData(true)
-	s.packages = s.dataProvider.GetPackages()
+	newPackages := s.dataProvider.GetPackages()
 
 	// If in Brewfile mode, load tap packages and verify installed status
+	s.mu.Lock()
+	s.packages = newPackages
+
 	if s.IsBrewfileMode() {
 		s.fetchTapPackages()
-		_ = s.loadBrewfilePackages() // Gets fresh installed status via FetchInstalledCaskNames/FormulaNames
+		_ = s.loadBrewfilePackages()
 		*s.filteredPackages = *s.brewfilePackages
 	} else {
-		// For non-Brewfile mode, get fresh installed status
 		installedCasks := s.dataProvider.FetchInstalledCaskNames()
 		installedFormulae := s.dataProvider.FetchInstalledFormulaNames()
 		for i := range *s.packages {
@@ -109,6 +111,7 @@ func (s *AppService) forceRefreshResults() {
 		}
 		*s.filteredPackages = *s.packages
 	}
+	s.mu.Unlock()
 
 	s.app.QueueUpdateDraw(func() {
 		s.search(s.layout.GetSearch().Field().GetText(), false)

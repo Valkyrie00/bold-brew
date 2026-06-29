@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"sync"
 	"time"
 
 	"github.com/gdamore/tcell/v2"
@@ -34,6 +35,7 @@ type AppService struct {
 	theme  *theme.Theme
 	layout ui.LayoutInterface
 
+	mu               sync.RWMutex // Protects packages, filteredPackages, brewfilePackages, activeFilter
 	packages         *[]models.Package
 	filteredPackages *[]models.Package
 	activeFilter     FilterType
@@ -83,11 +85,16 @@ var NewAppService = func() AppServiceInterface {
 	return s
 }
 
-func (s *AppService) GetApp() *tview.Application             { return s.app }
-func (s *AppService) GetLayout() ui.LayoutInterface          { return s.layout }
-func (s *AppService) SetBrewfilePath(path string)            { s.brewfilePath = path }
-func (s *AppService) IsBrewfileMode() bool                   { return s.brewfilePath != "" }
-func (s *AppService) GetBrewfilePackages() *[]models.Package { return s.brewfilePackages }
+func (s *AppService) GetApp() *tview.Application  { return s.app }
+func (s *AppService) GetLayout() ui.LayoutInterface { return s.layout }
+func (s *AppService) SetBrewfilePath(path string)  { s.brewfilePath = path }
+func (s *AppService) IsBrewfileMode() bool         { return s.brewfilePath != "" }
+
+func (s *AppService) GetBrewfilePackages() *[]models.Package {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return s.brewfilePackages
+}
 
 // Boot initializes the application by setting up Homebrew and loading formulae data.
 func (s *AppService) Boot() (err error) {
@@ -157,20 +164,24 @@ func (s *AppService) BuildApp() {
 		ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 		defer cancel()
 
-		if latestVersion, err := s.selfUpdateService.CheckForUpdates(ctx); err == nil && latestVersion != AppVersion {
-			s.app.QueueUpdateDraw(func() {
-				AppVersion = fmt.Sprintf("%s ([orange]New Version Available: %s[-])", AppVersion, latestVersion)
-				headerName := AppName
-				if s.IsBrewfileMode() {
-					headerName = fmt.Sprintf("%s [Brewfile Mode]", AppName)
-				}
-				s.layout.GetHeader().Update(headerName, AppVersion, s.brewVersion)
-			})
+		latestVersion, err := s.selfUpdateService.CheckForUpdates(ctx)
+		if err != nil || latestVersion == AppVersion {
+			return
 		}
+		s.app.QueueUpdateDraw(func() {
+			displayVersion := fmt.Sprintf("%s ([orange]New Version Available: %s[-])", AppVersion, latestVersion)
+			headerName := AppName
+			if s.IsBrewfileMode() {
+				headerName = fmt.Sprintf("%s [Brewfile Mode]", AppName)
+			}
+			s.layout.GetHeader().Update(headerName, displayVersion, s.brewVersion)
+		})
 	}()
 
 	// Table handler to update the details view when a table row is selected
 	tableSelectionChangedFunc := func(row, _ int) {
+		s.mu.RLock()
+		defer s.mu.RUnlock()
 		if row > 0 && row-1 < len(*s.filteredPackages) {
 			s.layout.GetDetails().SetContent(&(*s.filteredPackages)[row-1])
 		}

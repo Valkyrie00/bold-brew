@@ -19,6 +19,7 @@ type HelpScreen struct {
 // NewHelpScreen creates a new help screen component
 func NewHelpScreen(theme *theme.Theme) *HelpScreen {
 	return &HelpScreen{
+		pages: tview.NewPages(),
 		theme: theme,
 	}
 }

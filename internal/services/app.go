@@ -85,10 +85,10 @@ var NewAppService = func() AppServiceInterface {
 	return s
 }
 
-func (s *AppService) GetApp() *tview.Application  { return s.app }
+func (s *AppService) GetApp() *tview.Application    { return s.app }
 func (s *AppService) GetLayout() ui.LayoutInterface { return s.layout }
-func (s *AppService) SetBrewfilePath(path string)  { s.brewfilePath = path }
-func (s *AppService) IsBrewfileMode() bool         { return s.brewfilePath != "" }
+func (s *AppService) SetBrewfilePath(path string)   { s.brewfilePath = path }
+func (s *AppService) IsBrewfileMode() bool          { return s.brewfilePath != "" }
 
 func (s *AppService) GetBrewfilePackages() *[]models.Package {
 	s.mu.RLock()

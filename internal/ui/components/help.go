@@ -116,7 +116,7 @@ func (h *HelpScreen) buildHelpContent() string {
 	}
 
 	sb.WriteString("\n")
-	sb.WriteString(fmt.Sprintf("[%s]Press any key to close[-]", h.getColorTag(h.theme.LegendColor)))
+	fmt.Fprintf(&sb, "[%s]Press any key to close[-]", h.getColorTag(h.theme.LegendColor))
 
 	return sb.String()
 }

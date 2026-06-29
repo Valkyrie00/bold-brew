@@ -1,10 +1,12 @@
 package components
 
 import (
-	"bbrew/internal/ui/theme"
 	"fmt"
-	"github.com/rivo/tview"
 	"strings"
+
+	"github.com/rivo/tview"
+
+	"bbrew/internal/ui/theme"
 )
 
 type Legend struct {

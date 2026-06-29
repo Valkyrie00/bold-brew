@@ -14,7 +14,6 @@ type Theme struct {
 	ErrorColor       tcell.Color
 
 	TitleColor      tcell.Color
-	LabelColor      tcell.Color
 	ButtonBgColor   tcell.Color
 	ButtonTextColor tcell.Color
 
@@ -49,7 +48,6 @@ func NewTheme() *Theme {
 
 		// Component colors
 		TitleColor:      tcell.ColorPurple,
-		LabelColor:      tcell.ColorYellow,
 		ButtonBgColor:   tcell.ColorDefault,
 		ButtonTextColor: tcell.ColorDefault,
 

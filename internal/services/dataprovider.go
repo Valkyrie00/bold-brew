@@ -200,11 +200,10 @@ func (d *DataProvider) GetInstalledCasks(forceRefresh bool) ([]models.Cask, erro
 	return response.Casks, nil
 }
 
-// markCasksAsInstalled sets LocallyInstalled and IsCask for casks.
+// markCasksAsInstalled sets LocallyInstalled for casks.
 func (d *DataProvider) markCasksAsInstalled(casks *[]models.Cask) {
 	for i := range *casks {
 		(*casks)[i].LocallyInstalled = true
-		(*casks)[i].IsCask = true
 	}
 }
 
@@ -581,6 +580,15 @@ func (d *DataProvider) SetupData(forceRefresh bool) error {
 	return nil
 }
 
+// enrichWithAnalytics applies analytics data (rank and download count) to a package.
+func (d *DataProvider) enrichWithAnalytics(pkg *models.Package, analytics map[string]models.AnalyticsItem, name string) {
+	if a, exists := analytics[name]; exists && a.Number > 0 {
+		downloads, _ := strconv.Atoi(strings.ReplaceAll(a.Count, ",", ""))
+		pkg.Analytics90dRank = a.Number
+		pkg.Analytics90dDownloads = downloads
+	}
+}
+
 // GetPackages retrieves all packages (formulae + casks), merging remote and installed.
 func (d *DataProvider) GetPackages() *[]models.Package {
 	packageMap := make(map[string]models.Package)
@@ -589,11 +597,7 @@ func (d *DataProvider) GetPackages() *[]models.Package {
 		if _, exists := packageMap[formula.Name]; !exists {
 			f := formula
 			pkg := models.NewPackageFromFormula(&f)
-			if a, exists := d.formulaeAnalytics[formula.Name]; exists && a.Number > 0 {
-				downloads, _ := strconv.Atoi(strings.ReplaceAll(a.Count, ",", ""))
-				pkg.Analytics90dRank = a.Number
-				pkg.Analytics90dDownloads = downloads
-			}
+			d.enrichWithAnalytics(&pkg, d.formulaeAnalytics, formula.Name)
 			packageMap[formula.Name] = pkg
 		}
 	}
@@ -601,11 +605,7 @@ func (d *DataProvider) GetPackages() *[]models.Package {
 	for _, formula := range *d.installedFormulae {
 		f := formula
 		pkg := models.NewPackageFromFormula(&f)
-		if a, exists := d.formulaeAnalytics[formula.Name]; exists && a.Number > 0 {
-			downloads, _ := strconv.Atoi(strings.ReplaceAll(a.Count, ",", ""))
-			pkg.Analytics90dRank = a.Number
-			pkg.Analytics90dDownloads = downloads
-		}
+		d.enrichWithAnalytics(&pkg, d.formulaeAnalytics, formula.Name)
 		packageMap[formula.Name] = pkg
 	}
 
@@ -613,11 +613,7 @@ func (d *DataProvider) GetPackages() *[]models.Package {
 		if _, exists := packageMap[cask.Token]; !exists {
 			c := cask
 			pkg := models.NewPackageFromCask(&c)
-			if a, exists := d.caskAnalytics[cask.Token]; exists && a.Number > 0 {
-				downloads, _ := strconv.Atoi(strings.ReplaceAll(a.Count, ",", ""))
-				pkg.Analytics90dRank = a.Number
-				pkg.Analytics90dDownloads = downloads
-			}
+			d.enrichWithAnalytics(&pkg, d.caskAnalytics, cask.Token)
 			packageMap[cask.Token] = pkg
 		}
 	}
@@ -625,11 +621,7 @@ func (d *DataProvider) GetPackages() *[]models.Package {
 	for _, cask := range *d.installedCasks {
 		c := cask
 		pkg := models.NewPackageFromCask(&c)
-		if a, exists := d.caskAnalytics[cask.Token]; exists && a.Number > 0 {
-			downloads, _ := strconv.Atoi(strings.ReplaceAll(a.Count, ",", ""))
-			pkg.Analytics90dRank = a.Number
-			pkg.Analytics90dDownloads = downloads
-		}
+		d.enrichWithAnalytics(&pkg, d.caskAnalytics, cask.Token)
 		packageMap[cask.Token] = pkg
 	}
 

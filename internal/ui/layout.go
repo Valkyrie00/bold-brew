@@ -33,22 +33,20 @@ type Layout struct {
 	notifier    *components.Notifier
 	modal       *components.Modal
 	helpScreen  *components.HelpScreen
-	theme       *theme.Theme
 }
 
-func NewLayout(theme *theme.Theme) LayoutInterface {
+func NewLayout(t *theme.Theme) LayoutInterface {
 	return &Layout{
 		mainContent: tview.NewGrid(),
-		header:      components.NewHeader(theme),
-		search:      components.NewSearch(theme),
-		table:       components.NewTable(theme),
-		details:     components.NewDetails(theme),
-		output:      components.NewOutput(theme),
-		legend:      components.NewLegend(theme),
-		notifier:    components.NewNotifier(theme),
-		modal:       components.NewModal(theme),
-		helpScreen:  components.NewHelpScreen(theme),
-		theme:       theme,
+		header:      components.NewHeader(t),
+		search:      components.NewSearch(t),
+		table:       components.NewTable(t),
+		details:     components.NewDetails(t),
+		output:      components.NewOutput(t),
+		legend:      components.NewLegend(t),
+		notifier:    components.NewNotifier(t),
+		modal:       components.NewModal(t),
+		helpScreen:  components.NewHelpScreen(t),
 	}
 }
 

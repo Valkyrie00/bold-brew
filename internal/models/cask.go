@@ -27,5 +27,4 @@ type Cask struct {
 	Analytics90dRank      int                // Internal: Populated from analytics
 	Analytics90dDownloads int                // Internal: Populated from analytics
 	LocallyInstalled      bool               `json:"-"` // Internal flag
-	IsCask                bool               `json:"-"` // Internal flag to distinguish from formulae
 }

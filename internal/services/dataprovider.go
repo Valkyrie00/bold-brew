@@ -11,7 +11,14 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
+	"time"
 )
+
+// httpClient is a shared HTTP client with a reasonable timeout for API calls.
+var httpClient = &http.Client{
+	Timeout: 30 * time.Second,
+}
 
 // API URLs for Homebrew data
 const (
@@ -80,9 +87,9 @@ func NewDataProvider() *DataProvider {
 	}
 }
 
-// fetchFromAPI downloads data from a URL.
+// fetchFromAPI downloads data from a URL using the shared HTTP client with timeout.
 func fetchFromAPI(url string) ([]byte, error) {
-	resp, err := http.Get(url) // #nosec G107 - URLs are internal constants
+	resp, err := httpClient.Get(url) // #nosec G107 - URLs are internal constants
 	if err != nil {
 		return nil, err
 	}
@@ -533,49 +540,115 @@ func (d *DataProvider) fetchSinglePackageInfo(name string, isCask bool) *models.
 	return &pkg
 }
 
-// SetupData initializes the DataProvider by loading all package data.
+// SetupData initializes the DataProvider by loading all package data concurrently.
+// All 6 data sources are fetched in parallel to minimize startup time.
 func (d *DataProvider) SetupData(forceRefresh bool) error {
-	// Get installed formulae
-	installed, err := d.GetInstalledFormulae(forceRefresh)
-	if err != nil {
-		return fmt.Errorf("failed to get installed formulae: %w", err)
+	var (
+		wg          sync.WaitGroup
+		mu          sync.Mutex
+		firstErr    error
+		installed   []models.Formula
+		remote      []models.Formula
+		analytics   map[string]models.AnalyticsItem
+		instCasks   []models.Cask
+		remoteCasks []models.Cask
+		caskAnalyt  map[string]models.AnalyticsItem
+	)
+
+	setErr := func(err error) {
+		mu.Lock()
+		if firstErr == nil {
+			firstErr = err
+		}
+		mu.Unlock()
 	}
+
+	wg.Add(6)
+
+	go func() {
+		defer wg.Done()
+		result, err := d.GetInstalledFormulae(forceRefresh)
+		if err != nil {
+			setErr(fmt.Errorf("failed to get installed formulae: %w", err))
+			return
+		}
+		mu.Lock()
+		installed = result
+		mu.Unlock()
+	}()
+
+	go func() {
+		defer wg.Done()
+		result, err := d.GetRemoteFormulae(forceRefresh)
+		if err != nil {
+			setErr(fmt.Errorf("failed to get remote formulae: %w", err))
+			return
+		}
+		mu.Lock()
+		remote = result
+		mu.Unlock()
+	}()
+
+	go func() {
+		defer wg.Done()
+		result, err := d.GetFormulaeAnalytics(forceRefresh)
+		if err != nil {
+			setErr(fmt.Errorf("failed to get formulae analytics: %w", err))
+			return
+		}
+		mu.Lock()
+		analytics = result
+		mu.Unlock()
+	}()
+
+	go func() {
+		defer wg.Done()
+		result, err := d.GetInstalledCasks(forceRefresh)
+		if err != nil {
+			setErr(fmt.Errorf("failed to get installed casks: %w", err))
+			return
+		}
+		mu.Lock()
+		instCasks = result
+		mu.Unlock()
+	}()
+
+	go func() {
+		defer wg.Done()
+		result, err := d.GetRemoteCasks(forceRefresh)
+		if err != nil {
+			setErr(fmt.Errorf("failed to get remote casks: %w", err))
+			return
+		}
+		mu.Lock()
+		remoteCasks = result
+		mu.Unlock()
+	}()
+
+	go func() {
+		defer wg.Done()
+		result, err := d.GetCaskAnalytics(forceRefresh)
+		if err != nil {
+			setErr(fmt.Errorf("failed to get cask analytics: %w", err))
+			return
+		}
+		mu.Lock()
+		caskAnalyt = result
+		mu.Unlock()
+	}()
+
+	wg.Wait()
+
+	if firstErr != nil {
+		return firstErr
+	}
+
 	*d.installedFormulae = installed
-
-	// Get remote formulae
-	remote, err := d.GetRemoteFormulae(forceRefresh)
-	if err != nil {
-		return fmt.Errorf("failed to get remote formulae: %w", err)
-	}
 	*d.remoteFormulae = remote
-
-	// Get formulae analytics
-	analytics, err := d.GetFormulaeAnalytics(forceRefresh)
-	if err != nil {
-		return fmt.Errorf("failed to get formulae analytics: %w", err)
-	}
 	d.formulaeAnalytics = analytics
-
-	// Get installed casks
-	installedCasks, err := d.GetInstalledCasks(forceRefresh)
-	if err != nil {
-		return fmt.Errorf("failed to get installed casks: %w", err)
-	}
-	*d.installedCasks = installedCasks
-
-	// Get remote casks
-	remoteCasks, err := d.GetRemoteCasks(forceRefresh)
-	if err != nil {
-		return fmt.Errorf("failed to get remote casks: %w", err)
-	}
+	*d.installedCasks = instCasks
 	*d.remoteCasks = remoteCasks
-
-	// Get cask analytics
-	caskAnalytics, err := d.GetCaskAnalytics(forceRefresh)
-	if err != nil {
-		return fmt.Errorf("failed to get cask analytics: %w", err)
-	}
-	d.caskAnalytics = caskAnalytics
+	d.caskAnalytics = caskAnalyt
 
 	return nil
 }

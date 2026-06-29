@@ -32,6 +32,7 @@ const (
 const (
 	cacheFileInstalled      = "installed.json"
 	cacheFileInstalledCasks = "installed-casks.json"
+	cacheFileInstalledV2    = "installed-v2.json" // Unified v2 format (Homebrew 6+)
 	cacheFileFormulae       = "formula.json"
 	cacheFileCasks          = "cask.json"
 	cacheFileAnalytics      = "analytics.json"
@@ -212,6 +213,49 @@ func (d *DataProvider) markCasksAsInstalled(casks *[]models.Cask) {
 	for i := range *casks {
 		(*casks)[i].LocallyInstalled = true
 	}
+}
+
+// installedV2Response represents the JSON output from `brew info --installed --json=v2`.
+// Available in Homebrew 6.0+, this returns both formulae and casks in one call.
+type installedV2Response struct {
+	Formulae []models.Formula `json:"formulae"`
+	Casks    []models.Cask    `json:"casks"`
+}
+
+// GetInstalledV2 fetches all installed packages (formulae + casks) via `brew info --installed --json=v2`.
+// This single command replaces separate GetInstalledFormulae + GetInstalledCasks calls.
+// Returns (formulae, casks, error). On error (e.g. Homebrew < 6), callers should fall back.
+func (d *DataProvider) GetInstalledV2(forceRefresh bool) ([]models.Formula, []models.Cask, error) {
+	if err := ensureCacheDir(); err != nil {
+		return nil, nil, err
+	}
+
+	if !forceRefresh {
+		if data := readCacheFileWithTTL(cacheFileInstalledV2, 10, cacheShortTTL); data != nil {
+			var resp installedV2Response
+			if err := json.Unmarshal(data, &resp); err == nil {
+				d.markFormulaeAsInstalled(&resp.Formulae)
+				d.markCasksAsInstalled(&resp.Casks)
+				return resp.Formulae, resp.Casks, nil
+			}
+		}
+	}
+
+	cmd := brewCommand("info", "--installed", "--json=v2")
+	output, err := cmd.Output()
+	if err != nil {
+		return nil, nil, err
+	}
+
+	var resp installedV2Response
+	if err := json.Unmarshal(output, &resp); err != nil {
+		return nil, nil, err
+	}
+
+	d.markFormulaeAsInstalled(&resp.Formulae)
+	d.markCasksAsInstalled(&resp.Casks)
+	writeCacheFile(cacheFileInstalledV2, output)
+	return resp.Formulae, resp.Casks, nil
 }
 
 // GetRemoteFormulae retrieves remote formulae from API, optionally using cache.
@@ -563,19 +607,42 @@ func (d *DataProvider) SetupData(forceRefresh bool) error {
 		mu.Unlock()
 	}
 
-	wg.Add(6)
+	// Try unified v2 fetch first (Homebrew 6+: one command for both formulae and casks).
+	// Falls back to separate commands if v2 is unavailable.
+	v2Formulae, v2Casks, v2Err := d.GetInstalledV2(forceRefresh)
+	useV2 := v2Err == nil
 
-	go func() {
-		defer wg.Done()
-		result, err := d.GetInstalledFormulae(forceRefresh)
-		if err != nil {
-			setErr(fmt.Errorf("failed to get installed formulae: %w", err))
-			return
-		}
-		mu.Lock()
-		installed = result
-		mu.Unlock()
-	}()
+	if useV2 {
+		installed = v2Formulae
+		instCasks = v2Casks
+		wg.Add(4)
+	} else {
+		wg.Add(6)
+
+		go func() {
+			defer wg.Done()
+			result, err := d.GetInstalledFormulae(forceRefresh)
+			if err != nil {
+				setErr(fmt.Errorf("failed to get installed formulae: %w", err))
+				return
+			}
+			mu.Lock()
+			installed = result
+			mu.Unlock()
+		}()
+
+		go func() {
+			defer wg.Done()
+			result, err := d.GetInstalledCasks(forceRefresh)
+			if err != nil {
+				setErr(fmt.Errorf("failed to get installed casks: %w", err))
+				return
+			}
+			mu.Lock()
+			instCasks = result
+			mu.Unlock()
+		}()
+	}
 
 	go func() {
 		defer wg.Done()
@@ -598,18 +665,6 @@ func (d *DataProvider) SetupData(forceRefresh bool) error {
 		}
 		mu.Lock()
 		analytics = result
-		mu.Unlock()
-	}()
-
-	go func() {
-		defer wg.Done()
-		result, err := d.GetInstalledCasks(forceRefresh)
-		if err != nil {
-			setErr(fmt.Errorf("failed to get installed casks: %w", err))
-			return
-		}
-		mu.Lock()
-		instCasks = result
 		mu.Unlock()
 	}()
 

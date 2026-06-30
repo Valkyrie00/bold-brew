@@ -98,6 +98,8 @@ func (h *HelpScreen) buildHelpContent() string {
 	sb.WriteString(h.formatKey("o", "Toggle outdated"))
 	sb.WriteString(h.formatKey("l", "Toggle leaves"))
 	sb.WriteString(h.formatKey("c", "Toggle casks"))
+	sb.WriteString(h.formatKey("F", "Toggle formulae"))
+	sb.WriteString(h.formatKey("s", "Cycle sort mode"))
 	sb.WriteString("\n")
 
 	// Actions section
@@ -105,6 +107,7 @@ func (h *HelpScreen) buildHelpContent() string {
 	sb.WriteString(h.formatKey("i", "Install selected"))
 	sb.WriteString(h.formatKey("u", "Update selected"))
 	sb.WriteString(h.formatKey("r", "Remove selected"))
+	sb.WriteString(h.formatKey("e", "Export Brewfile"))
 	sb.WriteString(h.formatKey("Ctrl+U", "Update all"))
 
 	// Brewfile section (only if in Brewfile mode)

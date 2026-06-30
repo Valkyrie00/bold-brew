@@ -111,6 +111,57 @@ func TestNewPackageFromCask(t *testing.T) {
 	}
 }
 
+func TestNewPackageFromCask_OutdatedByVersionMismatch(t *testing.T) {
+	installedVersion := "1.0.0"
+	c := &Cask{
+		Token:            "vorta",
+		Name:             []string{"Vorta"},
+		Version:          "1.1.0",
+		Installed:        &installedVersion,
+		Outdated:         false, // Homebrew didn't flag it
+		LocallyInstalled: true,
+	}
+
+	pkg := NewPackageFromCask(c)
+	if !pkg.Outdated {
+		t.Error("Outdated = false, want true (version mismatch: 1.0.0 vs 1.1.0)")
+	}
+}
+
+func TestNewPackageFromCask_NotOutdatedWhenVersionLatest(t *testing.T) {
+	installedVersion := "latest"
+	c := &Cask{
+		Token:            "some-app",
+		Name:             []string{"Some App"},
+		Version:          "latest",
+		Installed:        &installedVersion,
+		Outdated:         false,
+		LocallyInstalled: true,
+	}
+
+	pkg := NewPackageFromCask(c)
+	if pkg.Outdated {
+		t.Error("Outdated = true, want false (version is 'latest')")
+	}
+}
+
+func TestNewPackageFromCask_NotOutdatedWhenVersionsMatch(t *testing.T) {
+	installedVersion := "2.0.0"
+	c := &Cask{
+		Token:            "up-to-date",
+		Name:             []string{"Up To Date"},
+		Version:          "2.0.0",
+		Installed:        &installedVersion,
+		Outdated:         false,
+		LocallyInstalled: true,
+	}
+
+	pkg := NewPackageFromCask(c)
+	if pkg.Outdated {
+		t.Error("Outdated = true, want false (versions match)")
+	}
+}
+
 func TestNewPackageFromCask_EmptyName(t *testing.T) {
 	c := &Cask{
 		Token:   "my-app",

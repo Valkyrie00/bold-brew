@@ -68,6 +68,14 @@ func NewPackageFromCask(c *Cask) Package {
 		displayName = c.Name[0]
 	}
 
+	// Detect outdated: use Homebrew's flag OR compare installed vs latest version.
+	// Some casks don't set Outdated correctly in the JSON, so we also check
+	// if the installed version differs from the available version.
+	outdated := c.Outdated
+	if !outdated && c.Installed != nil && c.Version != "" && c.Version != "latest" {
+		outdated = *c.Installed != c.Version
+	}
+
 	return Package{
 		Name:                  c.Token,
 		DisplayName:           displayName,
@@ -75,7 +83,7 @@ func NewPackageFromCask(c *Cask) Package {
 		Homepage:              c.Homepage,
 		Version:               c.Version,
 		LocallyInstalled:      c.LocallyInstalled,
-		Outdated:              c.Outdated,
+		Outdated:              outdated,
 		Type:                  PackageTypeCask,
 		Analytics90dRank:      c.Analytics90dRank,
 		Analytics90dDownloads: c.Analytics90dDownloads,

@@ -57,12 +57,12 @@ func (d *Details) SetContent(pkg *models.Package) {
 		}
 	}
 
-	// Health warning for deprecated/disabled packages
-	healthWarning := ""
+	// Health warning inline (shown next to status)
+	healthInline := ""
 	if pkg.Disabled {
-		healthWarning = "\n[red::b]⚠ DISABLED[-] - This package is disabled and cannot be installed"
+		healthInline = " [red::b]⚠ DISABLED[-]"
 	} else if pkg.Deprecated {
-		healthWarning = "\n[yellow::b]⚠ DEPRECATED[-] - This package is deprecated and may be removed in the future"
+		healthInline = " [yellow::b]⚠ DEPRECATED[-]"
 	}
 
 	// Type tag with escaped brackets
@@ -97,11 +97,14 @@ func (d *Details) SetContent(pkg *models.Package) {
 		pkg.Name,
 		pkg.DisplayName,
 		pkg.Version,
-		installedStatus, healthWarning,
+		installedStatus, healthInline,
 		pkg.Homepage,
 		separator,
 		pkg.Description,
 	)
+
+	// Health section (only for deprecated/disabled)
+	healthSection := d.getHealthInfo(pkg)
 
 	// Installation details
 	installDetails := d.getPackageInstallationDetails(pkg)
@@ -114,13 +117,77 @@ func (d *Details) SetContent(pkg *models.Package) {
 
 	analyticsInfo := d.getAnalyticsInfo(pkg)
 
-	parts := []string{basicInfo, installDetails}
+	parts := []string{basicInfo}
+	if healthSection != "" {
+		parts = append(parts, healthSection)
+	}
+	parts = append(parts, installDetails)
 	if dependenciesInfo != "" {
 		parts = append(parts, dependenciesInfo)
 	}
 	parts = append(parts, analyticsInfo)
 
 	d.view.SetText(strings.Join(parts, "\n\n"))
+}
+
+func (d *Details) getHealthInfo(pkg *models.Package) string {
+	if !pkg.Deprecated && !pkg.Disabled {
+		return ""
+	}
+
+	separator := "[dim]────────────────────────[-]"
+
+	var title, reason, date, replacement string
+
+	if pkg.Disabled {
+		title = "[red::b]⚠ Package Disabled[-]"
+		if pkg.Formula != nil {
+			reason = interfaceToString(pkg.Formula.DisableReason)
+			date = interfaceToString(pkg.Formula.DisableDate)
+			replacement = interfaceToString(pkg.Formula.DisableReplacement)
+		} else if pkg.Cask != nil {
+			reason = interfaceToString(pkg.Cask.DisableReason)
+			date = interfaceToString(pkg.Cask.DisableDate)
+		}
+	} else {
+		title = "[yellow::b]⚠ Package Deprecated[-]"
+		if pkg.Formula != nil {
+			reason = interfaceToString(pkg.Formula.DeprecationReason)
+			date = interfaceToString(pkg.Formula.DeprecationDate)
+			replacement = interfaceToString(pkg.Formula.DeprecationReplacement)
+		} else if pkg.Cask != nil {
+			reason = interfaceToString(pkg.Cask.DeprecationReason)
+			date = interfaceToString(pkg.Cask.DeprecationDate)
+		}
+	}
+
+	var sb strings.Builder
+	fmt.Fprintf(&sb, "%s\n%s\n", title, separator)
+
+	if reason != "" {
+		fmt.Fprintf(&sb, "[blue]• Reason:[-] %s\n", reason)
+	}
+	if date != "" {
+		fmt.Fprintf(&sb, "[blue]• Since:[-] %s\n", date)
+	}
+	if replacement != "" {
+		fmt.Fprintf(&sb, "[blue]• Replacement:[-] [green]%s[-]\n", replacement)
+	}
+
+	if pkg.Disabled {
+		sb.WriteString("\n[dim]This package can no longer be installed.[-]")
+	} else {
+		sb.WriteString("\n[dim]Consider migrating to the replacement before this package is removed.[-]")
+	}
+
+	return sb.String()
+}
+
+func interfaceToString(v interface{}) string {
+	if v == nil {
+		return ""
+	}
+	return fmt.Sprintf("%v", v)
 }
 
 func (d *Details) getPackageInstallationDetails(pkg *models.Package) string {

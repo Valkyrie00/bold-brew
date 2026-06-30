@@ -7,9 +7,9 @@ func TestSortMode_String(t *testing.T) {
 		mode SortMode
 		want string
 	}{
+		{SortNone, "None"},
 		{SortByDownloads, "Downloads"},
 		{SortByName, "Name"},
-		{SortByInstalled, "Installed"},
 	}
 
 	for _, tt := range tests {
@@ -24,9 +24,9 @@ func TestSortMode_Next(t *testing.T) {
 		mode SortMode
 		want SortMode
 	}{
+		{SortNone, SortByDownloads},
 		{SortByDownloads, SortByName},
-		{SortByName, SortByInstalled},
-		{SortByInstalled, SortByDownloads},
+		{SortByName, SortNone},
 	}
 
 	for _, tt := range tests {

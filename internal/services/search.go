@@ -47,23 +47,18 @@ func (s *AppService) search(searchText string, scrollToTop bool) {
 }
 
 // applySortOrder sorts the list in place based on the active sort mode.
+// When SortNone, the list preserves its natural order (API/cache order).
 func (s *AppService) applySortOrder(list []models.Package) {
 	switch s.activeSort {
+	case models.SortByDownloads:
+		sort.Slice(list, func(i, j int) bool {
+			return list[i].Analytics90dDownloads > list[j].Analytics90dDownloads
+		})
 	case models.SortByName:
 		sort.Slice(list, func(i, j int) bool {
 			return strings.ToLower(list[i].Name) < strings.ToLower(list[j].Name)
 		})
-	case models.SortByInstalled:
-		sort.SliceStable(list, func(i, j int) bool {
-			if list[i].LocallyInstalled != list[j].LocallyInstalled {
-				return list[i].LocallyInstalled
-			}
-			return false
-		})
-	default: // SortByDownloads
-		sort.Slice(list, func(i, j int) bool {
-			return list[i].Analytics90dDownloads > list[j].Analytics90dDownloads
-		})
+	default: // SortNone - no sorting
 	}
 }
 
@@ -137,7 +132,15 @@ func (s *AppService) forceRefreshResults() {
 // setResults updates the results table with the provided data and optionally scrolls to the top.
 func (s *AppService) setResults(data *[]models.Package, scrollToTop bool) {
 	s.layout.GetTable().Clear()
-	s.layout.GetTable().SetTableHeaders("Type", "Name", "Version", "Description", "Downloads")
+
+	headers := [5]string{"Type", "Name", "Version", "Description", "Downloads"}
+	switch s.activeSort {
+	case models.SortByName:
+		headers[1] += " ▼"
+	case models.SortByDownloads:
+		headers[4] += " ▼"
+	}
+	s.layout.GetTable().SetTableHeaders(headers[0], headers[1], headers[2], headers[3], headers[4])
 
 	for i, info := range *data {
 		// Type cell with escaped brackets

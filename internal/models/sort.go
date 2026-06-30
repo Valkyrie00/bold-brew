@@ -4,19 +4,19 @@ package models
 type SortMode int
 
 const (
-	SortByDownloads SortMode = iota
-	SortByName
-	SortByInstalled
+	SortNone        SortMode = iota // No explicit sort (preserves natural/API order)
+	SortByDownloads                 // Most downloaded first
+	SortByName                      // Alphabetical A-Z
 )
 
 func (s SortMode) String() string {
 	switch s {
+	case SortByDownloads:
+		return "Downloads"
 	case SortByName:
 		return "Name"
-	case SortByInstalled:
-		return "Installed"
 	default:
-		return "Downloads"
+		return "None"
 	}
 }
 

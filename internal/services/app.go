@@ -49,6 +49,7 @@ type AppService struct {
 
 	brewService       BrewServiceInterface
 	flatpakService    FlatpakServiceInterface
+	masService        MasServiceInterface
 	dataProvider      DataProviderInterface // Direct access for Brewfile operations
 	selfUpdateService SelfUpdateServiceInterface
 	inputService      InputServiceInterface
@@ -80,6 +81,7 @@ var NewAppService = func() AppServiceInterface {
 	s.dataProvider = NewDataProvider()
 	s.brewService = NewBrewService()
 	s.flatpakService = NewFlatpakService()
+	s.masService = NewMasService()
 	s.inputService = NewInputService(s, s.brewService, s.flatpakService)
 	s.selfUpdateService = NewSelfUpdateService()
 

@@ -5,6 +5,8 @@ type BrewfileEntry struct {
 	Name      string
 	IsCask    bool
 	IsFlatpak bool
+	IsMas     bool
+	MasID     string // Mac App Store numeric ID
 }
 
 // BrewfileResult contains all parsed entries from a Brewfile

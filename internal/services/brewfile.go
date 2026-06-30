@@ -156,9 +156,43 @@ func parseBrewfileWithTaps(filepath string) (*models.BrewfileResult, error) {
 				})
 			}
 		}
+
+		if strings.HasPrefix(line, "mas ") {
+			if name, ok := extractQuotedValue(line); ok {
+				masID := extractMasID(line)
+				result.Packages = append(result.Packages, models.BrewfileEntry{
+					Name:  name,
+					IsMas: true,
+					MasID: masID,
+				})
+			}
+		}
 	}
 
 	return result, nil
+}
+
+// extractMasID extracts the numeric ID from a mas Brewfile line.
+// Format: mas "App Name", id: 1234567
+func extractMasID(line string) string {
+	idx := strings.Index(line, "id:")
+	if idx == -1 {
+		idx = strings.Index(line, "id: ")
+	}
+	if idx == -1 {
+		return ""
+	}
+	idPart := strings.TrimSpace(line[idx+3:])
+	// Extract only digits
+	var id strings.Builder
+	for _, ch := range idPart {
+		if ch >= '0' && ch <= '9' {
+			id.WriteRune(ch)
+		} else if id.Len() > 0 {
+			break
+		}
+	}
+	return id.String()
 }
 
 // loadBrewfilePackages parses the Brewfile and creates a filtered package list.
@@ -235,10 +269,35 @@ func (s *AppService) loadBrewfilePackages() error {
 		}
 	}
 
-	// Collect entries not found in main list (tap packages, excluding flatpak)
+	// Process Mac App Store entries
+	if s.masService.IsMasInstalled() {
+		masInstalledMap, err := s.masService.GetInstalledApps()
+		if err != nil {
+			masInstalledMap = make(map[string]bool)
+		}
+
+		for _, entry := range result.Packages {
+			if !entry.IsMas || foundPackages[entry.MasID] {
+				continue
+			}
+			pkg := models.Package{
+				Name:               entry.MasID,
+				DisplayName:        entry.Name,
+				Description:        "Mac App Store app",
+				Version:            "",
+				Type:               models.PackageTypeMas,
+				LocallyInstalled:   masInstalledMap[entry.MasID],
+				InstalledOnRequest: true,
+			}
+			*s.brewfilePackages = append(*s.brewfilePackages, pkg)
+			foundPackages[entry.MasID] = true
+		}
+	}
+
+	// Collect entries not found in main list (tap packages, excluding flatpak/mas)
 	var tapEntries []models.BrewfileEntry
 	for _, entry := range result.Packages {
-		if !foundPackages[entry.Name] && !entry.IsFlatpak {
+		if !foundPackages[entry.Name] && !entry.IsFlatpak && !entry.IsMas {
 			tapEntries = append(tapEntries, entry)
 		}
 	}

@@ -364,9 +364,12 @@ func (s *InputService) handleInstallPackageEvent() {
 				go func() {
 					s.layout.GetNotifier().ShowWarning(fmt.Sprintf("Installing %s...", info.Name))
 					var err error
-					if info.Type == models.PackageTypeFlatpak {
+					switch info.Type {
+					case models.PackageTypeFlatpak:
 						err = s.flatpakService.InstallPackage(info, s.outputWriter())
-					} else {
+					case models.PackageTypeMas:
+						err = s.appService.masService.InstallApp(info, s.outputWriter())
+					default:
 						err = s.brewService.InstallPackage(info, s.outputWriter())
 					}
 
@@ -555,10 +558,14 @@ func (s *InputService) handleInstallAllPackagesEvent() {
 		skipCondition: func(pkg models.Package) bool { return pkg.LocallyInstalled },
 		skipReason:    "already installed",
 		execute: func(pkg models.Package) error {
-			if pkg.Type == models.PackageTypeFlatpak {
+			switch pkg.Type {
+			case models.PackageTypeFlatpak:
 				return s.flatpakService.InstallPackage(pkg, s.outputWriter())
+			case models.PackageTypeMas:
+				return s.appService.masService.InstallApp(pkg, s.outputWriter())
+			default:
+				return s.brewService.InstallPackage(pkg, s.outputWriter())
 			}
-			return s.brewService.InstallPackage(pkg, s.outputWriter())
 		},
 	})
 }

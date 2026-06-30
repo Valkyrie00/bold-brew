@@ -7,6 +7,7 @@ const (
 	PackageTypeFormula PackageType = "formula"
 	PackageTypeCask    PackageType = "cask"
 	PackageTypeFlatpak PackageType = "flatpak"
+	PackageTypeMas     PackageType = "mas"
 )
 
 // Package represents a unified view of both Formula and Cask for UI display.

@@ -152,6 +152,8 @@ func (s *AppService) setResults(data *[]models.Package, scrollToTop bool) {
 			typeTag = tview.Escape("[C]")
 		case models.PackageTypeFlatpak:
 			typeTag = tview.Escape("[P]")
+		case models.PackageTypeMas:
+			typeTag = tview.Escape("[M]")
 		default:
 			typeTag = tview.Escape("[F]")
 		}

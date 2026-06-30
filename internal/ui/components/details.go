@@ -74,6 +74,9 @@ func (d *Details) SetContent(pkg *models.Package) {
 	case models.PackageTypeFlatpak:
 		typeTag = tview.Escape("[P]")
 		typeLabel = "Flatpak"
+	case models.PackageTypeMas:
+		typeTag = tview.Escape("[M]")
+		typeLabel = "Mac App Store"
 	default:
 		typeTag = tview.Escape("[F]")
 		typeLabel = "Formula"

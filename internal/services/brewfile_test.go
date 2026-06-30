@@ -112,6 +112,62 @@ func TestParseBrewfileWithTaps_CommentsOnly(t *testing.T) {
 	}
 }
 
+func TestParseBrewfileWithTaps_MasEntries(t *testing.T) {
+	content := `brew "mas"
+mas "AmorphousDiskMark", id: 1168254295
+mas "Display Menu", id: 549083868
+`
+	tmpFile := createTempBrewfile(t, content)
+
+	result, err := parseBrewfileWithTaps(tmpFile)
+	if err != nil {
+		t.Fatalf("parseBrewfileWithTaps() error: %v", err)
+	}
+
+	// Should have 3 packages: mas formula + 2 mas apps
+	if len(result.Packages) != 3 {
+		t.Fatalf("Packages count = %d, want 3", len(result.Packages))
+	}
+
+	// First entry is the mas formula itself
+	if result.Packages[0].Name != "mas" || result.Packages[0].IsMas {
+		t.Errorf("Packages[0] = %+v, want mas formula", result.Packages[0])
+	}
+
+	// Second entry is a mas app
+	if result.Packages[1].Name != "AmorphousDiskMark" || !result.Packages[1].IsMas {
+		t.Errorf("Packages[1] = %+v, want AmorphousDiskMark mas app", result.Packages[1])
+	}
+	if result.Packages[1].MasID != "1168254295" {
+		t.Errorf("Packages[1].MasID = %q, want %q", result.Packages[1].MasID, "1168254295")
+	}
+
+	// Third entry
+	if result.Packages[2].MasID != "549083868" {
+		t.Errorf("Packages[2].MasID = %q, want %q", result.Packages[2].MasID, "549083868")
+	}
+}
+
+func TestExtractMasID(t *testing.T) {
+	tests := []struct {
+		line string
+		want string
+	}{
+		{`mas "App", id: 1234567`, "1234567"},
+		{`mas "App", id:1234567`, "1234567"},
+		{`mas "App", id: 549083868`, "549083868"},
+		{`mas "App"`, ""},
+		{`mas "App", id: `, ""},
+	}
+
+	for _, tt := range tests {
+		got := extractMasID(tt.line)
+		if got != tt.want {
+			t.Errorf("extractMasID(%q) = %q, want %q", tt.line, got, tt.want)
+		}
+	}
+}
+
 func TestParseBrewfileWithTaps_FileNotFound(t *testing.T) {
 	_, err := parseBrewfileWithTaps("/nonexistent/path/Brewfile")
 	if err == nil {

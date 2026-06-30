@@ -87,6 +87,8 @@ func (s *AppService) applyFilter(sourceList *[]models.Package) *[]models.Package
 			include = info.LocallyInstalled && info.InstalledOnRequest
 		case FilterCasks:
 			include = info.Type == models.PackageTypeCask
+		case FilterFormulae:
+			include = info.Type == models.PackageTypeFormula
 		}
 		if include {
 			*filteredSource = append(*filteredSource, info)

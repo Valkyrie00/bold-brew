@@ -19,6 +19,7 @@ const (
 	FilterOutdated
 	FilterLeaves
 	FilterCasks
+	FilterFormulae
 )
 
 // InputAction represents a user action that can be triggered by a key event.
@@ -52,6 +53,7 @@ type InputService struct {
 	ActionFilterOutdated  *InputAction
 	ActionFilterLeaves    *InputAction
 	ActionFilterCasks     *InputAction
+	ActionFilterFormulae  *InputAction
 	ActionSort            *InputAction
 	ActionExport          *InputAction
 	ActionInstall         *InputAction
@@ -93,6 +95,10 @@ var NewInputService = func(appService *AppService, brewService BrewServiceInterf
 	s.ActionFilterCasks = &InputAction{
 		Key: tcell.KeyRune, Rune: 'c', KeySlug: "c", Name: "Casks",
 		Action: s.handleFilterCasksEvent, HideFromLegend: true,
+	}
+	s.ActionFilterFormulae = &InputAction{
+		Key: tcell.KeyRune, Rune: 'F', KeySlug: "F", Name: "Formulae",
+		Action: s.handleFilterFormulaeEvent, HideFromLegend: true,
 	}
 	s.ActionSort = &InputAction{
 		Key: tcell.KeyRune, Rune: 's', KeySlug: "s", Name: "Sort",
@@ -142,9 +148,9 @@ var NewInputService = func(appService *AppService, brewService BrewServiceInterf
 	// Build keyActions slice (InstallAll/RemoveAll added dynamically in Brewfile mode)
 	s.keyActions = []*InputAction{
 		s.ActionSearch, s.ActionFilterInstalled, s.ActionFilterOutdated,
-		s.ActionFilterLeaves, s.ActionFilterCasks, s.ActionSort,
-		s.ActionExport, s.ActionInstall, s.ActionUpdate, s.ActionRemove,
-		s.ActionUpdateAll, s.ActionHelp, s.ActionBack, s.ActionQuit,
+		s.ActionFilterLeaves, s.ActionFilterCasks, s.ActionFilterFormulae,
+		s.ActionSort, s.ActionExport, s.ActionInstall, s.ActionUpdate,
+		s.ActionRemove, s.ActionUpdateAll, s.ActionHelp, s.ActionBack, s.ActionQuit,
 	}
 
 	// Convert keyActions to legend entries
@@ -265,6 +271,7 @@ func (s *InputService) updateFilterUI() {
 		FilterOutdated:  {"Outdated", s.ActionFilterOutdated.KeySlug},
 		FilterLeaves:    {"Leaves", s.ActionFilterLeaves.KeySlug},
 		FilterCasks:     {"Casks", s.ActionFilterCasks.KeySlug},
+		FilterFormulae:  {"Formulae", s.ActionFilterFormulae.KeySlug},
 	}
 
 	baseLabel := "Search"
@@ -308,6 +315,11 @@ func (s *InputService) handleFilterLeavesEvent() {
 // handleFilterCasksEvent toggles the filter for cask packages only
 func (s *InputService) handleFilterCasksEvent() {
 	s.handleFilterEvent(FilterCasks)
+}
+
+// handleFilterFormulaeEvent toggles the filter for formulae packages only
+func (s *InputService) handleFilterFormulaeEvent() {
+	s.handleFilterEvent(FilterFormulae)
 }
 
 // handleSortEvent cycles through sort modes (Downloads → Name → Installed).

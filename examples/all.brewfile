@@ -1,8 +1,8 @@
-# Test Brewfile for bbrew
-# A simple example to test Brewfile mode functionality
-# Usage: bbrew -f test.brewfile
+# Complete Brewfile example for bbrew
+# Demonstrates all supported entry types: brew, cask, tap, mas, flatpak
+# Usage: bbrew -f examples/all.brewfile
 
-# Command-line utilities (lightweight and common)
+# Command-line utilities
 brew "wget"
 brew "curl"
 brew "tree"
@@ -12,12 +12,19 @@ brew "jq"
 # Development tools
 brew "git"
 brew "node"
+brew "mas"
 
 # Popular editors and IDEs
 cask "visual-studio-code"
 cask "sublime-text"
 
-# Alternative browsers (for testing)
+# Alternative browsers
 cask "firefox"
 cask "brave-browser"
+
+# Mac App Store apps (requires mas: brew install mas)
+mas "Xcode", id: 497799835
+mas "1Password", id: 1333542190
+mas "Amphetamine", id: 937984704
+mas "The Unarchiver", id: 425424353
 

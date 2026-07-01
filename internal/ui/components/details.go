@@ -42,7 +42,7 @@ func NewDetails(theme *theme.Theme) *Details {
 	return details
 }
 
-func (d *Details) SetContent(pkg *models.Package) {
+func (d *Details) SetContent(pkg *models.Package, vulns []models.Vulnerability) {
 	if pkg == nil {
 		d.view.SetText("")
 		return
@@ -118,11 +118,15 @@ func (d *Details) SetContent(pkg *models.Package) {
 		dependenciesInfo = d.getDependenciesInfo(pkg.Formula)
 	}
 
+	vulnInfo := d.getVulnInfo(vulns)
 	analyticsInfo := d.getAnalyticsInfo(pkg)
 
 	parts := []string{basicInfo}
 	if healthSection != "" {
 		parts = append(parts, healthSection)
+	}
+	if vulnInfo != "" {
+		parts = append(parts, vulnInfo)
 	}
 	parts = append(parts, installDetails)
 	if dependenciesInfo != "" {
@@ -283,6 +287,52 @@ func (d *Details) getAnalyticsInfo(pkg *models.Package) string {
 		p.Sprintf("%d", pkg.Analytics90dRank),
 		p.Sprintf("%d", pkg.Analytics90dDownloads),
 	)
+}
+
+func (d *Details) getVulnInfo(vulns []models.Vulnerability) string {
+	if vulns == nil {
+		return ""
+	}
+
+	separator := "[dim]────────────────────────[-]"
+
+	if len(vulns) == 0 {
+		return fmt.Sprintf("[yellow::b]Security[-]\n%s\n[green]✓ No known vulnerabilities[-]", separator)
+	}
+
+	var sb strings.Builder
+	fmt.Fprintf(&sb, "[red::b]⚠ Security (%d vulnerabilit", len(vulns))
+	if len(vulns) == 1 {
+		sb.WriteString("y")
+	} else {
+		sb.WriteString("ies")
+	}
+	fmt.Fprintf(&sb, ")[-]\n%s\n", separator)
+
+	for _, v := range vulns {
+		sevColor := vulnSeverityColor(v.Severity)
+		fmt.Fprintf(&sb, "  [%s][%s][-] %s\n", sevColor, v.Severity, v.ID)
+		if v.Summary != "" {
+			fmt.Fprintf(&sb, "    [dim]%s[-]\n", v.Summary)
+		}
+	}
+
+	return sb.String()
+}
+
+func vulnSeverityColor(severity string) string {
+	switch strings.ToUpper(severity) {
+	case "CRITICAL":
+		return "red::b"
+	case "HIGH":
+		return "red"
+	case "MEDIUM":
+		return "orange"
+	case "LOW":
+		return "yellow"
+	default:
+		return "white"
+	}
 }
 
 func (d *Details) View() *tview.TextView {

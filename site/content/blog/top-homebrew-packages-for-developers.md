@@ -189,7 +189,7 @@ Bold Brew (bbrew) solves these challenges by offering an elegant TUI (Terminal U
 You can install Bold Brew with a simple command:
 
 ```bash
-brew install Valkyrie00/homebrew-bbrew/bbrew
+brew install Valkyrie00/bbrew/bbrew
 ```
 
 Once installed, simply run:
@@ -216,7 +216,7 @@ The Homebrew packages listed in this article are essential tools for any macOS d
 If you haven't already, try Bold Brew today:
 
 ```bash
-brew install Valkyrie00/homebrew-bbrew/bbrew
+brew install Valkyrie00/bbrew/bbrew
 ```
 
 Discover a more elegant and productive way to interact with Homebrew, and focus on what really matters: writing exceptional code.

@@ -63,7 +63,7 @@ Share a single URL with colleagues or include it in your README:
 
 Install our recommended tools:
 \`\`\`bash
-brew install Valkyrie00/homebrew-bbrew/bbrew
+brew install Valkyrie00/bbrew/bbrew
 bbrew -f https://our-company.com/dev-setup.Brewfile
 \`\`\`
 ```

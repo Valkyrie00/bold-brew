@@ -95,7 +95,7 @@ brew upgrade bbrew
 Install Bold Brew via Homebrew:
 
 ```bash
-brew install Valkyrie00/homebrew-bbrew/bbrew
+brew install Valkyrie00/bbrew/bbrew
 ```
 
 Or download from the [releases page](https://github.com/Valkyrie00/bold-brew/releases).

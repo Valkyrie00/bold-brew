@@ -33,7 +33,7 @@ Bold Brew offers several advantages over traditional command-line package manage
 Install Bold Brew using Homebrew:
 
 ```bash
-brew install Valkyrie00/homebrew-bbrew/bbrew
+brew install Valkyrie00/bbrew/bbrew
 ```
 
 ## Key Features

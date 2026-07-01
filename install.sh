@@ -159,7 +159,7 @@ install_homebrew() {
 install_boldbrew() {
     info "Installing Bold Brew..."
     
-    brew install Valkyrie00/homebrew-bbrew/bbrew
+    brew install Valkyrie00/bbrew/bbrew
     
     success "Bold Brew installed successfully!"
 }
@@ -214,7 +214,7 @@ main() {
     # Check if bbrew is already installed
     if command_exists bbrew; then
         warn "Bold Brew is already installed. Upgrading..."
-        brew upgrade bbrew 2>/dev/null || brew install Valkyrie00/homebrew-bbrew/bbrew
+        brew upgrade bbrew 2>/dev/null || brew install Valkyrie00/bbrew/bbrew
     else
         install_boldbrew
     fi

@@ -42,16 +42,21 @@ Bold Brew is the **official Terminal UI** for managing Homebrew in [**Project Bl
 ## ✨ Features
 
 - 🚀 **Modern TUI Interface** - Clean and responsive terminal user interface
-- 📦 **Complete Package Management** - Manage both Homebrew formulae and casks
-- 📋 **Brewfile Mode** - Curated package collections from local or remote Brewfiles
+- 📦 **Complete Package Management** - Manage Homebrew formulae, casks, Flatpak, and Mac App Store apps
+- 📋 **Brewfile Mode** - Curated package collections from local or remote Brewfiles (supports `brew`, `cask`, `tap`, `mas`, and `flatpak` entries)
 - 🔍 **Advanced Search** - Fast fuzzy search across all packages
-- 🎯 **Smart Filters** - Filter by installed, outdated, leaves, or casks
+- 🎯 **Smart Filters** - Filter by installed, outdated, leaves, casks, or formulae
 - 📊 **Analytics Integration** - See popular packages based on 90-day download stats
 - 🔄 **Real-time Updates** - Live feedback during package operations
 - ⌨️ **Keyboard Shortcuts** - Intuitive keybindings for all operations
-- 🎨 **Type Indicators** - Visual distinction between formulae [F] and casks [C]
+- 🎨 **Type Indicators** - Visual distinction between formulae [F], casks [C], and Mac App Store [M]
+- 🔀 **Sort Modes** - Sort packages by downloads or name
+- 📤 **Brewfile Export** - Generate a Brewfile from currently installed packages
+- 🛡️ **Vulnerability Scanning** - On-demand CVE scanning via `brew vulns` (Homebrew 6+)
+- ⚠️ **Health Indicators** - Deprecated/disabled package warnings with replacement suggestions
 - 🗂️ **XDG Compliance** - Follows XDG Base Directory Specification for cache storage
-- 🔒 **Security Scanning** - Automated vulnerability and security checks
+- 🔒 **Security Scanning** - Automated vulnerability and security checks in CI
+- ⚡ **Homebrew 6 Ready** - Full compatibility with Homebrew 6.0 (ask mode, tap trust, JSON v2)
 
 ## 🛠️ Installation
 
@@ -118,16 +123,20 @@ Options:
 - `Esc` - Clear search / Back to table
 - `?` - Show help screen
 
-#### Filters
+#### Filters & Sorting
 - `f` - Filter installed packages
 - `o` - Filter outdated packages
 - `l` - Filter leaves (explicitly installed)
 - `c` - Filter casks only
+- `F` - Filter formulae only
+- `s` - Cycle sort mode (None → Downloads → Name)
 
 #### Package Operations
 - `i` - Install selected package
 - `u` - Update selected package
 - `r` - Remove selected package
+- `v` - Vulnerability scan (selected package)
+- `e` - Export installed packages to ~/Brewfile
 - `Ctrl+U` - Update all outdated packages
 
 #### Brewfile Mode Only
@@ -162,7 +171,8 @@ Options:
 Security is a priority for Bold Brew. We use:
 - **govulncheck** - Go vulnerability database scanning
 - **gosec** - Static security analysis
-- **Automated CI/CD** - Security checks on every PR and push
+- **brew vulns** - On-demand CVE scanning for installed Homebrew packages (requires `brew install homebrew/brew-vulns/brew-vulns`)
+- **Automated CI/CD** - Security checks and tests on every PR and push
 
 Found a security issue? Please report it privately via [GitHub Security Advisories](https://github.com/Valkyrie00/bold-brew/security/advisories).
 
@@ -197,10 +207,10 @@ make security
 bold-brew/
 ├── cmd/bbrew/           # Main application entry point
 ├── internal/
-│   ├── models/          # Data models (Formula, Cask, Package)
-│   ├── services/        # Business logic (Brew, App, Search, Input, Brewfile)
-│   └── ui/              # TUI components and layout
-├── .github/workflows/   # CI/CD pipelines
+│   ├── models/          # Data models (Formula, Cask, Package, Sort)
+│   ├── services/        # Business logic (Brew, App, Search, Input, Brewfile, Vulns, Export, Mas)
+│   └── ui/              # TUI components, layout, and thread-safe writer
+├── .github/workflows/   # CI/CD pipelines (quality, security, release, test-install)
 └── Makefile             # Build automation
 ```
 

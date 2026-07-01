@@ -56,10 +56,10 @@ func (h *HelpScreen) Build(mainContent tview.Primitive) *tview.Pages {
 		SetTitleAlign(tview.AlignCenter)
 
 	// Calculate box dimensions
-	boxHeight := 22
+	boxHeight := 23
 	boxWidth := 55
 	if h.isBrewfile {
-		boxHeight = 26 // Extra space for Brewfile section
+		boxHeight = 27 // Extra space for Brewfile section
 	}
 
 	// Center the frame in a flex layout
@@ -107,6 +107,7 @@ func (h *HelpScreen) buildHelpContent() string {
 	sb.WriteString(h.formatKey("i", "Install selected"))
 	sb.WriteString(h.formatKey("u", "Update selected"))
 	sb.WriteString(h.formatKey("r", "Remove selected"))
+	sb.WriteString(h.formatKey("v", "Vulnerability scan"))
 	sb.WriteString(h.formatKey("e", "Export Brewfile"))
 	sb.WriteString(h.formatKey("Ctrl+U", "Update all"))
 

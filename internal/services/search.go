@@ -206,9 +206,11 @@ func (s *AppService) setResults(data *[]models.Package, scrollToTop bool) {
 	if len(*data) > 0 && scrollToTop {
 		s.layout.GetTable().View().Select(1, 0)
 		s.layout.GetTable().View().ScrollToBeginning()
-		s.layout.GetDetails().SetContent(&(*data)[0])
+		pkg := &(*data)[0]
+		vulns, _ := s.vulnsService.GetCachedVulns(pkg.Name)
+		s.layout.GetDetails().SetContent(pkg, vulns)
 	} else if len(*data) == 0 {
-		s.layout.GetDetails().SetContent(nil) // Clear details if no results
+		s.layout.GetDetails().SetContent(nil, nil)
 	}
 
 	// Update the filter counter

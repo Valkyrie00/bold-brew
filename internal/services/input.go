@@ -56,6 +56,7 @@ type InputService struct {
 	ActionFilterFormulae  *InputAction
 	ActionSort            *InputAction
 	ActionExport          *InputAction
+	ActionVulnScan        *InputAction
 	ActionInstall         *InputAction
 	ActionUpdate          *InputAction
 	ActionRemove          *InputAction
@@ -108,6 +109,10 @@ var NewInputService = func(appService *AppService, brewService BrewServiceInterf
 		Key: tcell.KeyRune, Rune: 'e', KeySlug: "e", Name: "Export",
 		Action: s.handleExportEvent,
 	}
+	s.ActionVulnScan = &InputAction{
+		Key: tcell.KeyRune, Rune: 'v', KeySlug: "v", Name: "Vuln Scan",
+		Action: s.handleVulnScanEvent,
+	}
 	s.ActionInstall = &InputAction{
 		Key: tcell.KeyRune, Rune: 'i', KeySlug: "i", Name: "Install",
 		Action: s.handleInstallPackageEvent,
@@ -149,8 +154,9 @@ var NewInputService = func(appService *AppService, brewService BrewServiceInterf
 	s.keyActions = []*InputAction{
 		s.ActionSearch, s.ActionFilterInstalled, s.ActionFilterOutdated,
 		s.ActionFilterLeaves, s.ActionFilterCasks, s.ActionFilterFormulae,
-		s.ActionSort, s.ActionExport, s.ActionInstall, s.ActionUpdate,
-		s.ActionRemove, s.ActionUpdateAll, s.ActionHelp, s.ActionBack, s.ActionQuit,
+		s.ActionSort, s.ActionExport, s.ActionVulnScan, s.ActionInstall,
+		s.ActionUpdate, s.ActionRemove, s.ActionUpdateAll, s.ActionHelp,
+		s.ActionBack, s.ActionQuit,
 	}
 
 	// Convert keyActions to legend entries
@@ -336,6 +342,73 @@ func (s *InputService) handleExportEvent() {
 		return
 	}
 	s.layout.GetNotifier().ShowSuccess(fmt.Sprintf("Exported to %s", path))
+}
+
+// handleVulnScanEvent scans the selected package for known vulnerabilities using brew vulns.
+func (s *InputService) handleVulnScanEvent() {
+	if !s.appService.vulnsService.IsAvailable() {
+		s.handleVulnInstallPrompt()
+		return
+	}
+
+	row, _ := s.layout.GetTable().View().GetSelection()
+	if row <= 0 || row-1 >= len(*s.appService.filteredPackages) {
+		return
+	}
+
+	info := (*s.appService.filteredPackages)[row-1]
+	if info.Type != models.PackageTypeFormula && info.Type != models.PackageTypeCask {
+		s.layout.GetNotifier().ShowWarning("Vulnerability scan only available for Homebrew packages")
+		return
+	}
+
+	s.layout.GetOutput().Clear()
+	go func() {
+		s.appService.app.QueueUpdateDraw(func() {
+			s.layout.GetNotifier().ShowWarning(fmt.Sprintf("Scanning %s for vulnerabilities...", info.Name))
+		})
+
+		vulns, err := s.appService.vulnsService.ScanPackage(info.Name, s.outputWriter())
+
+		s.appService.app.QueueUpdateDraw(func() {
+			if err != nil {
+				s.layout.GetNotifier().ShowError(fmt.Sprintf("Vuln scan failed: %v", err))
+				return
+			}
+
+			if len(vulns) == 0 {
+				s.layout.GetNotifier().ShowSuccess(fmt.Sprintf("%s: no vulnerabilities found", info.Name))
+			} else {
+				s.layout.GetNotifier().ShowError(fmt.Sprintf("%s: %d vulnerabilit%s found", info.Name, len(vulns), pluralY(len(vulns))))
+			}
+
+			// Refresh details panel with newly cached vulnerability data
+			cachedVulns, _ := s.appService.vulnsService.GetCachedVulns(info.Name)
+			s.layout.GetDetails().SetContent(&info, cachedVulns)
+		})
+	}()
+}
+
+// handleVulnInstallPrompt asks the user to install brew vulns when it's not available.
+func (s *InputService) handleVulnInstallPrompt() {
+	s.showModal(
+		"brew vulns is not installed.\n\nInstall it now to enable vulnerability scanning?",
+		func() {
+			s.closeModal()
+			s.layout.GetOutput().Clear()
+			go func() {
+				s.layout.GetNotifier().ShowWarning("Installing brew vulns...")
+				cmd := brewCommand("install", "homebrew/brew-vulns/brew-vulns") // #nosec G204
+				if err := ExecuteCommand(cmd, s.outputWriter()); err != nil {
+					s.layout.GetNotifier().ShowError("Failed to install brew vulns")
+					return
+				}
+				s.appService.vulnsService.(*VulnsService).resetAvailability()
+				s.layout.GetNotifier().ShowSuccess("brew vulns installed! Press v again to scan.")
+			}()
+		},
+		s.closeModal,
+	)
 }
 
 // showModal displays a modal dialog with the specified text and confirmation/cancellation actions.

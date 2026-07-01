@@ -1,9 +1,6 @@
 package services
 
 import (
-	"bbrew/internal/models"
-	"bbrew/internal/ui"
-	"bbrew/internal/ui/theme"
 	"context"
 	"fmt"
 	"os"
@@ -12,6 +9,10 @@ import (
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
+
+	"bbrew/internal/models"
+	"bbrew/internal/ui"
+	"bbrew/internal/ui/theme"
 )
 
 var (
@@ -50,6 +51,7 @@ type AppService struct {
 	brewService       BrewServiceInterface
 	flatpakService    FlatpakServiceInterface
 	masService        MasServiceInterface
+	vulnsService      VulnsServiceInterface
 	dataProvider      DataProviderInterface // Direct access for Brewfile operations
 	selfUpdateService SelfUpdateServiceInterface
 	inputService      InputServiceInterface
@@ -82,6 +84,7 @@ var NewAppService = func() AppServiceInterface {
 	s.brewService = NewBrewService()
 	s.flatpakService = NewFlatpakService()
 	s.masService = NewMasService()
+	s.vulnsService = NewVulnsService()
 	s.inputService = NewInputService(s, s.brewService, s.flatpakService)
 	s.selfUpdateService = NewSelfUpdateService()
 
@@ -191,7 +194,9 @@ func (s *AppService) BuildApp() {
 		s.mu.RLock()
 		defer s.mu.RUnlock()
 		if row > 0 && row-1 < len(*s.filteredPackages) {
-			s.layout.GetDetails().SetContent(&(*s.filteredPackages)[row-1])
+			pkg := &(*s.filteredPackages)[row-1]
+			vulns, _ := s.vulnsService.GetCachedVulns(pkg.Name)
+			s.layout.GetDetails().SetContent(pkg, vulns)
 		}
 	}
 	s.layout.GetTable().View().SetSelectionChangedFunc(tableSelectionChangedFunc)

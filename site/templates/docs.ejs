@@ -1,0 +1,73 @@
+<main class="container page-content">
+    <% if (locals.breadcrumb) { %>
+        <%- include('partials/breadcrumb') %>
+    <% } %>
+
+    <section class="docs-section">
+        <h1>Documentation</h1>
+        <p class="lead">Everything you need to get the most out of Bold Brew</p>
+
+        <div class="docs-card">
+            <h2>Brewfile Syntax</h2>
+            <p>Bold Brew supports the standard Brewfile format with extensions for Mac App Store and Flatpak:</p>
+
+            <h3>Supported Entry Types</h3>
+            <table class="keyboard-table">
+                <thead>
+                    <tr><th>Keyword</th><th>Description</th><th>Example</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td><code>tap</code></td><td>Add a Homebrew tap</td><td><code>tap "homebrew/core"</code></td></tr>
+                    <tr><td><code>brew</code></td><td>Install a formula</td><td><code>brew "git"</code></td></tr>
+                    <tr><td><code>cask</code></td><td>Install a cask (GUI app)</td><td><code>cask "firefox"</code></td></tr>
+                    <tr><td><code>mas</code></td><td>Install from Mac App Store</td><td><code>mas "Xcode", id: 497799835</code></td></tr>
+                    <tr><td><code>flatpak</code></td><td>Install a Flatpak (Linux)</td><td><code>flatpak "org.gimp.GIMP"</code></td></tr>
+                </tbody>
+            </table>
+
+            <h3>Usage</h3>
+            <p>Launch Bold Brew with a Brewfile:</p>
+            <ul>
+                <li>Local file: <code>bbrew -f ~/Brewfile</code></li>
+                <li>Remote URL: <code>bbrew -f https://example.com/my.Brewfile</code></li>
+            </ul>
+        </div>
+
+        <div class="docs-card">
+            <h2>Homebrew Compatibility</h2>
+
+            <h3>Supported Versions</h3>
+            <table class="keyboard-table">
+                <thead>
+                    <tr><th>Homebrew Version</th><th>Status</th><th>Notes</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>6.x</td><td>Full support</td><td>Tap trust, ask mode, JSON v2 API</td></tr>
+                    <tr><td>4.x – 5.x</td><td>Full support</td><td>Standard operation</td></tr>
+                    <tr><td>3.x</td><td>Partial</td><td>Basic operations work, some features unavailable</td></tr>
+                </tbody>
+            </table>
+
+            <h3>Platform Requirements</h3>
+            <ul>
+                <li><strong>macOS:</strong> 10.15 Catalina or newer, Homebrew installed</li>
+                <li><strong>Linux:</strong> x86_64 or arm64, Homebrew/Linuxbrew installed</li>
+                <li><strong>Terminal:</strong> True color support recommended (iTerm2, Alacritty, Kitty, WezTerm, etc.)</li>
+            </ul>
+        </div>
+
+        <div class="docs-card">
+            <h2>CLI Options</h2>
+            <table class="keyboard-table">
+                <thead>
+                    <tr><th>Flag</th><th>Description</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td><code>-f &lt;path|url&gt;</code></td><td>Load a Brewfile (local path or HTTPS URL)</td></tr>
+                    <tr><td><code>-v</code></td><td>Show version</td></tr>
+                    <tr><td><code>-h</code></td><td>Show help</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+</main>

@@ -1,4 +1,4 @@
-<main class="container my-5">
+<main class="container page-content">
     <% if (locals.breadcrumb) { %>
         <%- include('../partials/breadcrumb') %>
     <% } %>
@@ -18,10 +18,15 @@
 
         <footer class="mt-5">
             <div class="tags">
-                <span class="tag">Homebrew</span>
-                <span class="tag">macOS</span>
-                <span class="tag">Command Line</span>
-                <span class="tag">Development Tools</span>
+                <% if (locals.tags && tags.length > 0) { %>
+                    <% tags.forEach(tag => { %>
+                        <a href="/blog/?tag=<%= encodeURIComponent(tag) %>" class="tag"><%= tag %></a>
+                    <% }); %>
+                <% } else { %>
+                    <a href="/blog/?tag=Homebrew" class="tag">Homebrew</a>
+                    <a href="/blog/?tag=TUI" class="tag">TUI</a>
+                    <a href="/blog/?tag=Development+Tools" class="tag">Development Tools</a>
+                <% } %>
             </div>
         </footer>
     </article>

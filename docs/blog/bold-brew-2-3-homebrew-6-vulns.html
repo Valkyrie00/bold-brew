@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Managing Homebrew Packages on macOS with Bold Brew</title>
-    <meta name="description" content="Learn how to efficiently manage Homebrew packages on macOS using Bold Brew. Discover best practices, tips, and tricks for package management.">
-    <meta name="keywords" content="Homebrew, package management, macOS, Bold Brew, bbrew, terminal, package manager, TUI, terminal user interface, brew packages">
+    <title>Bold Brew v2.3: Homebrew 6, Vulnerability Scanning, and Multi-Source Support</title>
+    <meta name="description" content="Bold Brew v2.3 brings full Homebrew 6.0 compatibility, vulnerability scanning with brew vulns, Mac App Store and Flatpak support, sort modes, Brewfile export, and a formulae-only filter.">
+    <meta name="keywords" content="Bold Brew 2.3, Homebrew 6, vulnerability scanning, brew vulns, Mac App Store, Flatpak, Brewfile export, formulae filter, TUI, package manager">
     <meta name="author" content="Valkyrie00">
     <meta name="robots" content="index, follow, max-image-preview:large">
     <meta name="theme-color" content="#1a1a1a">
@@ -17,20 +17,20 @@
     <link rel="preconnect" href="https://www.googletagmanager.com" crossorigin>
 
     <!-- OpenGraph Tags -->
-    <meta property="og:title" content="Managing Homebrew Packages on macOS with Bold Brew">
-    <meta property="og:description" content="Learn how to efficiently manage Homebrew packages on macOS using Bold Brew. Discover best practices, tips, and tricks for package management.">
+    <meta property="og:title" content="Bold Brew v2.3: Homebrew 6, Vulnerability Scanning, and Multi-Source Support">
+    <meta property="og:description" content="Bold Brew v2.3 brings full Homebrew 6.0 compatibility, vulnerability scanning with brew vulns, Mac App Store and Flatpak support, sort modes, Brewfile export, and a formulae-only filter.">
     <meta property="og:image" content="https://bold-brew.com/assets/logo/bbrew-logo-rounded.png">
     <meta property="og:image:width" content="200">
     <meta property="og:image:height" content="200">
     <meta property="og:image:alt" content="Bold Brew Logo">
-    <meta property="og:url" content="https://bold-brew.com/blog/managing-homebrew-packages.html">
+    <meta property="og:url" content="https://bold-brew.com/blog/bold-brew-2-3-homebrew-6-vulns.html">
     <meta property="og:type" content="article">
     <meta property="og:site_name" content="Bold Brew">
 
     <!-- Twitter Card Tags -->
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="Managing Homebrew Packages on macOS with Bold Brew">
-    <meta name="twitter:description" content="Learn how to efficiently manage Homebrew packages on macOS using Bold Brew. Discover best practices, tips, and tricks for package management.">
+    <meta name="twitter:title" content="Bold Brew v2.3: Homebrew 6, Vulnerability Scanning, and Multi-Source Support">
+    <meta name="twitter:description" content="Bold Brew v2.3 brings full Homebrew 6.0 compatibility, vulnerability scanning with brew vulns, Mac App Store and Flatpak support, sort modes, Brewfile export, and a formulae-only filter.">
     <meta name="twitter:image" content="https://bold-brew.com/assets/logo/bbrew-logo-rounded.png">
     <meta name="twitter:image:alt" content="Bold Brew Logo">
     <meta name="twitter:creator" content="@Valkyrie00">
@@ -46,9 +46,9 @@
     <meta name="msapplication-TileColor" content="#1a1a1a">
     <meta name="msapplication-config" content="none">
 
-    <link rel="canonical" href="https://bold-brew.com/blog/managing-homebrew-packages.html">
-    <link rel="alternate" hreflang="en" href="https://bold-brew.com/blog/managing-homebrew-packages.html">
-    <link rel="alternate" hreflang="x-default" href="https://bold-brew.com/blog/managing-homebrew-packages.html">
+    <link rel="canonical" href="https://bold-brew.com/blog/bold-brew-2-3-homebrew-6-vulns.html">
+    <link rel="alternate" hreflang="en" href="https://bold-brew.com/blog/bold-brew-2-3-homebrew-6-vulns.html">
+    <link rel="alternate" hreflang="x-default" href="https://bold-brew.com/blog/bold-brew-2-3-homebrew-6-vulns.html">
     
     <!-- Stylesheets -->
     <link rel="preload" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" as="stylesheet">
@@ -153,7 +153,7 @@
     
         <span class="bb-breadcrumb-sep">›</span>
         
-            <span class="bb-breadcrumb-item active">Managing Homebrew Packages on macOS with Bold Brew</span>
+            <span class="bb-breadcrumb-item active">Bold Brew v2.3: Homebrew 6, Vulnerability Scanning, and Multi-Source Support</span>
         
     
 </nav>
@@ -162,131 +162,95 @@
 
     <article>
         <header class="mb-5">
-            <h1>Managing Homebrew Packages on macOS with Bold Brew</h1>
+            <h1>Bold Brew v2.3: Homebrew 6, Vulnerability Scanning, and Multi-Source Support</h1>
             <div class="meta">
-                <span class="date">2025-03-29</span>
+                <span class="date">2026-07-02</span>
                 <span class="author">By Valkyrie00</span>
             </div>
         </header>
 
         <div class="content">
-            <h1>Managing Homebrew Packages on macOS with Bold Brew</h1>
-<p>Managing Homebrew packages through the command line can be challenging, especially when dealing with multiple packages or complex dependencies. Bold Brew provides a modern Terminal User Interface (TUI) that makes package management more intuitive and efficient.</p>
-<h2>Why Use Bold Brew?</h2>
-<p>Bold Brew offers several advantages over traditional command-line package management:</p>
-<ol>
-<li><p><strong>Visual Interface</strong></p>
+            <h1>Bold Brew v2.3: Homebrew 6, Vulnerability Scanning, and Multi-Source Support</h1>
+<p>We&#39;re excited to announce <strong>Bold Brew v2.3</strong> — the biggest feature release since 2.0. This update brings full Homebrew 6.0 compatibility, integrated vulnerability scanning, multi-source package support, and quality-of-life improvements that make managing your packages faster and more secure.</p>
+<h2>Homebrew 6.0 Compatibility</h2>
+<p>Homebrew 6.0 introduced significant changes to how taps, installations, and the API work. Bold Brew v2.3 is fully compatible:</p>
 <ul>
-<li>Easy-to-read package lists</li>
-<li>Clear dependency visualization</li>
-<li>Intuitive navigation</li>
+<li><strong>Tap trust</strong> — Bold Brew respects the new trust model and prompts when needed</li>
+<li><strong>Ask mode</strong> — interactive confirmation flows work seamlessly within the TUI</li>
+<li><strong>JSON v2 API</strong> — faster metadata fetching with the updated API format</li>
 </ul>
-</li>
-<li><p><strong>Efficient Workflow</strong></p>
+<p>If you&#39;re already on Homebrew 6, Bold Brew will work out of the box with no configuration changes.</p>
+<h2>Vulnerability Scanning</h2>
+<p>Security matters. Bold Brew now integrates with <code>brew vulns</code> to detect known CVEs in your installed packages:</p>
 <ul>
-<li>Quick package search</li>
-<li>One-click installation/removal</li>
-<li>Batch operations</li>
+<li>Press <strong><code>v</code></strong> anywhere to trigger a vulnerability scan</li>
+<li>Results are displayed inline with severity indicators</li>
+<li>If <code>brew vulns</code> isn&#39;t installed, Bold Brew offers to install it automatically</li>
 </ul>
-</li>
-<li><p><strong>Better Organization</strong></p>
-<ul>
-<li>Group packages by category</li>
-<li>Track package status</li>
-<li>Monitor system health</li>
-</ul>
-</li>
-</ol>
-<h2>Installation</h2>
-<p>Install Bold Brew using Homebrew:</p>
-<pre><code class="language-bash">brew install Valkyrie00/bbrew/bbrew
+<p>This makes it trivial to audit your development environment for known security issues without leaving the TUI.</p>
+<h2>Mac App Store Support</h2>
+<p>Bold Brew now understands <code>mas</code> entries in Brewfiles. This means you can manage your Mac App Store applications alongside Homebrew packages in a unified workflow:</p>
+<pre><code>mas &quot;Xcode&quot;, id: 497799835
+mas &quot;1Password&quot;, id: 1333542190
 </code></pre>
-<h2>Key Features</h2>
-<h3>1. Package Search</h3>
+<p>Load a Brewfile with mas entries using <code>bbrew -f ~/Brewfile</code> and see everything in one place.</p>
+<h2>Flatpak Support (Linux)</h2>
+<p>On Linux, Bold Brew now supports <code>flatpak</code> entries in Brewfiles:</p>
+<pre><code>flatpak &quot;org.gimp.GIMP&quot;
+flatpak &quot;org.mozilla.firefox&quot;
+</code></pre>
+<p>This is especially useful on Project Bluefin and Aurora where both Homebrew and Flatpak are part of the default setup.</p>
+<h2>Formulae-Only Filter</h2>
+<p>A new filter mode lets you show only formulae (excluding casks):</p>
 <ul>
-<li>Real-time search as you type</li>
-<li>Filter by name, description, or category</li>
-<li>View package details before installation</li>
+<li>Press <strong><code>F</code></strong> to toggle the formulae-only filter</li>
+<li>Combines with search for focused formula discovery</li>
 </ul>
-<h3>2. Package Management</h3>
+<p>This brings the total number of filter modes to six: all, installed, outdated, leaves, casks, and formulae.</p>
+<h2>Sort Modes</h2>
+<p>You can now sort packages by popularity or name:</p>
 <ul>
-<li>Install/remove packages with a single keypress</li>
-<li>Update packages individually or in bulk</li>
-<li>View package dependencies</li>
+<li>Press <strong><code>s</code></strong> to cycle through sort modes</li>
+<li>Sort by <strong>downloads</strong> (most popular first) or <strong>name</strong> (alphabetical)</li>
 </ul>
-<h3>3. System Monitoring</h3>
+<p>Sorting by downloads is great for discovering widely-used packages you might not know about.</p>
+<h2>Brewfile Export</h2>
+<p>Export your current selection to a Brewfile:</p>
 <ul>
-<li>Check Homebrew system status</li>
-<li>Monitor disk usage</li>
-<li>View installation logs</li>
+<li>Press <strong><code>e</code></strong> to export</li>
+<li>Saves to <code>~/Brewfile</code> in the standard format</li>
+<li>Respects current filters — export only what you&#39;re viewing</li>
 </ul>
-<h3>4. User Interface</h3>
-<ul>
-<li>Keyboard-driven navigation</li>
-<li>Color-coded status indicators</li>
-<li>Contextual help</li>
-</ul>
-<h2>Best Practices</h2>
-<ol>
-<li><p><strong>Regular Updates</strong></p>
-<ul>
-<li>Keep packages up to date</li>
-<li>Monitor for outdated packages</li>
-<li>Check system health regularly</li>
-</ul>
-</li>
-<li><p><strong>Package Organization</strong></p>
-<ul>
-<li>Group related packages</li>
-<li>Track package purposes</li>
-<li>Maintain a clean system</li>
-</ul>
-</li>
-<li><p><strong>Dependency Management</strong></p>
-<ul>
-<li>Review dependencies before installation</li>
-<li>Clean up orphaned packages</li>
-<li>Monitor disk usage</li>
-</ul>
-</li>
-</ol>
-<h2>Tips and Tricks</h2>
-<ol>
-<li><p><strong>Keyboard Shortcuts</strong></p>
-<ul>
-<li><code>?</code> - Show help</li>
-<li><code>q</code> - Quit</li>
-<li><code>space</code> - Select/deselect</li>
-<li><code>enter</code> - Execute action</li>
-</ul>
-</li>
-<li><p><strong>Search Tips</strong></p>
-<ul>
-<li>Use partial matches</li>
-<li>Filter by category</li>
-<li>Sort by various criteria</li>
-</ul>
-</li>
-<li><p><strong>Maintenance</strong></p>
-<ul>
-<li>Regular cleanup</li>
-<li>System health checks</li>
-<li>Package updates</li>
-</ul>
-</li>
-</ol>
-<h2>Conclusion</h2>
-<p>Bold Brew transforms Homebrew package management from a command-line chore into an intuitive, visual experience. Whether you&#39;re a casual user or a power user, Bold Brew can help you manage your Homebrew packages more efficiently.</p>
-<p>For more information, visit the <a href="https://bold-brew.com">Bold Brew documentation</a> or check out our other guides on Homebrew management. </p>
+<p>This makes it easy to snapshot your setup for sharing or backup.</p>
+<h2>CI Pipeline</h2>
+<p>Bold Brew now has a full CI pipeline with automated tests and coverage reporting. This ensures reliability across releases and makes contributing easier.</p>
+<h2>Upgrade</h2>
+<p>Update Bold Brew to v2.3 with:</p>
+<pre><code>brew upgrade bbrew
+</code></pre>
+<p>Or install fresh:</p>
+<pre><code>brew install Valkyrie00/bbrew/bbrew
+</code></pre>
+<p>Check out the <a href="/changelog/">full changelog</a> for the complete list of changes.</p>
+<hr>
+<p><em>Bold Brew is the official Homebrew TUI for Project Bluefin, Aurora, and Universal Blue. Used by tens of thousands of developers on macOS and Linux.</em></p>
 
         </div>
 
         <footer class="mt-5">
             <div class="tags">
                 
-                    <a href="/blog/?tag=Homebrew" class="tag">Homebrew</a>
-                    <a href="/blog/?tag=TUI" class="tag">TUI</a>
-                    <a href="/blog/?tag=Development+Tools" class="tag">Development Tools</a>
+                    
+                        <a href="/blog/?tag=Homebrew" class="tag">Homebrew</a>
+                    
+                        <a href="/blog/?tag=Security" class="tag">Security</a>
+                    
+                        <a href="/blog/?tag=TUI" class="tag">TUI</a>
+                    
+                        <a href="/blog/?tag=macOS" class="tag">macOS</a>
+                    
+                        <a href="/blog/?tag=Linux" class="tag">Linux</a>
+                    
                 
             </div>
         </footer>

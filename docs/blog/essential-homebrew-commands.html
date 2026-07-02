@@ -77,7 +77,7 @@
       "name": "Bold Brew (bbrew)",
       "operatingSystem": ["macOS", "Linux"],
       "applicationCategory": "DeveloperApplication",
-      "description": "Bold Brew: A modern TUI interface for managing Homebrew packages and casks on macOS and Linux. Effortlessly install, search, update, and remove packages with an elegant and intuitive interface.",
+      "description": "Bold Brew: A modern TUI for managing Homebrew, Mac App Store, and Flatpak packages on macOS and Linux. Features vulnerability scanning, multi-source support, and full Homebrew 6 compatibility.",
       "url": "https://bold-brew.com",
       "author": {
         "@type": "Person",
@@ -120,10 +120,13 @@
                         <a class="nav-link" href="/#install">Install</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="/#about">About</a>
+                        <a class="nav-link" href="/docs/">Docs</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="/blog/">Blog</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/changelog/">Changelog</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="https://github.com/Valkyrie00/bold-brew" target="_blank" rel="noopener noreferrer">GitHub</a>
@@ -134,33 +137,27 @@
     </nav>
 </header>
 
-    <main class="container my-5">
+    <main class="container page-content">
     
-        <div class="container my-4">
-    <nav aria-label="breadcrumb">
-        <div class="breadcrumb">
-            
-                <div class="breadcrumb-item ">
-                    
-                        <a href="/">Home</a>
-                    
-                </div>
-            
-                <div class="breadcrumb-item ">
-                    
-                        <a href="/blog/">Blog</a>
-                    
-                </div>
-            
-                <div class="breadcrumb-item active">
-                    
-                        10 Essential Homebrew Commands You Should Know
-                    
-                </div>
-            
-        </div>
-    </nav>
-</div> 
+        <nav aria-label="breadcrumb" class="bb-breadcrumb">
+    
+        
+        
+            <a href="/" class="bb-breadcrumb-item">Home</a>
+        
+    
+        <span class="bb-breadcrumb-sep">›</span>
+        
+            <a href="/blog/" class="bb-breadcrumb-item">Blog</a>
+        
+    
+        <span class="bb-breadcrumb-sep">›</span>
+        
+            <span class="bb-breadcrumb-item active">10 Essential Homebrew Commands You Should Know</span>
+        
+    
+</nav>
+
     
 
     <article>
@@ -245,14 +242,16 @@
 
         <footer class="mt-5">
             <div class="tags">
-                <span class="tag">Homebrew</span>
-                <span class="tag">macOS</span>
-                <span class="tag">Command Line</span>
-                <span class="tag">Development Tools</span>
+                
+                    <a href="/blog/?tag=Homebrew" class="tag">Homebrew</a>
+                    <a href="/blog/?tag=TUI" class="tag">TUI</a>
+                    <a href="/blog/?tag=Development+Tools" class="tag">Development Tools</a>
+                
             </div>
         </footer>
     </article>
 </main>
+
 
     <footer>
     <div class="container">

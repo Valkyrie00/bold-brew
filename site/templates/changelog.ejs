@@ -1,0 +1,74 @@
+<main class="container page-content">
+    <% if (locals.breadcrumb) { %>
+        <%- include('partials/breadcrumb') %>
+    <% } %>
+
+    <section class="changelog-section">
+        <h1>Changelog</h1>
+        <p class="lead">Release history for Bold Brew. For full details, see <a href="https://github.com/Valkyrie00/bold-brew/releases">GitHub Releases</a>.</p>
+
+        <div class="changelog-entry latest">
+            <div class="changelog-version">
+                <h2>v2.3.0</h2>
+                <span class="badge">Latest</span>
+            </div>
+            <p class="changelog-date">2025</p>
+            <ul>
+                <li>Full Homebrew 6.0 compatibility (tap trust, ask mode, JSON v2 API)</li>
+                <li>Vulnerability scanning with <code>brew vulns</code> integration (press <kbd>v</kbd>)</li>
+                <li>Mac App Store support (<code>mas</code> entries in Brewfiles)</li>
+                <li>Flatpak support for Linux (<code>flatpak</code> entries in Brewfiles)</li>
+                <li>Formulae-only filter (press <kbd>F</kbd>)</li>
+                <li>Sort modes — by downloads or name (press <kbd>s</kbd>)</li>
+                <li>Brewfile export (press <kbd>e</kbd>) — saves to ~/Brewfile</li>
+                <li>CI pipeline with tests and coverage</li>
+            </ul>
+        </div>
+
+        <div class="changelog-entry">
+            <div class="changelog-version">
+                <h2>v2.0.0</h2>
+            </div>
+            <p class="changelog-date">October 2025</p>
+            <ul>
+                <li>Full Homebrew Casks support (GUI applications)</li>
+                <li>Leaves filter (explicitly installed packages)</li>
+                <li>XDG Base Directory compliance</li>
+                <li>Enhanced security scanning</li>
+                <li>Performance improvements across the board</li>
+            </ul>
+        </div>
+
+        <div class="changelog-entry">
+            <div class="changelog-version">
+                <h2>v1.5.0</h2>
+            </div>
+            <p class="changelog-date">August 2025</p>
+            <ul>
+                <li>Brewfile Mode — load curated package collections</li>
+                <li>Remote Brewfile support (HTTPS URLs)</li>
+                <li>Official inclusion in Project Bluefin</li>
+            </ul>
+        </div>
+
+        <div class="changelog-entry">
+            <div class="changelog-version">
+                <h2>v1.0.0</h2>
+            </div>
+            <p class="changelog-date">2024</p>
+            <ul>
+                <li>Initial release</li>
+                <li>Homebrew formulae management</li>
+                <li>Fuzzy search with analytics</li>
+                <li>Smart filters (installed, outdated)</li>
+                <li>Keyboard-driven interface</li>
+            </ul>
+        </div>
+
+        <div class="text-center mt-4">
+            <a href="https://github.com/Valkyrie00/bold-brew/releases" class="btn-primary" target="_blank" rel="noopener noreferrer">
+                View All Releases on GitHub
+            </a>
+        </div>
+    </section>
+</main>

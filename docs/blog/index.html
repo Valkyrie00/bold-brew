@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Blog | Bold Brew (bbrew)</title>
-    <meta name="description" content="Tips, tutorials, and guides for managing Homebrew packages on macOS">
-    <meta name="keywords" content="Homebrew blog, macOS tutorials, package management, Bold Brew guides">
+    <meta name="description" content="Tips, tutorials, and guides for managing Homebrew, Mac App Store, and Flatpak packages on macOS and Linux">
+    <meta name="keywords" content="Homebrew blog, macOS tutorials, Linux tutorials, package management, Bold Brew guides, Flatpak, Mac App Store">
     <meta name="author" content="Valkyrie00">
     <meta name="robots" content="index, follow, max-image-preview:large">
     <meta name="theme-color" content="#1a1a1a">
@@ -18,7 +18,7 @@
 
     <!-- OpenGraph Tags -->
     <meta property="og:title" content="Blog | Bold Brew (bbrew)">
-    <meta property="og:description" content="Tips, tutorials, and guides for managing Homebrew packages on macOS">
+    <meta property="og:description" content="Tips, tutorials, and guides for managing Homebrew, Mac App Store, and Flatpak packages on macOS and Linux">
     <meta property="og:image" content="https://bold-brew.com/assets/logo/bbrew-logo-rounded.png">
     <meta property="og:image:width" content="200">
     <meta property="og:image:height" content="200">
@@ -30,7 +30,7 @@
     <!-- Twitter Card Tags -->
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="Blog | Bold Brew (bbrew)">
-    <meta name="twitter:description" content="Tips, tutorials, and guides for managing Homebrew packages on macOS">
+    <meta name="twitter:description" content="Tips, tutorials, and guides for managing Homebrew, Mac App Store, and Flatpak packages on macOS and Linux">
     <meta name="twitter:image" content="https://bold-brew.com/assets/logo/bbrew-logo-rounded.png">
     <meta name="twitter:image:alt" content="Bold Brew Logo">
     <meta name="twitter:creator" content="@Valkyrie00">
@@ -77,7 +77,7 @@
       "name": "Bold Brew (bbrew)",
       "operatingSystem": ["macOS", "Linux"],
       "applicationCategory": "DeveloperApplication",
-      "description": "Bold Brew: A modern TUI interface for managing Homebrew packages and casks on macOS and Linux. Effortlessly install, search, update, and remove packages with an elegant and intuitive interface.",
+      "description": "Bold Brew: A modern TUI for managing Homebrew, Mac App Store, and Flatpak packages on macOS and Linux. Features vulnerability scanning, multi-source support, and full Homebrew 6 compatibility.",
       "url": "https://bold-brew.com",
       "author": {
         "@type": "Person",
@@ -120,10 +120,13 @@
                         <a class="nav-link" href="/#install">Install</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="/#about">About</a>
+                        <a class="nav-link" href="/docs/">Docs</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="/blog/">Blog</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/changelog/">Changelog</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="https://github.com/Valkyrie00/bold-brew" target="_blank" rel="noopener noreferrer">GitHub</a>
@@ -134,32 +137,27 @@
     </nav>
 </header>
 
-    <main class="container my-5">
+    <main class="container page-content">
     
-        <div class="container my-4">
-    <nav aria-label="breadcrumb">
-        <div class="breadcrumb">
-            
-                <div class="breadcrumb-item ">
-                    
-                        <a href="/">Home</a>
-                    
-                </div>
-            
-                <div class="breadcrumb-item active">
-                    
-                        Blog
-                    
-                </div>
-            
-        </div>
-    </nav>
-</div> 
+        <nav aria-label="breadcrumb" class="bb-breadcrumb">
+    
+        
+        
+            <a href="/" class="bb-breadcrumb-item">Home</a>
+        
+    
+        <span class="bb-breadcrumb-sep">›</span>
+        
+            <span class="bb-breadcrumb-item active">Blog</span>
+        
+    
+</nav>
+
     
 
     <header class="mb-5">
         <h1>Bold Brew Blog</h1>
-        <p class="lead">Tips, tutorials, and guides for managing Homebrew packages and casks</p>
+        <p class="lead">Tips, tutorials, and guides for managing packages on macOS and Linux</p>
     </header>
 
     <div class="row">
@@ -168,17 +166,27 @@
                 
                     <article class="blog-post mb-5">
                         <div class="post-meta">
-                            <span class="date">2025-12-29</span>
+                            <span class="date">2026-07-02</span>
                             <span class="author">By Valkyrie00</span>
                         </div>
-                        <h2><a href="/blog/brewfile-mode-remote-support.html">Brewfile Mode: Curated Package Collections &amp; Remote URL Support</a></h2>
-                        <p class="excerpt">Bold Brew now supports Brewfile mode for curated package collections, plus the ability to load Brewfiles directly from HTTPS URLs. Perfect for team configurations and themed installers.</p>
-                        <div class="tags">
-                            <span class="tag">Homebrew</span>
-                            <span class="tag">TUI</span>
-                            <span class="tag">Command Line</span>
-                        </div>
-                        <a href="/blog/brewfile-mode-remote-support.html" class="read-more">Read more →</a>
+                        <h2><a href="/blog/bold-brew-2-3-homebrew-6-vulns.html">Bold Brew v2.3: Homebrew 6, Vulnerability Scanning, and Multi-Source Support</a></h2>
+                        <p class="excerpt">Bold Brew v2.3 brings full Homebrew 6.0 compatibility, vulnerability scanning with brew vulns, Mac App Store and Flatpak support, sort modes, Brewfile export, and a formulae-only filter.</p>
+                        
+                            <div class="tags">
+                                
+                                    <a href="/blog/?tag=Homebrew" class="tag">Homebrew</a>
+                                
+                                    <a href="/blog/?tag=Security" class="tag">Security</a>
+                                
+                                    <a href="/blog/?tag=TUI" class="tag">TUI</a>
+                                
+                                    <a href="/blog/?tag=macOS" class="tag">macOS</a>
+                                
+                                    <a href="/blog/?tag=Linux" class="tag">Linux</a>
+                                
+                            </div>
+                        
+                        <a href="/blog/bold-brew-2-3-homebrew-6-vulns.html" class="read-more">Read more →</a>
                     </article>
                 
                     <article class="blog-post mb-5">
@@ -188,27 +196,30 @@
                         </div>
                         <h2><a href="/blog/bold-brew-2-0-cask-support.html">Bold Brew 2.0: Complete Homebrew Management with Cask Support</a></h2>
                         <p class="excerpt">Bold Brew 2.0 brings major new features including full Cask support, Leaves filter, XDG compliance, and enhanced security. Manage both CLI tools and GUI applications seamlessly.</p>
-                        <div class="tags">
-                            <span class="tag">Homebrew</span>
-                            <span class="tag">TUI</span>
-                            <span class="tag">Command Line</span>
-                        </div>
+                        
                         <a href="/blog/bold-brew-2-0-cask-support.html" class="read-more">Read more →</a>
                     </article>
                 
                     <article class="blog-post mb-5">
                         <div class="post-meta">
-                            <span class="date">2025-10-13</span>
+                            <span class="date">2025-09-20</span>
                             <span class="author">By Valkyrie00</span>
                         </div>
                         <h2><a href="/blog/bold-brew-official-project-bluefin-tui.html">Bold Brew Named Official Homebrew TUI for Project Bluefin</a></h2>
                         <p class="excerpt">Bold Brew becomes the official Terminal UI for managing Homebrew in Project Bluefin, a next-generation Linux desktop serving tens of thousands of users worldwide.</p>
-                        <div class="tags">
-                            <span class="tag">Homebrew</span>
-                            <span class="tag">TUI</span>
-                            <span class="tag">Command Line</span>
-                        </div>
+                        
                         <a href="/blog/bold-brew-official-project-bluefin-tui.html" class="read-more">Read more →</a>
+                    </article>
+                
+                    <article class="blog-post mb-5">
+                        <div class="post-meta">
+                            <span class="date">2025-08-15</span>
+                            <span class="author">By Valkyrie00</span>
+                        </div>
+                        <h2><a href="/blog/brewfile-mode-remote-support.html">Brewfile Mode: Curated Package Collections &amp; Remote URL Support</a></h2>
+                        <p class="excerpt">Bold Brew now supports Brewfile mode for curated package collections, plus the ability to load Brewfiles directly from HTTPS URLs. Perfect for team configurations and themed installers.</p>
+                        
+                        <a href="/blog/brewfile-mode-remote-support.html" class="read-more">Read more →</a>
                     </article>
                 
                     <article class="blog-post mb-5">
@@ -216,13 +227,9 @@
                             <span class="date">2025-04-12</span>
                             <span class="author">By Valkyrie00</span>
                         </div>
-                        <h2><a href="/blog/top-homebrew-packages-for-developers.html">Top 20 Homebrew Packages for Developers in 2024</a></h2>
-                        <p class="excerpt">Discover essential Homebrew packages for macOS developers. A curated list of the best development tools every programmer should install.</p>
-                        <div class="tags">
-                            <span class="tag">Homebrew</span>
-                            <span class="tag">TUI</span>
-                            <span class="tag">Command Line</span>
-                        </div>
+                        <h2><a href="/blog/top-homebrew-packages-for-developers.html">Top 20 Homebrew Packages for Developers in 2025</a></h2>
+                        <p class="excerpt">Discover essential Homebrew packages for macOS and Linux developers. A curated list of the best development tools every programmer should install.</p>
+                        
                         <a href="/blog/top-homebrew-packages-for-developers.html" class="read-more">Read more →</a>
                     </article>
                 
@@ -233,11 +240,7 @@
                         </div>
                         <h2><a href="/blog/essential-homebrew-commands.html">10 Essential Homebrew Commands You Should Know</a></h2>
                         <p class="excerpt">Master the most important Homebrew commands for macOS package management. Learn how to install, update, and manage packages efficiently.</p>
-                        <div class="tags">
-                            <span class="tag">Homebrew</span>
-                            <span class="tag">TUI</span>
-                            <span class="tag">Command Line</span>
-                        </div>
+                        
                         <a href="/blog/essential-homebrew-commands.html" class="read-more">Read more →</a>
                     </article>
                 
@@ -248,11 +251,7 @@
                         </div>
                         <h2><a href="/blog/install-homebrew-macos.html">How to Install and Configure Homebrew on macOS</a></h2>
                         <p class="excerpt">Learn how to install and configure Homebrew on macOS. A step-by-step guide to setting up the most popular package manager for macOS.</p>
-                        <div class="tags">
-                            <span class="tag">Homebrew</span>
-                            <span class="tag">TUI</span>
-                            <span class="tag">Command Line</span>
-                        </div>
+                        
                         <a href="/blog/install-homebrew-macos.html" class="read-more">Read more →</a>
                     </article>
                 
@@ -263,11 +262,7 @@
                         </div>
                         <h2><a href="/blog/managing-homebrew-packages.html">Managing Homebrew Packages on macOS with Bold Brew</a></h2>
                         <p class="excerpt">Learn how to efficiently manage Homebrew packages on macOS using Bold Brew. Discover best practices, tips, and tricks for package management.</p>
-                        <div class="tags">
-                            <span class="tag">Homebrew</span>
-                            <span class="tag">TUI</span>
-                            <span class="tag">Command Line</span>
-                        </div>
+                        
                         <a href="/blog/managing-homebrew-packages.html" class="read-more">Read more →</a>
                     </article>
                 
@@ -278,19 +273,20 @@
             <div class="sidebar">
                 <div class="widget mb-4">
                     <h3>About Bold Brew</h3>
-                    <p>Bold Brew is a modern Terminal User Interface (TUI) for managing Homebrew packages and casks on macOS and Linux.</p>
+                    <p>Bold Brew is a modern Terminal User Interface for managing Homebrew, Mac App Store, and Flatpak packages on macOS and Linux.</p>
                     <a href="/#install" class="btn btn-primary">Install Now</a>
                 </div>
 
                 <div class="widget mb-4">
                     <h3>Popular Tags</h3>
                     <div class="tags">
-                        <a href="#" class="tag">Homebrew</a>
-                        <a href="#" class="tag">TUI</a>
-                        <a href="#" class="tag">Casks</a>
-                        <a href="#" class="tag">Brewfile</a>
-                        <a href="#" class="tag">Package Management</a>
-                        <a href="#" class="tag">Project Bluefin</a>
+                        <a href="/blog/?tag=Homebrew" class="tag">Homebrew</a>
+                        <a href="/blog/?tag=TUI" class="tag">TUI</a>
+                        <a href="/blog/?tag=Security" class="tag">Security</a>
+                        <a href="/blog/?tag=Brewfile" class="tag">Brewfile</a>
+                        <a href="/blog/?tag=macOS" class="tag">macOS</a>
+                        <a href="/blog/?tag=Linux" class="tag">Linux</a>
+                        <a href="/blog/?tag=Project+Bluefin" class="tag">Project Bluefin</a>
                     </div>
                 </div>
 
@@ -304,6 +300,7 @@
         </aside>
     </div>
 </main>
+
 
     <footer>
     <div class="container">

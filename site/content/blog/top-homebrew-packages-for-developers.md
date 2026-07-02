@@ -1,11 +1,11 @@
 ---
-title: "Top 20 Homebrew Packages for Developers in 2024"
+title: "Top 20 Homebrew Packages for Developers in 2025"
 date: "2025-04-12"
-description: "Discover essential Homebrew packages for macOS developers. A curated list of the best development tools every programmer should install."
-keywords: "Homebrew packages, macOS developer tools, best Homebrew packages, CLI tools, developer tools, Bold Brew, bbrew"
+description: "Discover essential Homebrew packages for macOS and Linux developers. A curated list of the best development tools every programmer should install."
+keywords: "Homebrew packages, macOS developer tools, Linux developer tools, best Homebrew packages, CLI tools, developer tools, Bold Brew, bbrew"
 ---
 
-# Top 20 Homebrew Packages for Developers in 2024
+# Top 20 Homebrew Packages for Developers in 2025
 
 Homebrew has revolutionized how developers install and manage software on macOS. In this article, we'll explore the 20 most useful Homebrew packages for developers in 2024, and how Bold Brew can make their management even easier.
 

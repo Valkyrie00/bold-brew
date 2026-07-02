@@ -1,6 +1,6 @@
 ---
 title: "Bold Brew Named Official Homebrew TUI for Project Bluefin"
-date: "2025-10-13"
+date: "2025-09-20"
 description: "Bold Brew becomes the official Terminal UI for managing Homebrew in Project Bluefin, a next-generation Linux desktop serving tens of thousands of users worldwide."
 keywords: "Bold Brew, Project Bluefin, Universal Blue, Fedora Silverblue, atomic desktop, official TUI, Linux desktop, Homebrew Linux, immutable OS, cloud-native desktop"
 ---

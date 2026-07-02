@@ -1,6 +1,6 @@
 ---
 title: "Brewfile Mode: Curated Package Collections & Remote URL Support"
-date: "2025-12-29"
+date: "2025-08-15"
 description: "Bold Brew now supports Brewfile mode for curated package collections, plus the ability to load Brewfiles directly from HTTPS URLs. Perfect for team configurations and themed installers."
 keywords: "Brewfile mode, remote Brewfile, HTTPS URL, curated packages, team configuration, Homebrew TUI, package collections, IDE installer, dev tools, Bold Brew"
 ---

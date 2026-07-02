@@ -46,9 +46,9 @@ async function generatePage(template, data, outputPath) {
 async function generateHomepage() {
     const posts = getBlogPosts();
     await generatePage('index.ejs', {
-        title: 'Bold Brew (bbrew) - Modern Homebrew TUI Manager for macOS and Linux',
-        description: 'Bold Brew (bbrew) is the modern Terminal User Interface for Homebrew on macOS and Linux. Install, update, and manage packages and casks with an elegant TUI.',
-        keywords: 'bbrew, Bold Brew, Homebrew TUI, macOS package manager, Linux package manager, Homebrew casks, Homebrew GUI, terminal package manager, Homebrew alternative, Project Bluefin, macOS development tools, Linux development tools',
+        title: 'Bold Brew (bbrew) - Modern TUI for Homebrew, MAS & Flatpak on macOS and Linux',
+        description: 'Bold Brew (bbrew) is the modern Terminal UI for managing Homebrew, Mac App Store, and Flatpak packages on macOS and Linux. Vulnerability scanning, multi-source support, Homebrew 6 ready.',
+        keywords: 'bbrew, Bold Brew, Homebrew TUI, macOS package manager, Linux package manager, Homebrew casks, Mac App Store, Flatpak, vulnerability scanning, brew vulns, Homebrew 6, terminal package manager, Project Bluefin, Aurora, Universal Blue',
         canonicalUrl: config.site.url,
         ogType: 'website',
         posts,
@@ -61,8 +61,8 @@ async function generateBlog() {
     // Generate the main blog page
     await generatePage('blog/index.ejs', {
         title: 'Blog | Bold Brew (bbrew)',
-        description: 'Tips, tutorials, and guides for managing Homebrew packages on macOS',
-        keywords: 'Homebrew blog, macOS tutorials, package management, Bold Brew guides',
+        description: 'Tips, tutorials, and guides for managing Homebrew, Mac App Store, and Flatpak packages on macOS and Linux',
+        keywords: 'Homebrew blog, macOS tutorials, Linux tutorials, package management, Bold Brew guides, Flatpak, Mac App Store',
         canonicalUrl: `${config.site.url}/blog/`,
         ogType: 'website',
         breadcrumb: [
@@ -91,6 +91,7 @@ async function generateBlog() {
                 description: attributes.description || '',
                 keywords: attributes.keywords || 'Homebrew, macOS, package management, Bold Brew, bbrew, terminal, development tools',
                 date: attributes.date || '',
+                tags: attributes.tags || [],
                 content: htmlContent,
                 canonicalUrl: `${config.site.url}/blog/${outputFile}`,
                 ogType: 'article',
@@ -126,7 +127,8 @@ function getBlogPosts() {
                 title: attributes.title,
                 date: attributes.date,
                 url: `/blog/${outputFile}`,
-                excerpt: attributes.description || ''
+                excerpt: attributes.description || '',
+                tags: attributes.tags || []
             });
         }
     }
@@ -153,6 +155,18 @@ async function generateSitemap() {
             lastmod: today,
             changefreq: 'weekly',
             priority: '0.9'
+        },
+        {
+            url: '/docs/',
+            lastmod: today,
+            changefreq: 'monthly',
+            priority: '0.8'
+        },
+        {
+            url: '/changelog/',
+            lastmod: today,
+            changefreq: 'monthly',
+            priority: '0.7'
         }
     ];
 
@@ -182,15 +196,45 @@ ${allPages.map(page => `  <url>
     fs.writeFileSync(path.join(config.distDir, 'sitemap.xml'), sitemapContent);
 }
 
+// Function to generate the docs page
+async function generateDocs() {
+    await generatePage('docs.ejs', {
+        title: 'Documentation | Bold Brew (bbrew)',
+        description: 'Complete documentation for Bold Brew — keyboard shortcuts, Brewfile syntax, CLI options, and compatibility information.',
+        keywords: 'Bold Brew docs, bbrew documentation, keyboard shortcuts, Brewfile syntax, Homebrew TUI guide',
+        canonicalUrl: `${config.site.url}/docs/`,
+        ogType: 'website',
+        breadcrumb: [
+            { text: 'Home', url: '/' },
+            { text: 'Docs', url: '/docs/' }
+        ],
+        site: config.site
+    }, path.join(config.distDir, 'docs/index.html'));
+}
+
+// Function to generate the changelog page
+async function generateChangelog() {
+    await generatePage('changelog.ejs', {
+        title: 'Changelog | Bold Brew (bbrew)',
+        description: 'Release history for Bold Brew — see what changed in every version.',
+        keywords: 'Bold Brew changelog, bbrew releases, version history, release notes',
+        canonicalUrl: `${config.site.url}/changelog/`,
+        ogType: 'website',
+        breadcrumb: [
+            { text: 'Home', url: '/' },
+            { text: 'Changelog', url: '/changelog/' }
+        ],
+        site: config.site
+    }, path.join(config.distDir, 'changelog/index.html'));
+}
+
 // Main function
 async function build() {
     try {
         // Clean the output directory while preserving assets, .git and other static files
         if (fs.existsSync(config.distDir)) {
-            // Read all files in the docs directory
             const files = fs.readdirSync(config.distDir);
             
-            // List of files/directories to preserve
             const preserveFiles = [
                 'assets',
                 '.git',
@@ -199,12 +243,10 @@ async function build() {
                 'CNAME'
             ];
             
-            // Remove only dynamically generated files
             for (const file of files) {
                 if (!preserveFiles.includes(file)) {
                     const filePath = path.join(config.distDir, file);
-                    // Check if it's a dynamically generated HTML file
-                    if (file.endsWith('.html')) {
+                    if (file.endsWith('.html') || file === 'blog' || file === 'docs' || file === 'changelog' || file === 'sitemap.xml') {
                         fs.rmSync(filePath, { recursive: true, force: true });
                     }
                 }
@@ -216,6 +258,8 @@ async function build() {
         // Generate pages
         await generateHomepage();
         await generateBlog();
+        await generateDocs();
+        await generateChangelog();
         await generateSitemap();
         
         console.log('Build completed successfully!');

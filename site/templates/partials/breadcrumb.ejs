@@ -1,15 +1,10 @@
-<div class="container my-4">
-    <nav aria-label="breadcrumb">
-        <div class="breadcrumb">
-            <% breadcrumb.forEach((item, index) => { %>
-                <div class="breadcrumb-item <%= index === breadcrumb.length - 1 ? 'active' : '' %>">
-                    <% if (index === breadcrumb.length - 1) { %>
-                        <%= item.text %>
-                    <% } else { %>
-                        <a href="<%= item.url %>"><%= item.text %></a>
-                    <% } %>
-                </div>
-            <% }); %>
-        </div>
-    </nav>
-</div> 
+<nav aria-label="breadcrumb" class="bb-breadcrumb">
+    <% breadcrumb.forEach((item, index) => { %>
+        <% if (index > 0) { %><span class="bb-breadcrumb-sep">›</span><% } %>
+        <% if (index === breadcrumb.length - 1) { %>
+            <span class="bb-breadcrumb-item active"><%= item.text %></span>
+        <% } else { %>
+            <a href="<%= item.url %>" class="bb-breadcrumb-item"><%= item.text %></a>
+        <% } %>
+    <% }); %>
+</nav>

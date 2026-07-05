@@ -80,7 +80,7 @@ Install Homebrew + Bold Brew with a single command:
 ### Via Homebrew
 
 ```sh
-brew install Valkyrie00/bbrew/bbrew
+brew install bbrew
 ```
 
 ### Manual Download

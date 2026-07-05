@@ -100,7 +100,7 @@ brew upgrade bbrew
 Or install fresh:
 
 ```
-brew install Valkyrie00/bbrew/bbrew
+brew install bbrew
 ```
 
 Check out the [full changelog](/changelog/) for the complete list of changes.

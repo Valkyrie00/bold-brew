@@ -397,14 +397,20 @@ func (s *InputService) handleVulnInstallPrompt() {
 			s.closeModal()
 			s.layout.GetOutput().Clear()
 			go func() {
-				s.layout.GetNotifier().ShowWarning("Installing brew vulns...")
+				s.appService.app.QueueUpdateDraw(func() {
+					s.layout.GetNotifier().ShowWarning("Installing brew vulns...")
+				})
 				cmd := brewCommand("install", "homebrew/brew-vulns/brew-vulns") // #nosec G204
 				if err := ExecuteCommand(cmd, s.outputWriter()); err != nil {
-					s.layout.GetNotifier().ShowError("Failed to install brew vulns")
+					s.appService.app.QueueUpdateDraw(func() {
+						s.layout.GetNotifier().ShowError("Failed to install brew vulns")
+					})
 					return
 				}
 				s.appService.vulnsService.(*VulnsService).resetAvailability()
-				s.layout.GetNotifier().ShowSuccess("brew vulns installed! Press v again to scan.")
+				s.appService.app.QueueUpdateDraw(func() {
+					s.layout.GetNotifier().ShowSuccess("brew vulns installed! Press v again to scan.")
+				})
 			}()
 		},
 		s.closeModal,
@@ -435,7 +441,9 @@ func (s *InputService) handleInstallPackageEvent() {
 				s.closeModal()
 				s.layout.GetOutput().Clear()
 				go func() {
-					s.layout.GetNotifier().ShowWarning(fmt.Sprintf("Installing %s...", info.Name))
+					s.appService.app.QueueUpdateDraw(func() {
+						s.layout.GetNotifier().ShowWarning(fmt.Sprintf("Installing %s...", info.Name))
+					})
 					var err error
 					switch info.Type {
 					case models.PackageTypeFlatpak:
@@ -446,12 +454,16 @@ func (s *InputService) handleInstallPackageEvent() {
 						err = s.brewService.InstallPackage(info, s.outputWriter())
 					}
 
-					if err != nil {
-						s.layout.GetNotifier().ShowError(fmt.Sprintf("Failed to install %s", info.Name))
-						return
+					s.appService.app.QueueUpdateDraw(func() {
+						if err != nil {
+							s.layout.GetNotifier().ShowError(fmt.Sprintf("Failed to install %s", info.Name))
+							return
+						}
+						s.layout.GetNotifier().ShowSuccess(fmt.Sprintf("Installed %s", info.Name))
+					})
+					if err == nil {
+						s.appService.forceRefreshResults()
 					}
-					s.layout.GetNotifier().ShowSuccess(fmt.Sprintf("Installed %s", info.Name))
-					s.appService.forceRefreshResults()
 				}()
 			}, s.closeModal)
 	}
@@ -468,7 +480,9 @@ func (s *InputService) handleRemovePackageEvent() {
 				s.closeModal()
 				s.layout.GetOutput().Clear()
 				go func() {
-					s.layout.GetNotifier().ShowWarning(fmt.Sprintf("Removing %s...", info.Name))
+					s.appService.app.QueueUpdateDraw(func() {
+						s.layout.GetNotifier().ShowWarning(fmt.Sprintf("Removing %s...", info.Name))
+					})
 					var err error
 					if info.Type == models.PackageTypeFlatpak {
 						err = s.flatpakService.RemovePackage(info, s.outputWriter())
@@ -476,12 +490,16 @@ func (s *InputService) handleRemovePackageEvent() {
 						err = s.brewService.RemovePackage(info, s.outputWriter())
 					}
 
-					if err != nil {
-						s.layout.GetNotifier().ShowError(fmt.Sprintf("Failed to remove %s", info.Name))
-						return
+					s.appService.app.QueueUpdateDraw(func() {
+						if err != nil {
+							s.layout.GetNotifier().ShowError(fmt.Sprintf("Failed to remove %s: may need sudo in terminal", info.Name))
+							return
+						}
+						s.layout.GetNotifier().ShowSuccess(fmt.Sprintf("Removed %s", info.Name))
+					})
+					if err == nil {
+						s.appService.forceRefreshResults()
 					}
-					s.layout.GetNotifier().ShowSuccess(fmt.Sprintf("Removed %s", info.Name))
-					s.appService.forceRefreshResults()
 				}()
 			}, s.closeModal)
 	}
@@ -498,7 +516,9 @@ func (s *InputService) handleUpdatePackageEvent() {
 				s.closeModal()
 				s.layout.GetOutput().Clear()
 				go func() {
-					s.layout.GetNotifier().ShowWarning(fmt.Sprintf("Updating %s...", info.Name))
+					s.appService.app.QueueUpdateDraw(func() {
+						s.layout.GetNotifier().ShowWarning(fmt.Sprintf("Updating %s...", info.Name))
+					})
 					var err error
 					if info.Type == models.PackageTypeFlatpak {
 						err = s.flatpakService.UpdatePackage(info, s.outputWriter())
@@ -506,12 +526,16 @@ func (s *InputService) handleUpdatePackageEvent() {
 						err = s.brewService.UpdatePackage(info, s.outputWriter())
 					}
 
-					if err != nil {
-						s.layout.GetNotifier().ShowError(fmt.Sprintf("Failed to update %s", info.Name))
-						return
+					s.appService.app.QueueUpdateDraw(func() {
+						if err != nil {
+							s.layout.GetNotifier().ShowError(fmt.Sprintf("Failed to update %s", info.Name))
+							return
+						}
+						s.layout.GetNotifier().ShowSuccess(fmt.Sprintf("Updated %s", info.Name))
+					})
+					if err == nil {
+						s.appService.forceRefreshResults()
 					}
-					s.layout.GetNotifier().ShowSuccess(fmt.Sprintf("Updated %s", info.Name))
-					s.appService.forceRefreshResults()
 				}()
 			}, s.closeModal)
 	}
@@ -523,21 +547,31 @@ func (s *InputService) handleUpdateAllPackagesEvent() {
 		s.closeModal()
 		s.layout.GetOutput().Clear()
 		go func() {
-			s.layout.GetNotifier().ShowWarning("Updating all Homebrew packages...")
+			s.appService.app.QueueUpdateDraw(func() {
+				s.layout.GetNotifier().ShowWarning("Updating all Homebrew packages...")
+			})
 			if err := s.brewService.UpdateAllPackages(s.outputWriter()); err != nil {
-				s.layout.GetNotifier().ShowError("Failed to update Homebrew packages")
+				s.appService.app.QueueUpdateDraw(func() {
+					s.layout.GetNotifier().ShowError("Failed to update Homebrew packages")
+				})
 				return
 			}
 
 			if s.flatpakService.IsFlatpakInstalled() {
-				s.layout.GetNotifier().ShowWarning("Updating all Flatpak packages...")
+				s.appService.app.QueueUpdateDraw(func() {
+					s.layout.GetNotifier().ShowWarning("Updating all Flatpak packages...")
+				})
 				if err := s.flatpakService.UpdateAllPackages(s.outputWriter()); err != nil {
-					s.layout.GetNotifier().ShowError("Failed to update Flatpak packages")
+					s.appService.app.QueueUpdateDraw(func() {
+						s.layout.GetNotifier().ShowError("Failed to update Flatpak packages")
+					})
 					return
 				}
 			}
 
-			s.layout.GetNotifier().ShowSuccess("Updated all Packages")
+			s.appService.app.QueueUpdateDraw(func() {
+				s.layout.GetNotifier().ShowSuccess("Updated all Packages")
+			})
 			s.appService.forceRefreshResults()
 		}()
 	}, s.closeModal)
@@ -592,21 +626,21 @@ func (s *InputService) handleBatchPackageOperation(op batchOperation) {
 				pkgName := pkg.Name // Capture for closures
 
 				if op.skipCondition(pkg) {
-					s.layout.GetNotifier().ShowWarning(fmt.Sprintf("[%d/%d] Skipping %s (%s)", current, total, pkgName, op.skipReason))
 					s.appService.app.QueueUpdateDraw(func() {
+						s.layout.GetNotifier().ShowWarning(fmt.Sprintf("[%d/%d] Skipping %s (%s)", current, total, pkgName, op.skipReason))
 						fmt.Fprintf(s.layout.GetOutput().View(), "[SKIP] %s (%s)\n", pkgName, op.skipReason)
 					})
 					continue
 				}
 
-				s.layout.GetNotifier().ShowWarning(fmt.Sprintf("[%d/%d] %s %s...", current, total, op.actionVerb, pkgName))
 				s.appService.app.QueueUpdateDraw(func() {
+					s.layout.GetNotifier().ShowWarning(fmt.Sprintf("[%d/%d] %s %s...", current, total, op.actionVerb, pkgName))
 					fmt.Fprintf(s.layout.GetOutput().View(), "\n[%s] %s %s...\n", op.actionTag, op.actionVerb, pkgName)
 				})
 
 				if err := op.execute(pkg); err != nil {
-					s.layout.GetNotifier().ShowError(fmt.Sprintf("[%d/%d] Failed to process %s", current, total, pkgName))
 					s.appService.app.QueueUpdateDraw(func() {
+						s.layout.GetNotifier().ShowError(fmt.Sprintf("[%d/%d] Failed to process %s", current, total, pkgName))
 						fmt.Fprintf(s.layout.GetOutput().View(), "[ERROR] Failed to process %s: %v\n", pkgName, err)
 					})
 					continue
@@ -617,7 +651,9 @@ func (s *InputService) handleBatchPackageOperation(op batchOperation) {
 				})
 			}
 
-			s.layout.GetNotifier().ShowSuccess(fmt.Sprintf("Completed! Processed %d packages", total))
+			s.appService.app.QueueUpdateDraw(func() {
+				s.layout.GetNotifier().ShowSuccess(fmt.Sprintf("Completed! Processed %d packages", total))
+			})
 			s.appService.forceRefreshResults()
 		}()
 	}, s.closeModal)

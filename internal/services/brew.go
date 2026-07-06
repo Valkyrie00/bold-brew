@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+	"syscall"
 
 	"bbrew/internal/models"
 )
@@ -22,10 +23,13 @@ func brewEnv() []string {
 }
 
 // brewCommand creates an exec.Cmd for brew with non-interactive environment settings.
+// Setsid places the process in its own session so sudo cannot open /dev/tty,
+// preventing password prompts from hanging the TUI.
 func brewCommand(args ...string) *exec.Cmd {
 	cmd := exec.Command("brew", args...)
 	cmd.Stdin = nil
 	cmd.Env = brewEnv()
+	cmd.SysProcAttr = &syscall.SysProcAttr{Setsid: true}
 	return cmd
 }
 
@@ -34,6 +38,7 @@ func brewCommandContext(ctx context.Context, args ...string) *exec.Cmd {
 	cmd := exec.CommandContext(ctx, "brew", args...)
 	cmd.Stdin = nil
 	cmd.Env = brewEnv()
+	cmd.SysProcAttr = &syscall.SysProcAttr{Setsid: true}
 	return cmd
 }
 

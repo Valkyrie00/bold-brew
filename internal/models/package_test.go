@@ -128,6 +128,42 @@ func TestNewPackageFromCask_OutdatedByVersionMismatch(t *testing.T) {
 	}
 }
 
+func TestNewPackageFromCask_NotOutdatedWhenAutoUpdates(t *testing.T) {
+	installedVersion := "4.8.3" // stale receipt: the app self-updated past this
+	c := &Cask{
+		Token:            "macfuse",
+		Name:             []string{"macFUSE"},
+		Version:          "5.2.0",
+		Installed:        &installedVersion,
+		Outdated:         false, // Homebrew skips auto_updates casks by default
+		AutoUpdates:      true,
+		LocallyInstalled: true,
+	}
+
+	pkg := NewPackageFromCask(c)
+	if pkg.Outdated {
+		t.Error("Outdated = true, want false (auto_updates cask: receipt mismatch is not a real update)")
+	}
+}
+
+func TestNewPackageFromCask_OutdatedWhenAutoUpdatesFlaggedByHomebrew(t *testing.T) {
+	installedVersion := "1.0.0"
+	c := &Cask{
+		Token:            "self-updating-app",
+		Name:             []string{"Self Updating App"},
+		Version:          "2.0.0",
+		Installed:        &installedVersion,
+		Outdated:         true, // e.g. brew outdated --greedy would report this
+		AutoUpdates:      true,
+		LocallyInstalled: true,
+	}
+
+	pkg := NewPackageFromCask(c)
+	if !pkg.Outdated {
+		t.Error("Outdated = false, want true (Homebrew's own flag must still be respected)")
+	}
+}
+
 func TestNewPackageFromCask_NotOutdatedWhenVersionLatest(t *testing.T) {
 	installedVersion := "latest"
 	c := &Cask{

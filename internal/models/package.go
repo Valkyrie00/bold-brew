@@ -72,8 +72,11 @@ func NewPackageFromCask(c *Cask) Package {
 	// Detect outdated: use Homebrew's flag OR compare installed vs latest version.
 	// Some casks don't set Outdated correctly in the JSON, so we also check
 	// if the installed version differs from the available version.
+	// Skip the version comparison for auto_updates casks: the app updates
+	// itself, so the Caskroom receipt is stale by design and a mismatch is
+	// not a real update (same reason `brew outdated` skips them by default).
 	outdated := c.Outdated
-	if !outdated && c.Installed != nil && c.Version != "" && c.Version != "latest" {
+	if !outdated && !c.AutoUpdates && c.Installed != nil && c.Version != "" && c.Version != "latest" {
 		outdated = *c.Installed != c.Version
 	}
 

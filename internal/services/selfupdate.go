@@ -23,14 +23,17 @@ var NewSelfUpdateService = func() SelfUpdateServiceInterface {
 }
 
 // CheckForUpdates checks for the latest version of the Bold Brew package using Homebrew.
+// It queries "bbrew" without a tap prefix so it resolves to whichever source the user
+// installed from (homebrew-core or the tap), ensuring the notification matches what
+// the user can actually upgrade to.
 func (s *SelfUpdateService) CheckForUpdates(ctx context.Context) (string, error) {
-	cmd := brewCommandContext(ctx, "info", "--json=v1", "valkyrie00/bbrew/bbrew")
+	cmd := brewCommandContext(ctx, "info", "--json=v1", "bbrew")
 	output, err := cmd.CombinedOutput()
 	if err != nil {
 		if ctx.Err() != nil {
 			return "", fmt.Errorf("context cancelled")
 		}
-		return "", fmt.Errorf("failed to fetch latest version from tap: %v", err)
+		return "", fmt.Errorf("failed to fetch latest version: %v", err)
 	}
 
 	var info []boldBrewStatusInfo

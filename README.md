@@ -9,6 +9,7 @@
   ![Quality](https://github.com/Valkyrie00/bold-brew/workflows/Quality/badge.svg)
   ![Security](https://github.com/Valkyrie00/bold-brew/workflows/Security/badge.svg)
   ![Downloads](https://img.shields.io/github/downloads/Valkyrie00/bold-brew/total)
+  ![Homebrew Installs](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fformulae.brew.sh%2Fapi%2Fformula%2Fbbrew.json&query=%24.analytics.install.30d.bbrew&label=homebrew%20installs%20%2830d%29&logo=homebrew&color=FBB040)
 
   [Website](https://bold-brew.com/) · [Changelog](https://github.com/Valkyrie00/bold-brew/releases) · [Report Bug](https://github.com/Valkyrie00/bold-brew/issues/new?labels=bug) · [Request Feature](https://github.com/Valkyrie00/bold-brew/issues/new?labels=enhancement)
 

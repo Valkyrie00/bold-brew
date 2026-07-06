@@ -14,6 +14,7 @@ type Cask struct {
 	Installed             *string            `json:"installed"`      // Null if not installed, version string if installed
 	InstalledTime         *int64             `json:"installed_time"` // Unix timestamp
 	Outdated              bool               `json:"outdated"`
+	AutoUpdates           bool               `json:"auto_updates"` // App updates itself; Homebrew's version lags behind
 	SHA256                string             `json:"sha256"`
 	Deprecated            bool               `json:"deprecated"`
 	DeprecationDate       interface{}        `json:"deprecation_date"`

@@ -436,13 +436,13 @@ func (s *InputService) handleInstallPackageEvent() {
 	if row > 0 && row-1 < len(*s.appService.filteredPackages) {
 		info := (*s.appService.filteredPackages)[row-1]
 		s.showModal(
-			fmt.Sprintf("Are you sure you want to install the package: %s?", info.Name),
+			fmt.Sprintf("Are you sure you want to install the package: %s?", info.Label()),
 			func() {
 				s.closeModal()
 				s.layout.GetOutput().Clear()
 				go func() {
 					s.appService.app.QueueUpdateDraw(func() {
-						s.layout.GetNotifier().ShowWarning(fmt.Sprintf("Installing %s...", info.Name))
+						s.layout.GetNotifier().ShowWarning(fmt.Sprintf("Installing %s...", info.Label()))
 					})
 					var err error
 					switch info.Type {
@@ -456,10 +456,10 @@ func (s *InputService) handleInstallPackageEvent() {
 
 					s.appService.app.QueueUpdateDraw(func() {
 						if err != nil {
-							s.layout.GetNotifier().ShowError(fmt.Sprintf("Failed to install %s", info.Name))
+							s.layout.GetNotifier().ShowError(fmt.Sprintf("Failed to install %s", info.Label()))
 							return
 						}
-						s.layout.GetNotifier().ShowSuccess(fmt.Sprintf("Installed %s", info.Name))
+						s.layout.GetNotifier().ShowSuccess(fmt.Sprintf("Installed %s", info.Label()))
 					})
 					if err == nil {
 						s.appService.forceRefreshResults()
@@ -475,27 +475,30 @@ func (s *InputService) handleRemovePackageEvent() {
 	if row > 0 && row-1 < len(*s.appService.filteredPackages) {
 		info := (*s.appService.filteredPackages)[row-1]
 		s.showModal(
-			fmt.Sprintf("Are you sure you want to remove the package: %s?", info.Name),
+			fmt.Sprintf("Are you sure you want to remove the package: %s?", info.Label()),
 			func() {
 				s.closeModal()
 				s.layout.GetOutput().Clear()
 				go func() {
 					s.appService.app.QueueUpdateDraw(func() {
-						s.layout.GetNotifier().ShowWarning(fmt.Sprintf("Removing %s...", info.Name))
+						s.layout.GetNotifier().ShowWarning(fmt.Sprintf("Removing %s...", info.Label()))
 					})
 					var err error
-					if info.Type == models.PackageTypeFlatpak {
+					switch info.Type {
+					case models.PackageTypeFlatpak:
 						err = s.flatpakService.RemovePackage(info, s.outputWriter())
-					} else {
+					case models.PackageTypeMas:
+						err = s.appService.masService.RemoveApp(info, s.outputWriter())
+					default:
 						err = s.brewService.RemovePackage(info, s.outputWriter())
 					}
 
 					s.appService.app.QueueUpdateDraw(func() {
 						if err != nil {
-							s.layout.GetNotifier().ShowError(fmt.Sprintf("Failed to remove %s: may need sudo in terminal", info.Name))
+							s.layout.GetNotifier().ShowError(fmt.Sprintf("Failed to remove %s: may need sudo in terminal", info.Label()))
 							return
 						}
-						s.layout.GetNotifier().ShowSuccess(fmt.Sprintf("Removed %s", info.Name))
+						s.layout.GetNotifier().ShowSuccess(fmt.Sprintf("Removed %s", info.Label()))
 					})
 					if err == nil {
 						s.appService.forceRefreshResults()
@@ -511,27 +514,31 @@ func (s *InputService) handleUpdatePackageEvent() {
 	if row > 0 && row-1 < len(*s.appService.filteredPackages) {
 		info := (*s.appService.filteredPackages)[row-1]
 		s.showModal(
-			fmt.Sprintf("Are you sure you want to update the package: %s?", info.Name),
+			fmt.Sprintf("Are you sure you want to update the package: %s?", info.Label()),
 			func() {
 				s.closeModal()
 				s.layout.GetOutput().Clear()
 				go func() {
 					s.appService.app.QueueUpdateDraw(func() {
-						s.layout.GetNotifier().ShowWarning(fmt.Sprintf("Updating %s...", info.Name))
+						s.layout.GetNotifier().ShowWarning(fmt.Sprintf("Updating %s...", info.Label()))
 					})
 					var err error
-					if info.Type == models.PackageTypeFlatpak {
+					switch info.Type {
+					case models.PackageTypeFlatpak:
 						err = s.flatpakService.UpdatePackage(info, s.outputWriter())
-					} else {
+					case models.PackageTypeMas:
+						// MAS apps are updated through the App Store; no CLI update supported
+						err = nil
+					default:
 						err = s.brewService.UpdatePackage(info, s.outputWriter())
 					}
 
 					s.appService.app.QueueUpdateDraw(func() {
 						if err != nil {
-							s.layout.GetNotifier().ShowError(fmt.Sprintf("Failed to update %s", info.Name))
+							s.layout.GetNotifier().ShowError(fmt.Sprintf("Failed to update %s", info.Label()))
 							return
 						}
-						s.layout.GetNotifier().ShowSuccess(fmt.Sprintf("Updated %s", info.Name))
+						s.layout.GetNotifier().ShowSuccess(fmt.Sprintf("Updated %s", info.Label()))
 					})
 					if err == nil {
 						s.appService.forceRefreshResults()
@@ -687,10 +694,14 @@ func (s *InputService) handleRemoveAllPackagesEvent() {
 		skipCondition: func(pkg models.Package) bool { return !pkg.LocallyInstalled },
 		skipReason:    "not installed",
 		execute: func(pkg models.Package) error {
-			if pkg.Type == models.PackageTypeFlatpak {
+			switch pkg.Type {
+			case models.PackageTypeFlatpak:
 				return s.flatpakService.RemovePackage(pkg, s.outputWriter())
+			case models.PackageTypeMas:
+				return s.appService.masService.RemoveApp(pkg, s.outputWriter())
+			default:
+				return s.brewService.RemovePackage(pkg, s.outputWriter())
 			}
-			return s.brewService.RemovePackage(pkg, s.outputWriter())
 		},
 	})
 }

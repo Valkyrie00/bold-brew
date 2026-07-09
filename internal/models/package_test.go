@@ -210,3 +210,47 @@ func TestNewPackageFromCask_EmptyName(t *testing.T) {
 		t.Errorf("DisplayName = %q, want %q (fallback to Token)", pkg.DisplayName, "my-app")
 	}
 }
+
+func TestPackageLabel_MasUsesDisplayName(t *testing.T) {
+	pkg := Package{
+		Name:        "1168254295",
+		DisplayName: "AmorphousDiskMark",
+		Type:        PackageTypeMas,
+	}
+	if got := pkg.Label(); got != "AmorphousDiskMark" {
+		t.Errorf("Label() = %q, want %q", got, "AmorphousDiskMark")
+	}
+}
+
+func TestPackageLabel_MasFallsBackToName(t *testing.T) {
+	pkg := Package{
+		Name:        "1168254295",
+		DisplayName: "",
+		Type:        PackageTypeMas,
+	}
+	if got := pkg.Label(); got != "1168254295" {
+		t.Errorf("Label() = %q, want %q", got, "1168254295")
+	}
+}
+
+func TestPackageLabel_FormulaUsesName(t *testing.T) {
+	pkg := Package{
+		Name:        "wget",
+		DisplayName: "GNU Wget",
+		Type:        PackageTypeFormula,
+	}
+	if got := pkg.Label(); got != "wget" {
+		t.Errorf("Label() = %q, want %q", got, "wget")
+	}
+}
+
+func TestPackageLabel_CaskUsesName(t *testing.T) {
+	pkg := Package{
+		Name:        "firefox",
+		DisplayName: "Mozilla Firefox",
+		Type:        PackageTypeCask,
+	}
+	if got := pkg.Label(); got != "firefox" {
+		t.Errorf("Label() = %q, want %q", got, "firefox")
+	}
+}

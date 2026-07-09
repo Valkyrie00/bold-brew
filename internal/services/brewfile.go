@@ -209,6 +209,9 @@ func (s *AppService) loadBrewfilePackages() error {
 	// Create a map for quick lookup of Brewfile entries
 	packageMap := make(map[string]models.PackageType)
 	for _, entry := range result.Packages {
+		if entry.IsMas {
+			continue
+		}
 		if entry.IsCask {
 			packageMap[entry.Name] = models.PackageTypeCask
 		} else if entry.IsFlatpak {
@@ -280,11 +283,21 @@ func (s *AppService) loadBrewfilePackages() error {
 			if !entry.IsMas || foundPackages[entry.MasID] {
 				continue
 			}
+
+			version := ""
+			homepage := ""
+			description := "Mac App Store app"
+			if appInfo, err := s.masService.GetAppInfo(entry.MasID); err == nil && appInfo != nil {
+				version = appInfo.Version
+				homepage = appInfo.Homepage
+			}
+
 			pkg := models.Package{
 				Name:               entry.MasID,
 				DisplayName:        entry.Name,
-				Description:        "Mac App Store app",
-				Version:            "",
+				Description:        description,
+				Version:            version,
+				Homepage:           homepage,
 				Type:               models.PackageTypeMas,
 				LocallyInstalled:   masInstalledMap[entry.MasID],
 				InstalledOnRequest: true,

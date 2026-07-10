@@ -8,7 +8,7 @@
 APP_NAME ?= bbrew
 APP_VERSION ?= 0.0.1-local
 CONTAINER_IMAGE_NAME ?= bbrew
-BUILD_GOVERSION ?= 1.25
+BUILD_GOVERSION ?= 1.26.5
 BUILD_GOOS ?= $(shell go env GOOS)
 BUILD_GOARCH ?= $(shell go env GOARCH)
 

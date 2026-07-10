@@ -1,7 +1,7 @@
-FROM golang:1.25
+FROM golang:1.26.5
 
 # Install dependencies
-RUN curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/HEAD/install.sh | sh -s -- -b $(go env GOPATH)/bin v2.5.0
+RUN curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/HEAD/install.sh | sh -s -- -b $(go env GOPATH)/bin v2.11.4
 RUN go install github.com/goreleaser/goreleaser/v2@latest
 
 # Install security tools

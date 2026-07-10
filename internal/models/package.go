@@ -36,6 +36,15 @@ type Package struct {
 	InstalledOnRequest bool
 }
 
+// Label returns the best human-readable name for UI display.
+// For MAS packages, Name is the numeric ID so we prefer DisplayName.
+func (p *Package) Label() string {
+	if p.Type == PackageTypeMas && p.DisplayName != "" {
+		return p.DisplayName
+	}
+	return p.Name
+}
+
 // NewPackageFromFormula creates a Package from a Formula.
 func NewPackageFromFormula(f *Formula) Package {
 	installedOnRequest := false

@@ -86,18 +86,22 @@ func (d *Details) SetContent(pkg *models.Package, vulns []models.Vulnerability) 
 	separator := "[dim]────────────────────────[-]"
 
 	// Basic information with status
+	nameLabel := "Name"
+	if pkg.Type == models.PackageTypeMas {
+		nameLabel = "App ID"
+	}
 	basicInfo := fmt.Sprintf(
 		"[yellow::b]%s[-]\n%s\n"+
 			"[blue]• Type:[-] %s %s\n"+
-			"[blue]• Name:[-] %s\n"+
+			"[blue]• %s:[-] %s\n"+
 			"[blue]• Display Name:[-] %s\n"+
 			"[blue]• Version:[-] %s\n"+
 			"[blue]• Status:[-] %s%s\n"+
 			"[blue]• Homepage:[-] %s\n\n"+
 			"[yellow::b]Description[-]\n%s\n%s",
-		pkg.Name, separator,
+		pkg.Label(), separator,
 		typeTag, typeLabel,
-		pkg.Name,
+		nameLabel, pkg.Name,
 		pkg.DisplayName,
 		pkg.Version,
 		installedStatus, healthInline,

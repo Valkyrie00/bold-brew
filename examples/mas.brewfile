@@ -1,0 +1,6 @@
+tap "homebrew/cask"
+brew "mas"
+brew "wget"
+cask "firefox"
+mas "AmorphousDiskMark", id: 1168254295
+mas "Display Menu", id: 549083868

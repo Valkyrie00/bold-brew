@@ -426,7 +426,7 @@ func (d *DataProvider) GetTapPackages(entries []models.BrewfileEntry, existingPa
 	var missingFormulae []string
 
 	for _, entry := range entries {
-		if entry.IsFlatpak {
+		if entry.IsFlatpak || entry.IsMas {
 			continue
 		}
 

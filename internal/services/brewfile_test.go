@@ -175,6 +175,83 @@ func TestParseBrewfileWithTaps_FileNotFound(t *testing.T) {
 	}
 }
 
+func TestParseBrewfileWithTaps_MasEntriesNotInPackageMap(t *testing.T) {
+	content := `brew "wget"
+cask "firefox"
+mas "AmorphousDiskMark", id: 1168254295
+mas "Display Menu", id: 549083868
+`
+	tmpFile := createTempBrewfile(t, content)
+
+	result, err := parseBrewfileWithTaps(tmpFile)
+	if err != nil {
+		t.Fatalf("parseBrewfileWithTaps() error: %v", err)
+	}
+
+	// Build the packageMap the same way loadBrewfilePackages does
+	packageMap := make(map[string]string)
+	for _, entry := range result.Packages {
+		if entry.IsMas {
+			continue
+		}
+		if entry.IsCask {
+			packageMap[entry.Name] = "cask"
+		} else if entry.IsFlatpak {
+			packageMap[entry.Name] = "flatpak"
+		} else {
+			packageMap[entry.Name] = "formula"
+		}
+	}
+
+	// MAS app names must NOT appear in the package map
+	if _, exists := packageMap["AmorphousDiskMark"]; exists {
+		t.Error("MAS entry 'AmorphousDiskMark' should not be in packageMap")
+	}
+	if _, exists := packageMap["Display Menu"]; exists {
+		t.Error("MAS entry 'Display Menu' should not be in packageMap")
+	}
+
+	// Regular entries should be present
+	if _, exists := packageMap["wget"]; !exists {
+		t.Error("formula 'wget' should be in packageMap")
+	}
+	if _, exists := packageMap["firefox"]; !exists {
+		t.Error("cask 'firefox' should be in packageMap")
+	}
+}
+
+func TestParseBrewfileWithTaps_MasEntriesExcludedFromTapEntries(t *testing.T) {
+	content := `brew "wget"
+mas "AmorphousDiskMark", id: 1168254295
+mas "Hand Mirror", id: 1502839586
+`
+	tmpFile := createTempBrewfile(t, content)
+
+	result, err := parseBrewfileWithTaps(tmpFile)
+	if err != nil {
+		t.Fatalf("parseBrewfileWithTaps() error: %v", err)
+	}
+
+	// Simulate the tap entry collection logic from loadBrewfilePackages:
+	// entries not found in main list, excluding flatpak and mas
+	foundPackages := make(map[string]bool)
+	foundPackages["wget"] = true // pretend wget was found in Homebrew catalog
+
+	var tapEntries []string
+	for _, entry := range result.Packages {
+		if !foundPackages[entry.Name] && !entry.IsFlatpak && !entry.IsMas {
+			tapEntries = append(tapEntries, entry.Name)
+		}
+	}
+
+	// MAS entries must not end up as tap entries
+	for _, name := range tapEntries {
+		if name == "AmorphousDiskMark" || name == "Hand Mirror" {
+			t.Errorf("MAS entry %q should not appear in tapEntries", name)
+		}
+	}
+}
+
 func createTempBrewfile(t *testing.T, content string) string {
 	t.Helper()
 	f, err := os.CreateTemp(t.TempDir(), "Brewfile")

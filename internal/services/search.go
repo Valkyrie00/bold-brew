@@ -167,7 +167,7 @@ func (s *AppService) setResults(data *[]models.Package, scrollToTop bool) {
 		}
 
 		// Name cell with color based on status
-		nameCell := tview.NewTableCell(info.Name).SetSelectable(true)
+		nameCell := tview.NewTableCell(info.Label()).SetSelectable(true)
 		switch {
 		case info.Disabled:
 			nameCell.SetTextColor(tcell.ColorRed)
